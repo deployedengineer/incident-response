@@ -8,13 +8,20 @@
     "type": "suspicious_login",
     "title": "Multiple failed login attempts from anomalous IP",
     "description": "User account 'j.martinez@company.com' experienced 47 failed login attempts from IP 185.220.101.34 (Tor exit node) within 5 minutes",
-    "affected_systems": ["auth-server-02", "VPN gateway"],
+    "affected_systems": [
+      "auth-server-02",
+      "VPN gateway"
+    ],
     "source_ip": "185.220.101.34",
     "destination_ip": "10.50.2.15",
     "user": "j.martinez@company.com",
     "assigned_to": "security-team",
     "detection_method": "SIEM alert",
-    "tags": ["brute-force", "tor", "authentication"],
+    "tags": [
+      "brute-force",
+      "tor",
+      "authentication"
+    ],
     "mitre": {
       "tactic": [
         "TA0006 - Credential Access",
@@ -78,23 +85,72 @@
       "Reviewed authentication logs for successful logins",
       "Added IP to threat intelligence feed"
     ],
-    "systems_remediated": ["auth-server-02", "firewall-01"],
-    "accounts_affected": ["j.martinez@company.com"],
+    "systems_remediated": [
+      "auth-server-02",
+      "firewall-01"
+    ],
+    "accounts_affected": [
+      "j.martinez@company.com"
+    ],
     "preventive_measures": [
       "Audit all accounts without MFA and enforce compliance",
       "Implement rate limiting on authentication endpoints",
       "Deploy Tor exit node blocklist to firewall"
     ],
-    "security_controls_updated": ["MFA policy enforcement", "IP reputation blocking"],
-    "documentation_updated": ["security-runbooks/brute-force-response.md"],
+    "security_controls_updated": [
+      "MFA policy enforcement",
+      "IP reputation blocking"
+    ],
+    "documentation_updated": [
+      "security-runbooks/brute-force-response.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "MFA policy not consistently enforced across legacy accounts. Need automated compliance checking",
-    "follow_up_tasks": ["TASK-2026-0345: Implement MFA compliance scanner", "TASK-2026-0346: Review firewall rules for Tor blocking"],
+    "follow_up_tasks": [
+      "TASK-2026-0345: Implement MFA compliance scanner",
+      "TASK-2026-0346: Review firewall rules for Tor blocking"
+    ],
     "verification_method": "Login testing and log review",
     "verified_by": "security-team-lead",
     "verification_timestamp": "2026-02-09T15:30:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "resolution": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "mitre_tactic_ids": [
+      "TA0006",
+      "TA0001"
+    ],
+    "mitre_technique_ids": [
+      "T1110.003",
+      "T1078"
+    ],
+    "mitre_prevention_ids": [
+      "M1032",
+      "M1036",
+      "M1027"
+    ]
   },
   {
     "@timestamp": "2026-02-09T11:22:15.000Z",
@@ -105,12 +161,19 @@
     "type": "service_outage",
     "title": "Database cluster primary node failure",
     "description": "PostgreSQL primary node (db-prod-01) crashed due to disk space exhaustion. Automatic failover to secondary completed in 45 seconds",
-    "affected_systems": ["db-prod-01", "api-gateway"],
+    "affected_systems": [
+      "db-prod-01",
+      "api-gateway"
+    ],
     "downtime_minutes": 2,
     "impact": "Brief API latency spike, no data loss",
     "assigned_to": "database-team",
     "root_cause": "Log rotation failure causing /var partition to fill",
-    "tags": ["database", "outage", "disk-space"],
+    "tags": [
+      "database",
+      "outage",
+      "disk-space"
+    ],
     "mitre": {
       "tactic": [],
       "technique": [],
@@ -171,7 +234,9 @@
       "Tested log rotation on all database nodes",
       "Verified db-prod-01 rejoined cluster successfully"
     ],
-    "systems_remediated": ["db-prod-01"],
+    "systems_remediated": [
+      "db-prod-01"
+    ],
     "preventive_measures": [
       "Deployed disk space monitoring with alerts at 80% threshold",
       "Implemented logrotate health checks in monitoring",
@@ -179,15 +244,49 @@
       "Documented disk space recovery procedures"
     ],
     "security_controls_updated": [],
-    "documentation_updated": ["runbooks/database-failover.md", "runbooks/disk-space-recovery.md"],
+    "documentation_updated": [
+      "runbooks/database-failover.md",
+      "runbooks/disk-space-recovery.md"
+    ],
     "post_incident_review_scheduled": true,
     "lessons_learned": "HA failover worked as designed, but silent logrotate failure went undetected. Need better monitoring of system maintenance tasks",
-    "follow_up_tasks": ["TASK-2026-0347: Audit all logrotate configs across infrastructure", "TASK-2026-0348: Implement systemd service health monitoring"],
+    "follow_up_tasks": [
+      "TASK-2026-0347: Audit all logrotate configs across infrastructure",
+      "TASK-2026-0348: Implement systemd service health monitoring"
+    ],
     "verification_method": "Database replication status check and query performance testing",
     "verified_by": "database-team-lead",
     "verification_timestamp": "2026-02-09T13:30:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "attack_count": null,
+    "containment_action": null,
+    "resolution": null,
+    "action_taken": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "accounts_affected": [],
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [],
+    "mitre_technique_ids": [],
+    "mitre_prevention_ids": []
   },
   {
     "@timestamp": "2026-02-09T09:15:33.000Z",
@@ -198,12 +297,18 @@
     "type": "malware_detection",
     "title": "Trojan detected on employee workstation",
     "description": "EDR flagged trojan.generic.12345 on workstation WKS-HR-089. File quarantined automatically. Investigating lateral movement",
-    "affected_systems": ["WKS-HR-089"],
+    "affected_systems": [
+      "WKS-HR-089"
+    ],
     "user": "m.lopez@company.com",
     "malware_hash": "a3c5e8d2f1b9a4e6c8d1f3b5a7c9e2d4",
     "assigned_to": "incident-response",
     "detection_method": "EDR",
-    "tags": ["malware", "endpoint", "trojan"],
+    "tags": [
+      "malware",
+      "endpoint",
+      "trojan"
+    ],
     "mitre": {
       "tactic": [
         "TA0001 - Initial Access",
@@ -279,24 +384,76 @@
       "Reset user account credentials",
       "Added hash to threat intelligence blocklist"
     ],
-    "systems_remediated": ["WKS-HR-089"],
-    "accounts_affected": ["m.lopez@company.com"],
+    "systems_remediated": [
+      "WKS-HR-089"
+    ],
+    "accounts_affected": [
+      "m.lopez@company.com"
+    ],
     "preventive_measures": [
       "Enhanced email filtering rules for invoice-themed phishing",
       "Deployed user security awareness training on phishing",
       "Implemented application whitelisting on HR workstations",
       "Added malware hash to EDR signatures globally"
     ],
-    "security_controls_updated": ["Email filtering rules", "EDR signatures"],
-    "documentation_updated": ["incident-response/malware-response.md"],
+    "security_controls_updated": [
+      "Email filtering rules",
+      "EDR signatures"
+    ],
+    "documentation_updated": [
+      "incident-response/malware-response.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "EDR containment worked effectively. Need faster email filtering to catch threats before user interaction",
-    "follow_up_tasks": ["TASK-2026-0349: Review email filtering latency", "TASK-2026-0350: Schedule phishing awareness training for HR department"],
+    "follow_up_tasks": [
+      "TASK-2026-0349: Review email filtering latency",
+      "TASK-2026-0350: Schedule phishing awareness training for HR department"
+    ],
     "verification_method": "Endpoint scan and network traffic monitoring",
     "verified_by": "security-team-lead",
     "verification_timestamp": "2026-02-09T14:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "resolution": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "source_ip": null,
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [
+      "TA0001",
+      "TA0002",
+      "TA0009"
+    ],
+    "mitre_technique_ids": [
+      "T1566.001",
+      "T1204.002",
+      "T1005"
+    ],
+    "mitre_prevention_ids": [
+      "M1049",
+      "M1040",
+      "M1021",
+      "M1017"
+    ]
   },
   {
     "@timestamp": "2026-02-09T08:42:11.000Z",
@@ -307,12 +464,19 @@
     "type": "performance_degradation",
     "title": "Elevated API response times on payment service",
     "description": "Payment processing API showing 2-3x normal response times. Traced to database query optimization issue after recent deployment",
-    "affected_systems": ["payment-api-v2", "db-payments-prod"],
+    "affected_systems": [
+      "payment-api-v2",
+      "db-payments-prod"
+    ],
     "response_time_ms": 1850,
     "baseline_ms": 620,
     "assigned_to": "backend-team",
     "resolution": "Rolled back deployment, added missing index",
-    "tags": ["performance", "api", "database"],
+    "tags": [
+      "performance",
+      "api",
+      "database"
+    ],
     "mitre": {
       "tactic": [],
       "technique": [],
@@ -369,7 +533,10 @@
       "Tested hotfix in staging environment",
       "Deployed v2.8.4 with complete database schema changes"
     ],
-    "systems_remediated": ["payment-api-v2", "db-payments-prod"],
+    "systems_remediated": [
+      "payment-api-v2",
+      "db-payments-prod"
+    ],
     "preventive_measures": [
       "Enhanced pre-deployment checklist to verify all migration files",
       "Added database query performance tests to CI/CD pipeline",
@@ -377,15 +544,48 @@
       "Updated code review guidelines for database schema changes"
     ],
     "security_controls_updated": [],
-    "documentation_updated": ["deployment-procedures/pre-flight-checklist.md"],
+    "documentation_updated": [
+      "deployment-procedures/pre-flight-checklist.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "Migration files can be lost during merge conflict resolution. Need better validation in CI pipeline before deployment",
-    "follow_up_tasks": ["TASK-2026-0351: Add migration file validation to CI pipeline", "TASK-2026-0352: Audit all recent deployments for missing migrations"],
+    "follow_up_tasks": [
+      "TASK-2026-0351: Add migration file validation to CI pipeline",
+      "TASK-2026-0352: Audit all recent deployments for missing migrations"
+    ],
     "verification_method": "APM response time monitoring and load testing",
     "verified_by": "backend-team-lead",
     "verification_timestamp": "2026-02-09T12:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "accounts_affected": [],
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [],
+    "mitre_technique_ids": [],
+    "mitre_prevention_ids": []
   },
   {
     "@timestamp": "2026-02-09T07:33:44.000Z",
@@ -396,13 +596,20 @@
     "type": "data_exfiltration",
     "title": "Unusual data transfer volume detected",
     "description": "Account 'svc-backup@company.com' transferred 45GB to external S3 bucket outside normal backup window. Investigating unauthorized data access",
-    "affected_systems": ["file-server-03", "s3-external"],
+    "affected_systems": [
+      "file-server-03",
+      "s3-external"
+    ],
     "user": "svc-backup@company.com",
     "data_volume_gb": 45,
     "destination": "s3://external-bucket-xyz",
     "assigned_to": "security-team",
     "detection_method": "DLP alert",
-    "tags": ["data-exfiltration", "dlp", "cloud"],
+    "tags": [
+      "data-exfiltration",
+      "dlp",
+      "cloud"
+    ],
     "mitre": {
       "tactic": [
         "TA0010 - Exfiltration"
@@ -467,24 +674,70 @@
       "Re-enabled service account after verification",
       "Updated DLP whitelist to include vendor bucket"
     ],
-    "systems_remediated": ["dlp-system"],
-    "accounts_affected": ["svc-backup@company.com"],
+    "systems_remediated": [
+      "dlp-system"
+    ],
+    "accounts_affected": [
+      "svc-backup@company.com"
+    ],
     "preventive_measures": [
       "Updated vendor onboarding checklist to include DLP whitelist step",
       "Created process for communicating manual backup schedules",
       "Documented approved external destinations in security wiki",
       "Implemented change notification for out-of-schedule backups"
     ],
-    "security_controls_updated": ["DLP whitelist"],
-    "documentation_updated": ["security/dlp-whitelist.md", "procedures/vendor-onboarding.md"],
+    "security_controls_updated": [
+      "DLP whitelist"
+    ],
+    "documentation_updated": [
+      "security/dlp-whitelist.md",
+      "procedures/vendor-onboarding.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "DLP detection worked correctly. Need better coordination between ops and security teams for manual maintenance activities",
-    "follow_up_tasks": ["TASK-2026-0353: Audit all external data destinations against DLP whitelist", "TASK-2026-0354: Create Slack channel for ops maintenance notifications"],
+    "follow_up_tasks": [
+      "TASK-2026-0353: Audit all external data destinations against DLP whitelist",
+      "TASK-2026-0354: Create Slack channel for ops maintenance notifications"
+    ],
     "verification_method": "Backup logs review and vendor contract verification",
     "verified_by": "security-team-lead",
     "verification_timestamp": "2026-02-09T09:30:00.000Z",
     "false_positive": true,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "resolution": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "source_ip": null,
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [
+      "TA0010"
+    ],
+    "mitre_technique_ids": [
+      "T1537"
+    ],
+    "mitre_prevention_ids": [
+      "M1057",
+      "M1037",
+      "M1018"
+    ]
   },
   {
     "@timestamp": "2026-02-08T22:18:09.000Z",
@@ -495,11 +748,18 @@
     "type": "certificate_expiration",
     "title": "SSL certificate expired on internal API",
     "description": "Certificate for internal-api.company.local expired at 23:59 UTC. Service disrupted for 18 minutes until emergency renewal completed",
-    "affected_systems": ["internal-api-01", "internal-api-02"],
+    "affected_systems": [
+      "internal-api-01",
+      "internal-api-02"
+    ],
     "downtime_minutes": 18,
     "assigned_to": "infrastructure-team",
     "resolution": "Emergency cert renewal, added automated monitoring",
-    "tags": ["certificate", "ssl", "infrastructure"],
+    "tags": [
+      "certificate",
+      "ssl",
+      "infrastructure"
+    ],
     "mitre": {
       "tactic": [],
       "technique": [],
@@ -558,7 +818,10 @@
       "Configured certbot systemd timer for auto-renewal",
       "Deployed certificate expiration monitoring script"
     ],
-    "systems_remediated": ["internal-api-01", "internal-api-02"],
+    "systems_remediated": [
+      "internal-api-01",
+      "internal-api-02"
+    ],
     "preventive_measures": [
       "Implemented certificate expiration monitoring with 30-day warning",
       "Fixed certbot cron job permissions issue",
@@ -566,16 +829,53 @@
       "Created runbook for emergency certificate renewal",
       "Set up weekly certificate expiration reports"
     ],
-    "security_controls_updated": ["Certificate lifecycle management"],
-    "documentation_updated": ["runbooks/certificate-renewal.md", "monitoring/ssl-certificate-checks.md"],
+    "security_controls_updated": [
+      "Certificate lifecycle management"
+    ],
+    "documentation_updated": [
+      "runbooks/certificate-renewal.md",
+      "monitoring/ssl-certificate-checks.md"
+    ],
     "post_incident_review_scheduled": true,
     "lessons_learned": "Silent cron job failures are dangerous. Need better monitoring of automated maintenance tasks and certificate lifecycle",
-    "follow_up_tasks": ["TASK-2026-0355: Audit all certificates across infrastructure", "TASK-2026-0356: Implement centralized certificate management system"],
+    "follow_up_tasks": [
+      "TASK-2026-0355: Audit all certificates across infrastructure",
+      "TASK-2026-0356: Implement centralized certificate management system"
+    ],
     "verification_method": "SSL certificate validation and API health checks",
     "verified_by": "infrastructure-team-lead",
     "verification_timestamp": "2026-02-09T00:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "action_taken": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "accounts_affected": [],
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [],
+    "mitre_technique_ids": [],
+    "mitre_prevention_ids": []
   },
   {
     "@timestamp": "2026-02-08T19:45:27.000Z",
@@ -586,13 +886,19 @@
     "type": "ransomware",
     "title": "Ransomware encryption activity detected",
     "description": "Rapid file modification pattern detected on file share \\\\fileserver-05\\finance. 1,247 files encrypted before isolation. Ransomware note identified",
-    "affected_systems": ["fileserver-05"],
+    "affected_systems": [
+      "fileserver-05"
+    ],
     "user": "a.hernandez@company.com",
     "encrypted_files": 1247,
     "assigned_to": "incident-response",
     "detection_method": "Behavioral analysis",
     "containment_action": "System isolated, user account disabled",
-    "tags": ["ransomware", "critical", "file-encryption"],
+    "tags": [
+      "ransomware",
+      "critical",
+      "file-encryption"
+    ],
     "mitre": {
       "tactic": [
         "TA0001 - Initial Access",
@@ -689,8 +995,13 @@
       "Applied latest security patches",
       "Deployed enhanced EDR signatures for LockBit 3.0"
     ],
-    "systems_remediated": ["fileserver-05", "WKS-FIN-042"],
-    "accounts_affected": ["a.hernandez@company.com"],
+    "systems_remediated": [
+      "fileserver-05",
+      "WKS-FIN-042"
+    ],
+    "accounts_affected": [
+      "a.hernandez@company.com"
+    ],
     "preventive_measures": [
       "Blocked macro execution via Group Policy",
       "Enhanced email filtering for macro-enabled attachments",
@@ -699,16 +1010,71 @@
       "Deployed network segmentation for file servers",
       "Mandatory ransomware response training for all staff"
     ],
-    "security_controls_updated": ["Group Policy - macro blocking", "Email filtering", "EDR signatures", "Backup frequency"],
-    "documentation_updated": ["incident-response/ransomware-playbook.md", "recovery/file-restore-procedures.md"],
+    "security_controls_updated": [
+      "Group Policy - macro blocking",
+      "Email filtering",
+      "EDR signatures",
+      "Backup frequency"
+    ],
+    "documentation_updated": [
+      "incident-response/ransomware-playbook.md",
+      "recovery/file-restore-procedures.md"
+    ],
     "post_incident_review_scheduled": true,
     "lessons_learned": "Automated containment prevented widespread damage. 4-hour RPO too long for finance data. User training needed on macro-enabled attachments",
-    "follow_up_tasks": ["TASK-2026-0357: Implement 1-hour backup for all critical file shares", "TASK-2026-0358: Deploy macro execution blocking GPO", "TASK-2026-0359: Conduct phishing simulation campaign"],
+    "follow_up_tasks": [
+      "TASK-2026-0357: Implement 1-hour backup for all critical file shares",
+      "TASK-2026-0358: Deploy macro execution blocking GPO",
+      "TASK-2026-0359: Conduct phishing simulation campaign"
+    ],
     "verification_method": "File integrity verification and malware scan",
     "verified_by": "ciso",
     "verification_timestamp": "2026-02-09T10:00:00.000Z",
     "false_positive": false,
-    "escalated": true
+    "escalated": true,
+    "impact": null,
+    "attack_count": null,
+    "resolution": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "source_ip": null,
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [
+      "TA0001",
+      "TA0002",
+      "TA0040",
+      "TA0005"
+    ],
+    "mitre_technique_ids": [
+      "T1566.001",
+      "T1204.002",
+      "T1486",
+      "T1027"
+    ],
+    "mitre_prevention_ids": [
+      "M1049",
+      "M1040",
+      "M1053",
+      "M1017",
+      "M1022",
+      "M1031"
+    ]
   },
   {
     "@timestamp": "2026-02-08T16:52:13.000Z",
@@ -724,7 +1090,11 @@
     "phishing_domain": "office365-secure-login.tk",
     "assigned_to": "security-team",
     "resolution": "Passwords reset, domain blocked, security awareness email sent",
-    "tags": ["phishing", "credentials", "social-engineering"],
+    "tags": [
+      "phishing",
+      "credentials",
+      "social-engineering"
+    ],
     "mitre": {
       "tactic": [
         "TA0001 - Initial Access",
@@ -808,8 +1178,14 @@
       "Removed phishing emails from all mailboxes",
       "Sent company-wide security awareness alert"
     ],
-    "systems_remediated": ["email-gateway", "firewall-01"],
-    "accounts_affected": ["t.brooks@company.com", "k.martinez@company.com"],
+    "systems_remediated": [
+      "email-gateway",
+      "firewall-01"
+    ],
+    "accounts_affected": [
+      "t.brooks@company.com",
+      "k.martinez@company.com"
+    ],
     "preventive_measures": [
       "Enhanced email filtering to block .tk domains",
       "Implemented external sender warning banners",
@@ -817,16 +1193,64 @@
       "Scheduled phishing simulation training for next quarter",
       "Updated security awareness training materials"
     ],
-    "security_controls_updated": ["Email filtering rules", "Domain blacklist"],
-    "documentation_updated": ["security-awareness/phishing-examples.md"],
+    "security_controls_updated": [
+      "Email filtering rules",
+      "Domain blacklist"
+    ],
+    "documentation_updated": [
+      "security-awareness/phishing-examples.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "User reporting was fast and effective. Need better email filtering for newly registered domains. MFA prevented potential compromise",
-    "follow_up_tasks": ["TASK-2026-0360: Block all new TLD domains (.tk, .ml, .ga) in email filter", "TASK-2026-0361: Audit MFA enrollment across organization"],
+    "follow_up_tasks": [
+      "TASK-2026-0360: Block all new TLD domains (.tk, .ml, .ga) in email filter",
+      "TASK-2026-0361: Audit MFA enrollment across organization"
+    ],
     "verification_method": "Authentication log review and user confirmation",
     "verified_by": "security-team-lead",
     "verification_timestamp": "2026-02-08T20:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "backup_size_gb": null,
+    "affected_systems": [],
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [
+      "TA0001",
+      "TA0006",
+      "TA0009"
+    ],
+    "mitre_technique_ids": [
+      "T1566.002",
+      "T1056.003",
+      "T1114"
+    ],
+    "mitre_prevention_ids": [
+      "M1017",
+      "M1032",
+      "M1021",
+      "M1054"
+    ]
   },
   {
     "@timestamp": "2026-02-08T14:28:55.000Z",
@@ -837,11 +1261,17 @@
     "type": "memory_leak",
     "title": "Memory leak detected in web application",
     "description": "Application server app-prod-07 showing gradual memory increase over 48 hours. Currently at 85% utilization, monitoring for restart necessity",
-    "affected_systems": ["app-prod-07"],
+    "affected_systems": [
+      "app-prod-07"
+    ],
     "memory_utilization_percent": 85,
     "trend": "increasing 2% per hour",
     "assigned_to": "application-team",
-    "tags": ["memory-leak", "performance", "application"],
+    "tags": [
+      "memory-leak",
+      "performance",
+      "application"
+    ],
     "mitre": {
       "tactic": [],
       "technique": [],
@@ -908,7 +1338,9 @@
       "Added try-finally blocks to ensure resource cleanup",
       "Deployed v3.2.2 with memory leak fix"
     ],
-    "systems_remediated": ["app-prod-07"],
+    "systems_remediated": [
+      "app-prod-07"
+    ],
     "preventive_measures": [
       "Added memory leak detection to CI/CD pipeline",
       "Implemented automated heap dump capture on high memory usage",
@@ -917,15 +1349,49 @@
       "Configured automatic alerts at 70% memory threshold"
     ],
     "security_controls_updated": [],
-    "documentation_updated": ["development/resource-management-guidelines.md"],
+    "documentation_updated": [
+      "development/resource-management-guidelines.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "Proactive monitoring caught issue before user impact. Need automated memory profiling in staging to catch leaks before production",
-    "follow_up_tasks": ["TASK-2026-0362: Implement memory profiling in staging CI/CD", "TASK-2026-0363: Audit all error handling code for resource cleanup"],
+    "follow_up_tasks": [
+      "TASK-2026-0362: Implement memory profiling in staging CI/CD",
+      "TASK-2026-0363: Audit all error handling code for resource cleanup"
+    ],
     "verification_method": "Memory usage monitoring and load testing",
     "verified_by": "application-team-lead",
     "verification_timestamp": "2026-02-09T12:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "resolution": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "accounts_affected": [],
+    "baseline_ms": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [],
+    "mitre_technique_ids": [],
+    "mitre_prevention_ids": []
   },
   {
     "@timestamp": "2026-02-08T11:15:42.000Z",
@@ -936,12 +1402,18 @@
     "type": "privilege_escalation",
     "title": "Unauthorized privilege escalation attempt",
     "description": "User 'contractor-dev-12' attempted to add themselves to Domain Admins group. Action blocked by GPO, investigating access to admin tools",
-    "affected_systems": ["ad-controller-01"],
+    "affected_systems": [
+      "ad-controller-01"
+    ],
     "user": "contractor-dev-12",
     "attempted_action": "Add-ADGroupMember -Identity 'Domain Admins'",
     "assigned_to": "security-team",
     "detection_method": "Windows Event Log",
-    "tags": ["privilege-escalation", "active-directory", "unauthorized"],
+    "tags": [
+      "privilege-escalation",
+      "active-directory",
+      "unauthorized"
+    ],
     "mitre": {
       "tactic": [
         "TA0004 - Privilege Escalation",
@@ -1023,8 +1495,12 @@
       "Collected all company equipment from contractor",
       "Removed all access credentials and VPN certificates"
     ],
-    "systems_remediated": ["ad-controller-01"],
-    "accounts_affected": ["contractor-dev-12"],
+    "systems_remediated": [
+      "ad-controller-01"
+    ],
+    "accounts_affected": [
+      "contractor-dev-12"
+    ],
     "preventive_measures": [
       "Enhanced monitoring for PowerShell administrative commands",
       "Implemented application control to block unapproved admin tools",
@@ -1032,16 +1508,64 @@
       "Updated contractor onboarding to include security policy training",
       "Deployed behavioral analytics for privilege escalation attempts"
     ],
-    "security_controls_updated": ["PowerShell logging", "Application control policies"],
-    "documentation_updated": ["security/insider-threat-response.md", "hr/contractor-offboarding.md"],
+    "security_controls_updated": [
+      "PowerShell logging",
+      "Application control policies"
+    ],
+    "documentation_updated": [
+      "security/insider-threat-response.md",
+      "hr/contractor-offboarding.md"
+    ],
     "post_incident_review_scheduled": true,
     "lessons_learned": "Group Policy protections worked as designed. Need better vetting of contractors and enhanced monitoring of privileged command execution",
-    "follow_up_tasks": ["TASK-2026-0364: Implement enhanced PowerShell logging for all users", "TASK-2026-0365: Review contractor vetting process with HR", "TASK-2026-0366: Consult legal on potential prosecution"],
+    "follow_up_tasks": [
+      "TASK-2026-0364: Implement enhanced PowerShell logging for all users",
+      "TASK-2026-0365: Review contractor vetting process with HR",
+      "TASK-2026-0366: Consult legal on potential prosecution"
+    ],
     "verification_method": "Active Directory audit log review and forensic analysis",
     "verified_by": "ciso",
     "verification_timestamp": "2026-02-08T17:00:00.000Z",
     "false_positive": false,
-    "escalated": true
+    "escalated": true,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "resolution": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "source_ip": null,
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [
+      "TA0004",
+      "TA0003"
+    ],
+    "mitre_technique_ids": [
+      "T1098",
+      "T1078.002"
+    ],
+    "mitre_prevention_ids": [
+      "M1026",
+      "M1018",
+      "M1015",
+      "M1047"
+    ]
   },
   {
     "@timestamp": "2026-02-08T09:33:18.000Z",
@@ -1052,12 +1576,19 @@
     "type": "network_congestion",
     "title": "Network congestion on core switch",
     "description": "Core switch SW-CORE-01 port utilization reached 98% during backup window. Caused packet loss and increased latency across VLAN 100",
-    "affected_systems": ["SW-CORE-01", "backup-server"],
+    "affected_systems": [
+      "SW-CORE-01",
+      "backup-server"
+    ],
     "port_utilization_percent": 98,
     "packet_loss_percent": 3.2,
     "assigned_to": "network-team",
     "resolution": "Rescheduled backup jobs, implementing QoS policies",
-    "tags": ["network", "congestion", "backup"],
+    "tags": [
+      "network",
+      "congestion",
+      "backup"
+    ],
     "mitre": {
       "tactic": [],
       "technique": [],
@@ -1123,7 +1654,9 @@
       "Configured traffic shaping for backup data flows",
       "Tested QoS effectiveness under load"
     ],
-    "systems_remediated": ["SW-CORE-01"],
+    "systems_remediated": [
+      "SW-CORE-01"
+    ],
     "preventive_measures": [
       "Implemented QoS across all core switches",
       "Set backup traffic to low-priority class",
@@ -1132,15 +1665,50 @@
       "Documented network traffic priorities and policies"
     ],
     "security_controls_updated": [],
-    "documentation_updated": ["network/qos-configuration.md", "backup/scheduling-guidelines.md"],
+    "documentation_updated": [
+      "network/qos-configuration.md",
+      "backup/scheduling-guidelines.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "Data growth causing backup jobs to extend into business hours. Need proactive capacity monitoring and QoS from the start",
-    "follow_up_tasks": ["TASK-2026-0367: Conduct network capacity assessment", "TASK-2026-0368: Evaluate backup compression options", "TASK-2026-0369: Deploy QoS to all switches"],
+    "follow_up_tasks": [
+      "TASK-2026-0367: Conduct network capacity assessment",
+      "TASK-2026-0368: Evaluate backup compression options",
+      "TASK-2026-0369: Deploy QoS to all switches"
+    ],
     "verification_method": "Network performance monitoring and user feedback",
     "verified_by": "network-team-lead",
     "verification_timestamp": "2026-02-08T16:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "accounts_affected": [],
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [],
+    "mitre_technique_ids": [],
+    "mitre_prevention_ids": []
   },
   {
     "@timestamp": "2026-02-07T23:47:03.000Z",
@@ -1151,13 +1719,26 @@
     "type": "lateral_movement",
     "title": "Suspicious lateral movement detected",
     "description": "Compromised service account 'svc-monitoring' used to access 12 servers outside normal scope within 10 minutes via RDP and PSExec",
-    "affected_systems": ["srv-app-01", "srv-app-02", "srv-db-03", "srv-web-05"],
+    "affected_systems": [
+      "srv-app-01",
+      "srv-app-02",
+      "srv-db-03",
+      "srv-web-05"
+    ],
     "user": "svc-monitoring",
     "source_ip": "10.20.15.67",
-    "protocols": ["RDP", "PSExec", "WMI"],
+    "protocols": [
+      "RDP",
+      "PSExec",
+      "WMI"
+    ],
     "assigned_to": "incident-response",
     "detection_method": "Behavioral analytics",
-    "tags": ["lateral-movement", "compromise", "service-account"],
+    "tags": [
+      "lateral-movement",
+      "compromise",
+      "service-account"
+    ],
     "mitre": {
       "tactic": [
         "TA0001 - Initial Access",
@@ -1256,8 +1837,17 @@
       "Scanned all systems for persistence mechanisms",
       "Verified no data exfiltration occurred"
     ],
-    "systems_remediated": ["srv-app-01", "srv-app-02", "srv-db-03", "srv-web-05", "workstation-10.20.15.67"],
-    "accounts_affected": ["svc-monitoring", "vpn-user-stolen"],
+    "systems_remediated": [
+      "srv-app-01",
+      "srv-app-02",
+      "srv-db-03",
+      "srv-web-05",
+      "workstation-10.20.15.67"
+    ],
+    "accounts_affected": [
+      "svc-monitoring",
+      "vpn-user-stolen"
+    ],
     "preventive_measures": [
       "Enforced MFA on all VPN accounts",
       "Implemented Credential Guard on all workstations",
@@ -1266,16 +1856,72 @@
       "Implemented just-in-time privileged access for service accounts",
       "Network segmentation to limit lateral movement paths"
     ],
-    "security_controls_updated": ["VPN MFA enforcement", "LSA protection", "Credential Guard", "Network segmentation"],
-    "documentation_updated": ["incident-response/lateral-movement-playbook.md", "security/service-account-management.md"],
+    "security_controls_updated": [
+      "VPN MFA enforcement",
+      "LSA protection",
+      "Credential Guard",
+      "Network segmentation"
+    ],
+    "documentation_updated": [
+      "incident-response/lateral-movement-playbook.md",
+      "security/service-account-management.md"
+    ],
     "post_incident_review_scheduled": true,
     "lessons_learned": "Behavioral analytics detected lateral movement quickly. Lack of MFA on VPN was critical gap. Service accounts need better protection and monitoring",
-    "follow_up_tasks": ["TASK-2026-0370: Deploy Credential Guard to all endpoints", "TASK-2026-0371: Audit all VPN accounts for MFA", "TASK-2026-0372: Implement network segmentation phase 2"],
+    "follow_up_tasks": [
+      "TASK-2026-0370: Deploy Credential Guard to all endpoints",
+      "TASK-2026-0371: Audit all VPN accounts for MFA",
+      "TASK-2026-0372: Implement network segmentation phase 2"
+    ],
     "verification_method": "Forensic analysis and threat hunting across network",
     "verified_by": "ciso",
     "verification_timestamp": "2026-02-08T10:00:00.000Z",
     "false_positive": false,
-    "escalated": true
+    "escalated": true,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "resolution": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "baseline_ms": null,
+    "trend": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [
+      "TA0001",
+      "TA0006",
+      "TA0008",
+      "TA0007"
+    ],
+    "mitre_technique_ids": [
+      "T1133",
+      "T1003.001",
+      "T1021.001",
+      "T1021.002",
+      "T1018"
+    ],
+    "mitre_prevention_ids": [
+      "M1032",
+      "M1043",
+      "M1030",
+      "M1026",
+      "M1035",
+      "M1047"
+    ]
   },
   {
     "@timestamp": "2026-02-07T18:22:31.000Z",
@@ -1286,11 +1932,17 @@
     "type": "dns_resolution_failure",
     "title": "DNS resolution failures for internal domain",
     "description": "DNS server dns-02 failed to resolve internal.company.local zone for 8 minutes due to zone transfer failure from primary",
-    "affected_systems": ["dns-02"],
+    "affected_systems": [
+      "dns-02"
+    ],
     "downtime_minutes": 8,
     "assigned_to": "infrastructure-team",
     "resolution": "Manual zone transfer initiated, investigating replication issues",
-    "tags": ["dns", "resolution", "infrastructure"],
+    "tags": [
+      "dns",
+      "resolution",
+      "infrastructure"
+    ],
     "mitre": {
       "tactic": [],
       "technique": [],
@@ -1356,7 +2008,10 @@
       "Tested automatic zone transfers between all DNS servers",
       "Verified zone serial numbers synchronized"
     ],
-    "systems_remediated": ["dns-02", "firewall-core"],
+    "systems_remediated": [
+      "dns-02",
+      "firewall-core"
+    ],
     "preventive_measures": [
       "Added DNS zone transfer monitoring to alerting system",
       "Implemented change validation checklist for firewall rules",
@@ -1365,15 +2020,50 @@
       "Added automated zone transfer tests to monitoring"
     ],
     "security_controls_updated": [],
-    "documentation_updated": ["network/firewall-rules-dns.md", "infrastructure/dns-configuration.md"],
+    "documentation_updated": [
+      "network/firewall-rules-dns.md",
+      "infrastructure/dns-configuration.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "Firewall change process needs better validation. DNS uses both UDP and TCP - need monitoring for both protocols",
-    "follow_up_tasks": ["TASK-2026-0373: Implement automated firewall rule testing", "TASK-2026-0374: Add DNS zone transfer health checks"],
+    "follow_up_tasks": [
+      "TASK-2026-0373: Implement automated firewall rule testing",
+      "TASK-2026-0374: Add DNS zone transfer health checks"
+    ],
     "verification_method": "DNS query testing and zone transfer validation",
     "verified_by": "infrastructure-team-lead",
     "verification_timestamp": "2026-02-07T20:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "action_taken": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "accounts_affected": [],
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [],
+    "mitre_technique_ids": [],
+    "mitre_prevention_ids": []
   },
   {
     "@timestamp": "2026-02-07T15:08:44.000Z",
@@ -1384,13 +2074,20 @@
     "type": "web_application_attack",
     "title": "SQL injection attempts on customer portal",
     "description": "WAF detected 237 SQL injection attempts targeting customer-portal.company.com from IP 203.0.113.45. All requests blocked",
-    "affected_systems": ["customer-portal", "waf-01"],
+    "affected_systems": [
+      "customer-portal",
+      "waf-01"
+    ],
     "source_ip": "203.0.113.45",
     "attack_count": 237,
     "assigned_to": "security-team",
     "detection_method": "WAF",
     "action_taken": "IP blocked, investigating for vulnerabilities",
-    "tags": ["sql-injection", "web-attack", "waf"],
+    "tags": [
+      "sql-injection",
+      "web-attack",
+      "waf"
+    ],
     "mitre": {
       "tactic": [
         "TA0001 - Initial Access"
@@ -1462,7 +2159,9 @@
       "Ran automated security scan on customer portal",
       "Submitted malicious IP to threat intelligence platforms"
     ],
-    "systems_remediated": ["waf-01"],
+    "systems_remediated": [
+      "waf-01"
+    ],
     "preventive_measures": [
       "Enhanced WAF rules for SQL injection patterns",
       "Implemented rate limiting on customer portal endpoints",
@@ -1470,16 +2169,62 @@
       "Scheduled quarterly security code reviews",
       "Deployed automated vulnerability scanning in CI/CD"
     ],
-    "security_controls_updated": ["WAF rules", "Rate limiting", "IP blocklist"],
-    "documentation_updated": ["security/waf-configuration.md"],
+    "security_controls_updated": [
+      "WAF rules",
+      "Rate limiting",
+      "IP blocklist"
+    ],
+    "documentation_updated": [
+      "security/waf-configuration.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "WAF protection effective against automated attacks. Regular code reviews and secure coding practices prevented vulnerability",
-    "follow_up_tasks": ["TASK-2026-0375: Review WAF logs for similar attack patterns", "TASK-2026-0376: Enhance rate limiting on all public endpoints"],
+    "follow_up_tasks": [
+      "TASK-2026-0375: Review WAF logs for similar attack patterns",
+      "TASK-2026-0376: Enhance rate limiting on all public endpoints"
+    ],
     "verification_method": "Code review and vulnerability scanning",
     "verified_by": "security-team-lead",
     "verification_timestamp": "2026-02-07T18:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "containment_action": null,
+    "resolution": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "backup_size_gb": null,
+    "user": null,
+    "accounts_affected": [],
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [
+      "TA0001"
+    ],
+    "mitre_technique_ids": [
+      "T1190"
+    ],
+    "mitre_prevention_ids": [
+      "M1050",
+      "M1016",
+      "M1013",
+      "M1031",
+      "M1020"
+    ]
   },
   {
     "@timestamp": "2026-02-07T12:41:19.000Z",
@@ -1490,11 +2235,18 @@
     "type": "backup_failure",
     "title": "Critical backup job failure",
     "description": "Nightly backup of production database failed due to network timeout. Backup window missed, investigating storage connectivity",
-    "affected_systems": ["backup-server-01", "db-prod-cluster"],
+    "affected_systems": [
+      "backup-server-01",
+      "db-prod-cluster"
+    ],
     "backup_size_gb": 2400,
     "assigned_to": "backup-team",
     "resolution": "Manual backup initiated, identified faulty network cable",
-    "tags": ["backup", "failure", "database"],
+    "tags": [
+      "backup",
+      "failure",
+      "database"
+    ],
     "mitre": {
       "tactic": [],
       "technique": [],
@@ -1564,7 +2316,9 @@
       "Manually initiated full database backup",
       "Verified backup integrity and recoverability"
     ],
-    "systems_remediated": ["backup-network-segment"],
+    "systems_remediated": [
+      "backup-network-segment"
+    ],
     "preventive_measures": [
       "Implemented continuous network monitoring on backup network",
       "Added backup network health checks to monitoring system",
@@ -1573,14 +2327,49 @@
       "Documented backup network troubleshooting procedures"
     ],
     "security_controls_updated": [],
-    "documentation_updated": ["backup/troubleshooting-network-issues.md", "infrastructure/backup-network-topology.md"],
+    "documentation_updated": [
+      "backup/troubleshooting-network-issues.md",
+      "infrastructure/backup-network-topology.md"
+    ],
     "post_incident_review_scheduled": false,
     "lessons_learned": "Physical infrastructure issues can cause intermittent failures. Need proactive monitoring of backup network performance",
-    "follow_up_tasks": ["TASK-2026-0377: Audit all backup network cabling", "TASK-2026-0378: Implement backup network performance monitoring"],
+    "follow_up_tasks": [
+      "TASK-2026-0377: Audit all backup network cabling",
+      "TASK-2026-0378: Implement backup network performance monitoring"
+    ],
     "verification_method": "Backup integrity check and test restore",
     "verified_by": "backup-team-lead",
     "verification_timestamp": "2026-02-07T20:00:00.000Z",
     "false_positive": false,
-    "escalated": false
+    "escalated": false,
+    "impact": null,
+    "attack_count": null,
+    "containment_action": null,
+    "action_taken": null,
+    "downtime_minutes": null,
+    "phishing_domain": null,
+    "destination": null,
+    "encrypted_files": null,
+    "malware_hash": null,
+    "data_volume_gb": null,
+    "packet_loss_percent": null,
+    "root_cause": null,
+    "attempted_action": null,
+    "compromised_users": null,
+    "response_time_ms": null,
+    "memory_utilization_percent": null,
+    "affected_users": null,
+    "detection_method": null,
+    "source_ip": null,
+    "user": null,
+    "accounts_affected": [],
+    "baseline_ms": null,
+    "trend": null,
+    "protocols": null,
+    "port_utilization_percent": null,
+    "destination_ip": null,
+    "mitre_tactic_ids": [],
+    "mitre_technique_ids": [],
+    "mitre_prevention_ids": []
   }
 ]
