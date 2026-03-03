@@ -1,0 +1,113 @@
+{
+  "@timestamp": "2025-10-31T00:00:00Z",
+  "incident_id": "INC-2025-1031-016",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "service_outage",
+  "title": "Database cluster complete outage",
+  "description": "Database cluster complete outage - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "postgres-cluster",
+    "replica-nodes"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "service-outage",
+    "infrastructure",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-31T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-10-31T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-10-31T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-31T05:29:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-31T07:50:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-10-31T07:50:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 470,
+  "resolution_summary": "Database cluster complete outage resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for service_outage incident",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1499 - Endpoint Denial of Service"
+    ],
+    "prevention": [
+      "M1053 - Data Backup",
+      "M1037 - Filter Network Traffic"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1499"
+  ],
+  "mitre_prevention_ids": [
+    "M1053",
+    "M1037"
+  ],
+  "affected_users_count": 5000,
+  "business_impact": "Complete infrastructure failure, business operations halted, productivity loss severe",
+  "estimated_cost": 391666,
+  "sla_met": false,
+  "mttr": 470,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: postgres-cluster, replica-nodes",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "postgres-cluster",
+    "replica-nodes"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for service_outage incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Database cluster complete outage resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by infrastructure-team within 470 minutes of detection"
+}

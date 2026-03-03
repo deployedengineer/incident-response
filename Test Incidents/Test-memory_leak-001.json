@@ -1,0 +1,28 @@
+{
+  "@timestamp": "2026-01-10T14:30:00Z",
+  "incident_id": "Test-memory_leak-001",
+  "severity": "medium",
+  "status": "unresolved",
+  "category": "application",
+  "type": "memory_leak",
+  "title": "Gradual memory consumption increase causing OutOfMemory errors",
+  "affected_systems": [
+    "payment-gateway",
+    "billing-api"
+  ],
+  "assigned_to": "backend-engineering",
+  "detection_method": "Datadog APM",
+  "tags": [
+    "memory-leak",
+    "performance",
+    "medium"
+  ],
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": []
+}

@@ -1,0 +1,113 @@
+{
+  "@timestamp": "2025-12-23T00:00:00Z",
+  "incident_id": "INC-2025-1223-017",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "api",
+  "type": "error_spike",
+  "title": "Search API elevated error rates",
+  "description": "Search API elevated error rates - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "search-api",
+    "elasticsearch-cluster"
+  ],
+  "assigned_to": "api-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "error-spike",
+    "api",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-23T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-12-23T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-12-23T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-23T03:33:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-23T05:05:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-12-23T05:05:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 305,
+  "resolution_summary": "Search API elevated error rates resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for error_spike incident",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1499 - Endpoint Denial of Service"
+    ],
+    "prevention": [
+      "M1047 - Audit",
+      "M1018 - User Account Management"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1499"
+  ],
+  "mitre_prevention_ids": [
+    "M1047",
+    "M1018"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Partial service degradation, minor revenue impact, customer experience affected",
+  "estimated_cost": 25416,
+  "sla_met": true,
+  "mttr": 305,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: search-api, elasticsearch-cluster",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "search-api",
+    "elasticsearch-cluster"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for error_spike incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Search API elevated error rates resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by api-team within 305 minutes of detection"
+}

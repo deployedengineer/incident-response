@@ -1,0 +1,39 @@
+{
+  "@timestamp": "2025-12-27T09:22:00Z",
+  "incident_id": "Test-data_exfiltration-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "security",
+  "type": "data_exfiltration",
+  "title": "Unusually high GetObject requests on customer-data bucket from unrecognized IP",
+  "affected_systems": [
+    "s3-customer-data"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "CloudTrail Log Analytics",
+  "tags": [
+    "s3",
+    "exfiltration",
+    "high"
+  ],
+  "mitre": {
+    "tactic": [
+      "Exfiltration"
+    ],
+    "technique": [
+      "T1039 - Data from Network Shared Drive"
+    ],
+    "prevention": [
+      "M1016 - Vulnerability Scanning"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0010"
+  ],
+  "mitre_technique_ids": [
+    "T1039"
+  ],
+  "mitre_prevention_ids": [
+    "M1016"
+  ]
+}

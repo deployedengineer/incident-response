@@ -1,0 +1,122 @@
+{
+  "@timestamp": "2025-10-28T00:00:00Z",
+  "incident_id": "INC-2025-1028-034",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "data_exfiltration",
+  "title": "Large file transfer to personal cloud storage",
+  "description": "Large file transfer to personal cloud storage - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "endpoint-145",
+    "network-monitoring"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "data-exfiltration",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-28T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-10-28T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-10-28T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-28T01:31:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-28T02:11:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-10-28T02:11:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 131,
+  "resolution_summary": "Large file transfer to personal cloud storage resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for data_exfiltration incident",
+  "mitre": {
+    "tactic": [
+      "Exfiltration",
+      "Collection"
+    ],
+    "technique": [
+      "T1020 - Automated Exfiltration",
+      "T1039 - Data from Network Shared Drive"
+    ],
+    "prevention": [
+      "M1057 - Data Loss Prevention",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0010",
+    "TA0009"
+  ],
+  "mitre_technique_ids": [
+    "T1020",
+    "T1039"
+  ],
+  "mitre_prevention_ids": [
+    "M1057",
+    "M1041"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate security risk, limited exposure, potential for escalation if not addressed",
+  "estimated_cost": 10916,
+  "sla_met": true,
+  "mttr": 131,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: endpoint-145, network-monitoring",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "endpoint-145",
+    "network-monitoring"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [
+    "Updated WAF rules and firewall policies",
+    "Enhanced authentication and authorization mechanisms",
+    "Implemented additional logging and audit trails",
+    "Strengthened endpoint detection and response capabilities"
+  ],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for data_exfiltration incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Large file transfer to personal cloud storage resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by security-team within 131 minutes of detection"
+}

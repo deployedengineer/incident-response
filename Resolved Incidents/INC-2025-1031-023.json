@@ -1,0 +1,119 @@
+{
+  "@timestamp": "2025-10-31T00:00:00Z",
+  "incident_id": "INC-2025-1031-023",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "malware_detection",
+  "title": "Trojan detected in email attachment",
+  "description": "Trojan detected in email attachment - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "endpoint-089",
+    "email-gateway"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "malware-detection",
+    "endpoint",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-31T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-10-31T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-10-31T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-31T04:37:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-31T06:37:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-10-31T06:37:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 397,
+  "resolution_summary": "Trojan detected in email attachment resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for malware_detection incident",
+  "mitre": {
+    "tactic": [
+      "Execution",
+      "Persistence"
+    ],
+    "technique": [
+      "T1204 - User Execution",
+      "T1543 - Create or Modify System Process"
+    ],
+    "prevention": [
+      "M1049 - Antivirus/Antimalware",
+      "M1038 - Execution Prevention",
+      "M1017 - User Training"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0002",
+    "TA0003"
+  ],
+  "mitre_technique_ids": [
+    "T1204",
+    "T1543"
+  ],
+  "mitre_prevention_ids": [
+    "M1049",
+    "M1038",
+    "M1017"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Limited endpoint impact, potential for spread, productivity reduction",
+  "estimated_cost": 33083,
+  "sla_met": true,
+  "mttr": 397,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: endpoint-089, email-gateway",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "endpoint-089",
+    "email-gateway"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for malware_detection incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Trojan detected in email attachment resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by endpoint-team within 397 minutes of detection"
+}

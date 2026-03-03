@@ -1,0 +1,45 @@
+{
+  "@timestamp": "2025-12-29T10:00:00Z",
+  "incident_id": "Test-prompt_injection-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "security",
+  "type": "prompt_injection",
+  "title": "Prompt injection attack on AcmeGPT Copilot system",
+  "affected_systems": [
+    "acmegpt-copilot-api"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "prompt-injection",
+    "security",
+    "high"
+  ],
+  "mitre": {
+    "tactic": [
+      "Initial Access",
+      "Execution"
+    ],
+    "technique": [
+      "T1190 - Exploit Public-Facing Application",
+      "T1059 - Command and Scripting Interpreter"
+    ],
+    "prevention": [
+      "M1050 - Exploit Protection",
+      "M1021 - Restrict Web-Based Content"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001",
+    "TA0002"
+  ],
+  "mitre_technique_ids": [
+    "T1190",
+    "T1059"
+  ],
+  "mitre_prevention_ids": [
+    "M1050",
+    "M1021"
+  ]
+}

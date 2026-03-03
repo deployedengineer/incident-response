@@ -1,0 +1,113 @@
+{
+  "@timestamp": "2025-11-07T00:00:00Z",
+  "incident_id": "INC-2025-1107-035",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "ddos_attack",
+  "title": "Volumetric DDoS attack on DNS infrastructure",
+  "description": "Volumetric DDoS attack on DNS infrastructure - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "dns-servers",
+    "authoritative-ns"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "ddos-attack",
+    "infrastructure",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-07T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-11-07T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-11-07T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-07T00:43:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-07T01:02:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-11-07T01:02:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 62,
+  "resolution_summary": "Volumetric DDoS attack on DNS infrastructure resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for ddos_attack incident",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1498 - Network Denial of Service"
+    ],
+    "prevention": [
+      "M1037 - Filter Network Traffic",
+      "M1031 - Network Intrusion Prevention"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1498"
+  ],
+  "mitre_prevention_ids": [
+    "M1037",
+    "M1031"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Infrastructure component degradation, backup systems engaged, limited impact",
+  "estimated_cost": 5166,
+  "sla_met": true,
+  "mttr": 62,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: dns-servers, authoritative-ns",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "dns-servers",
+    "authoritative-ns"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for ddos_attack incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Volumetric DDoS attack on DNS infrastructure resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by infrastructure-team within 62 minutes of detection"
+}

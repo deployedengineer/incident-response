@@ -1,0 +1,117 @@
+{
+  "@timestamp": "2025-10-23T00:00:00Z",
+  "incident_id": "INC-2025-1023-033",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "policy_violation",
+  "title": "USB device policy violation",
+  "description": "USB device policy violation - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "endpoint-178",
+    "dlp-system"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "policy-violation",
+    "endpoint",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-23T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-10-23T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-10-23T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-23T03:51:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-23T05:31:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-10-23T05:31:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 331,
+  "resolution_summary": "USB device policy violation resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for policy_violation incident",
+  "mitre": {
+    "tactic": [
+      "Command and Control"
+    ],
+    "technique": [
+      "T1219 - Remote Access Software",
+      "T1105 - Ingress Tool Transfer"
+    ],
+    "prevention": [
+      "M1038 - Execution Prevention",
+      "M1031 - Network Intrusion Prevention",
+      "M1017 - User Training"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0011"
+  ],
+  "mitre_technique_ids": [
+    "T1219",
+    "T1105"
+  ],
+  "mitre_prevention_ids": [
+    "M1038",
+    "M1031",
+    "M1017"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Limited endpoint impact, potential for spread, productivity reduction",
+  "estimated_cost": 27583,
+  "sla_met": true,
+  "mttr": 331,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: endpoint-178, dlp-system",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "endpoint-178",
+    "dlp-system"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for policy_violation incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "USB device policy violation resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by endpoint-team within 331 minutes of detection"
+}

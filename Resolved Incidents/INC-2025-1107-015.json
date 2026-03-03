@@ -1,0 +1,113 @@
+{
+  "@timestamp": "2025-11-07T00:00:00Z",
+  "incident_id": "INC-2025-1107-015",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "application",
+  "type": "memory_leak",
+  "title": "Memory leak in customer portal application",
+  "description": "Memory leak in customer portal application - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "customer-portal",
+    "app-server-3"
+  ],
+  "assigned_to": "application-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "memory-leak",
+    "application",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-07T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-11-07T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-11-07T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-07T03:52:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-07T05:32:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-11-07T05:32:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 332,
+  "resolution_summary": "Memory leak in customer portal application resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for memory_leak incident",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1499 - Endpoint Denial of Service"
+    ],
+    "prevention": [
+      "M1047 - Audit",
+      "M1053 - Data Backup"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1499"
+  ],
+  "mitre_prevention_ids": [
+    "M1047",
+    "M1053"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate application impact, workflow disruption, reduced productivity",
+  "estimated_cost": 27666,
+  "sla_met": true,
+  "mttr": 332,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: customer-portal, app-server-3",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "customer-portal",
+    "app-server-3"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for memory_leak incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Memory leak in customer portal application resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by application-team within 332 minutes of detection"
+}

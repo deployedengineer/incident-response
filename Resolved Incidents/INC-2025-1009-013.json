@@ -1,0 +1,124 @@
+{
+  "@timestamp": "2025-10-09T00:00:00Z",
+  "incident_id": "INC-2025-1009-013",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "unauthorized_access_attempt",
+  "title": "Multiple failed login attempts detected",
+  "description": "Multiple failed login attempts detected - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "auth-service",
+    "user-accounts"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "unauthorized-access-attempt",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-09T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-10-09T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-10-09T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-09T03:36:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-09T05:09:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-10-09T05:09:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 309,
+  "resolution_summary": "Multiple failed login attempts detected resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for unauthorized_access_attempt incident",
+  "mitre": {
+    "tactic": [
+      "Credential Access",
+      "Initial Access"
+    ],
+    "technique": [
+      "T1110 - Brute Force",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1036 - Account Use Policies",
+      "M1032 - Multi-factor Authentication",
+      "M1027 - Password Policies"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0006",
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1110",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1036",
+    "M1032",
+    "M1027"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate security risk, limited exposure, potential for escalation if not addressed",
+  "estimated_cost": 25750,
+  "sla_met": true,
+  "mttr": 309,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: auth-service, user-accounts",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "auth-service",
+    "user-accounts"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [
+    "Updated WAF rules and firewall policies",
+    "Enhanced authentication and authorization mechanisms",
+    "Implemented additional logging and audit trails",
+    "Strengthened endpoint detection and response capabilities"
+  ],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for unauthorized_access_attempt incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Multiple failed login attempts detected resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by security-team within 309 minutes of detection"
+}

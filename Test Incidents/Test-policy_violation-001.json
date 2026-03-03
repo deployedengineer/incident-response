@@ -1,0 +1,39 @@
+{
+  "@timestamp": "2026-01-14T11:45:00Z",
+  "incident_id": "Test-policy_violation-001",
+  "severity": "low",
+  "status": "unresolved",
+  "category": "endpoint",
+  "type": "policy_violation",
+  "title": "User attempted to install unapproved remote desktop software",
+  "affected_systems": [
+    "endpoint-203"
+  ],
+  "assigned_to": "it-support-team",
+  "detection_method": "CrowdStrike Falcon",
+  "tags": [
+    "endpoint",
+    "policy-violation",
+    "low"
+  ],
+  "mitre": {
+    "tactic": [
+      "Command and Control"
+    ],
+    "technique": [
+      "T1219 - Remote Access Software"
+    ],
+    "prevention": [
+      "M1026 - User Training"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0011"
+  ],
+  "mitre_technique_ids": [
+    "T1219"
+  ],
+  "mitre_prevention_ids": [
+    "M1026"
+  ]
+}

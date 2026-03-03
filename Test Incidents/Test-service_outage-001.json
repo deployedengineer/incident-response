@@ -1,0 +1,27 @@
+{
+  "@timestamp": "2025-12-27T02:10:00Z",
+  "incident_id": "Test-service_outage-001",
+  "severity": "critical",
+  "status": "unresolved",
+  "category": "infrastructure",
+  "type": "service_outage",
+  "title": "Database Primary node unreachable, Follower nodes out of sync",
+  "affected_systems": [
+    "postgres-cluster"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Infrastructure Ping",
+  "tags": [
+    "database",
+    "outage",
+    "critical"
+  ],
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": []
+}

@@ -1,0 +1,124 @@
+{
+  "@timestamp": "2025-12-04T00:00:00Z",
+  "incident_id": "INC-2025-1204-007",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "stale_account",
+  "title": "Stale administrative account with elevated privileges discovered",
+  "description": "Stale administrative account with elevated privileges discovered - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "active-directory",
+    "user-management",
+    "access-control"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "stale-account",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-04T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-12-04T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-12-04T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-04T05:17:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-04T07:34:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-12-04T07:34:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 454,
+  "resolution_summary": "Stale administrative account with elevated privileges discovered resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for stale_account incident",
+  "mitre": {
+    "tactic": [
+      "Persistence",
+      "Privilege Escalation"
+    ],
+    "technique": [
+      "T1078 - Valid Accounts",
+      "T1098 - Account Manipulation"
+    ],
+    "prevention": [
+      "M1026 - Privileged Account Management",
+      "M1018 - User Account Management"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0003",
+    "TA0004"
+  ],
+  "mitre_technique_ids": [
+    "T1078",
+    "T1098"
+  ],
+  "mitre_prevention_ids": [
+    "M1026",
+    "M1018"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate security risk, limited exposure, potential for escalation if not addressed",
+  "estimated_cost": 37833,
+  "sla_met": true,
+  "mttr": 454,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: active-directory, user-management",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "active-directory",
+    "user-management",
+    "access-control"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [
+    "Updated WAF rules and firewall policies",
+    "Enhanced authentication and authorization mechanisms",
+    "Implemented additional logging and audit trails",
+    "Strengthened endpoint detection and response capabilities"
+  ],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for stale_account incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Stale administrative account with elevated privileges discovered resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by security-team within 454 minutes of detection"
+}

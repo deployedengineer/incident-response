@@ -1,0 +1,124 @@
+{
+  "@timestamp": "2025-11-26T00:00:00Z",
+  "incident_id": "INC-2025-1126-010",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "phishing_attack",
+  "title": "Phishing campaign targeting employees",
+  "description": "Phishing campaign targeting employees - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "email-gateway",
+    "user-accounts"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "phishing-attack",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-26T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-11-26T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-11-26T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-26T00:24:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-26T00:35:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-11-26T00:35:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 35,
+  "resolution_summary": "Phishing campaign targeting employees resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for phishing_attack incident",
+  "mitre": {
+    "tactic": [
+      "Initial Access",
+      "Credential Access"
+    ],
+    "technique": [
+      "T1566 - Phishing",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1017 - User Training",
+      "M1032 - Multi-factor Authentication",
+      "M1021 - Restrict Web-Based Content"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001",
+    "TA0006"
+  ],
+  "mitre_technique_ids": [
+    "T1566",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1017",
+    "M1032",
+    "M1021"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate security risk, limited exposure, potential for escalation if not addressed",
+  "estimated_cost": 2916,
+  "sla_met": true,
+  "mttr": 35,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: email-gateway, user-accounts",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "email-gateway",
+    "user-accounts"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [
+    "Updated WAF rules and firewall policies",
+    "Enhanced authentication and authorization mechanisms",
+    "Implemented additional logging and audit trails",
+    "Strengthened endpoint detection and response capabilities"
+  ],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for phishing_attack incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Phishing campaign targeting employees resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by security-team within 35 minutes of detection"
+}

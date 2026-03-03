@@ -1,0 +1,113 @@
+{
+  "@timestamp": "2025-10-18T00:00:00Z",
+  "incident_id": "INC-2025-1018-026",
+  "severity": "low",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "configuration_drift",
+  "title": "Firewall rules not matching baseline",
+  "description": "Firewall rules not matching baseline - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "firewall-prod",
+    "network-security"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "configuration-drift",
+    "infrastructure",
+    "low"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-18T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-10-18T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-10-18T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-18T03:01:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-18T04:19:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-10-18T04:19:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 259,
+  "resolution_summary": "Firewall rules not matching baseline resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for configuration_drift incident",
+  "mitre": {
+    "tactic": [
+      "Defense Evasion"
+    ],
+    "technique": [
+      "T1562 - Impair Defenses"
+    ],
+    "prevention": [
+      "M1047 - Audit",
+      "M1022 - Restrict File and Directory Permissions"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0005"
+  ],
+  "mitre_technique_ids": [
+    "T1562"
+  ],
+  "mitre_prevention_ids": [
+    "M1047",
+    "M1022"
+  ],
+  "affected_users_count": 45,
+  "business_impact": "Low impact to infrastructure systems affecting service delivery",
+  "estimated_cost": 4316,
+  "sla_met": true,
+  "mttr": 259,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: firewall-prod, network-security",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "firewall-prod",
+    "network-security"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for configuration_drift incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Firewall rules not matching baseline resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by infrastructure-team within 259 minutes of detection"
+}

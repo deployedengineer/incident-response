@@ -1,0 +1,348 @@
+-- ============================================================
+-- INCIDENT RESPONSE RAG – PRODUCTION (VECTOR ONLY – GEMINI 3072) V0
+-- ============================================================
+--
+-- Design Principles:
+-- • Gemini embeddings (3072 dims)
+-- • Sequential scan (ANN not used due to dimension limits)
+-- • Structured concatenation before embedding
+-- • Over-fetch retrieval pattern
+-- • Metadata filtering only for resolved incidents
+-- • Reference playbooks have NO metadata (simplified)
+-- • Embedding version tracking
+-- • Soft delete support
+-- • Metadata discovery layer
+-- • Grouped metadata view
+-- • updated_at auto tracking
+--
+-- ============================================================
+
+
+-- ============================================================
+-- 1️⃣ EXTENSIONS
+-- ============================================================
+
+create extension if not exists vector;
+create extension if not exists pgcrypto;
+
+
+-- ============================================================
+-- 2️⃣ RESOLVED INCIDENTS V0 (RAG MEMORY)
+-- ============================================================
+-- Stores historical resolved incidents used for semantic retrieval.
+-- Metadata is supported for structured filtering.
+
+create table if not exists resolved_incidents_v0 (
+  id uuid primary key default gen_random_uuid(),
+
+  -- Structured concatenated text used for embedding
+  content text not null,
+
+  -- Flexible structured metadata (severity, systems, mitre, etc.)
+  metadata jsonb not null default '{}'::jsonb,
+
+  -- Gemini embedding vector
+  embedding vector(3072) not null,
+
+  -- Embedding traceability
+  embedding_model text not null default 'gemini-embedding-001',
+  embedding_version integer not null default 1,
+
+  -- Soft delete (safer than physical deletion)
+  is_active boolean not null default true,
+
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Index for metadata filtering
+create index if not exists resolved_incidents_metadata_idx_v0
+on resolved_incidents_v0
+using gin (metadata jsonb_path_ops);
+
+
+-- ============================================================
+-- 3️⃣ REFERENCE PLAYBOOKS V0 (VECTOR STORE COMPATIBLE)
+-- ============================================================
+-- Design aligned with n8n Supabase Vector Insert node.
+-- • content → summary used for embedding
+-- • embedding → Gemini 3072 vector
+-- • metadata → stores name + full_text + any future fields
+-- • No NOT NULL constraints on custom fields outside metadata
+-- • Fully compatible with vector insertion flow
+
+create table if not exists reference_playbooks_v0 (
+  id uuid primary key default gen_random_uuid(),
+
+  -- Summary used for embedding & similarity matching
+  content text not null,
+
+  -- Flexible storage for playbook data
+  -- Example:
+  -- {
+  --   "name": "playbook-brute-force-login.md",
+  --   "full_text": "# Incident Response Playbook ...",
+  --   "type": "identity"
+  -- }
+  metadata jsonb not null default '{}'::jsonb,
+
+  -- Gemini embedding vector
+  embedding vector(3072) not null,
+
+  embedding_model text not null default 'gemini-embedding-001',
+  embedding_version integer not null default 1,
+
+  is_active boolean not null default true,
+
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Optional index if you ever want to filter by metadata
+create index if not exists reference_playbooks_metadata_idx_v0
+on reference_playbooks_v0
+using gin (metadata jsonb_path_ops);
+
+
+-- ============================================================
+-- 4️⃣ TEST INCIDENTS V0 (EVALUATION LAYER)
+-- ============================================================
+
+create table if not exists test_incidents_v0 (
+  id uuid primary key default gen_random_uuid(),
+
+  incident_id text not null unique,
+
+  "@timestamp" timestamptz,
+
+  severity text,
+  status text,
+  category text,
+  type text,
+
+  title text,
+  assigned_to text,
+  detection_method text,
+  tags jsonb default '[]'::jsonb,
+  affected_systems jsonb default '[]'::jsonb,
+  mitre jsonb,
+  mitre_tactic_ids jsonb default '[]'::jsonb,
+  mitre_technique_ids jsonb default '[]'::jsonb,
+  mitre_prevention_ids jsonb default '[]'::jsonb,
+
+  -- Final AI generated output for evaluation
+  output text,
+
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+
+-- ============================================================
+-- 5️⃣ VECTOR SEARCH – RESOLVED INCIDENTS V0
+-- ============================================================
+-- Uses:
+-- • Over-fetch pattern
+-- • Threshold filtering
+-- • Soft delete filtering
+-- • Defensive metadata filtering
+
+create or replace function match_resolved_incidents_v0 (
+  query_embedding vector(3072),
+  match_threshold float default 0.0,
+  match_count int default 10,
+  filter jsonb default '{}'::jsonb
+)
+returns table (
+  id uuid,
+  content text,
+  metadata jsonb,
+  similarity float,
+  distance float
+)
+language sql
+stable
+as $$
+  select *
+  from (
+    select
+      r.id,
+      r.content,
+      r.metadata,
+
+      1 - (r.embedding <=> query_embedding) as similarity,
+      (r.embedding <=> query_embedding) as distance
+
+    from resolved_incidents_v0 r
+
+    where
+      r.is_active = true
+      and (filter = '{}'::jsonb or r.metadata @> filter)
+
+    order by r.embedding <=> query_embedding
+    limit match_count * 4
+  ) ranked
+
+  where similarity >= match_threshold
+
+  order by similarity desc
+  limit match_count;
+$$;
+
+
+-- ============================================================
+-- 🔎 VECTOR SEARCH – REFERENCE PLAYBOOKS V0 (COMPATIBLE)
+-- ============================================================
+-- Compatible with n8n Supabase Vector Store
+-- Required parameter order:
+--   1. query_embedding
+--   2. match_count
+--   3. filter
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION match_reference_playbooks_v0 (
+  query_embedding vector(3072),
+  match_count int DEFAULT 3,
+  filter jsonb DEFAULT '{}'::jsonb
+)
+RETURNS TABLE (
+  content text,
+  metadata jsonb,
+  similarity float
+)
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT
+    p.content,
+
+    -- Embed id + name inside metadata for Vector Store
+    jsonb_build_object(
+      'id', p.id,
+      'name', p.metadata->>'name'
+    ) AS metadata,
+
+    1 - (p.embedding <=> query_embedding) AS similarity
+
+  FROM reference_playbooks_v0 p
+
+  WHERE p.is_active = true
+
+  ORDER BY p.embedding <=> query_embedding
+
+  LIMIT match_count;
+$$;
+
+
+-- ============================================================
+-- 7️⃣ METADATA DISCOVERY V0 (RESOLVED INCIDENTS ONLY)
+-- ============================================================
+-- Allows AI agent / UI to dynamically inspect:
+-- • Available metadata keys
+-- • Allowed values
+-- • Value frequencies
+
+create table if not exists metadata_values_v0 (
+  id bigserial primary key,
+
+  field_name text not null,
+  field_value text not null,
+  value_count integer default 1,
+
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+
+  unique(field_name, field_value)
+);
+
+create index if not exists metadata_values_field_idx_v0
+on metadata_values_v0(field_name);
+
+create index if not exists metadata_values_field_value_idx_v0
+on metadata_values_v0(field_name, field_value);
+
+
+-- ============================================================
+-- 8️⃣ METADATA REFRESH FUNCTION V0
+-- ============================================================
+
+create or replace function refresh_metadata_values_v0()
+returns void
+language plpgsql
+as $$
+begin
+
+  truncate table metadata_values_v0;
+
+  insert into metadata_values_v0 (field_name, field_value, value_count)
+  select
+    key,
+    value_text,
+    count(*)
+  from resolved_incidents_v0 r
+  cross join lateral jsonb_each(r.metadata) as m(key, value)
+  cross join lateral (
+      select value #>> '{}' as value_text
+      where jsonb_typeof(value) <> 'array'
+      union all
+      select jsonb_array_elements_text(value)
+      where jsonb_typeof(value) = 'array'
+  ) v
+  where r.is_active = true
+    and value_text is not null
+    and value_text <> ''
+  group by key, value_text;
+
+end;
+$$;
+
+
+-- ============================================================
+-- 9️⃣ GROUPED METADATA VIEW V0
+-- ============================================================
+
+create or replace view metadata_values_grouped_v0 as
+select json_object_agg(field_name, values) as metadata
+from (
+  select
+    field_name,
+    json_agg(distinct field_value order by field_value) as values
+  from metadata_values_v0
+  group by field_name
+) grouped;
+
+
+-- ============================================================
+-- 🔟 AUTO UPDATED_AT TRIGGER V0
+-- ============================================================
+
+create or replace function set_updated_at_v0()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_resolved_updated_v0 on resolved_incidents_v0;
+create trigger trg_resolved_updated_v0
+before update on resolved_incidents_v0
+for each row execute function set_updated_at_v0();
+
+drop trigger if exists trg_playbooks_updated_v0 on reference_playbooks_v0;
+create trigger trg_playbooks_updated_v0
+before update on reference_playbooks_v0
+for each row execute function set_updated_at_v0();
+
+drop trigger if exists trg_test_updated_v0 on test_incidents_v0;
+create trigger trg_test_updated_v0
+before update on test_incidents_v0
+for each row execute function set_updated_at_v0();
+
+-- ============================================================
+-- 1️⃣1️⃣ INITIAL METADATA POPULATION
+-- ============================================================
+
+select refresh_metadata_values_v0();

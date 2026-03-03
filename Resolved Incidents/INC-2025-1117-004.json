@@ -1,0 +1,124 @@
+{
+  "@timestamp": "2025-11-17T00:00:00Z",
+  "incident_id": "INC-2025-1117-004",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "security",
+  "type": "data_exfiltration",
+  "title": "Suspected data exfiltration attempt detected",
+  "description": "Suspected data exfiltration attempt detected - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "customer-db-prod",
+    "api-backend",
+    "cdn-origin"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "data-exfiltration",
+    "security",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-17T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-11-17T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-11-17T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-17T03:19:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-17T04:45:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-11-17T04:45:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 285,
+  "resolution_summary": "Suspected data exfiltration attempt detected resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for data_exfiltration incident",
+  "mitre": {
+    "tactic": [
+      "Exfiltration",
+      "Collection"
+    ],
+    "technique": [
+      "T1020 - Automated Exfiltration",
+      "T1039 - Data from Network Shared Drive"
+    ],
+    "prevention": [
+      "M1057 - Data Loss Prevention",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0010",
+    "TA0009"
+  ],
+  "mitre_technique_ids": [
+    "T1020",
+    "T1039"
+  ],
+  "mitre_prevention_ids": [
+    "M1057",
+    "M1041"
+  ],
+  "affected_users_count": 5000,
+  "business_impact": "Critical data breach risk, regulatory exposure, customer trust severely impacted",
+  "estimated_cost": 237500,
+  "sla_met": false,
+  "mttr": 285,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: customer-db-prod, api-backend",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "customer-db-prod",
+    "api-backend",
+    "cdn-origin"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [
+    "Updated WAF rules and firewall policies",
+    "Enhanced authentication and authorization mechanisms",
+    "Implemented additional logging and audit trails",
+    "Strengthened endpoint detection and response capabilities"
+  ],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for data_exfiltration incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Suspected data exfiltration attempt detected resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by security-team within 285 minutes of detection"
+}

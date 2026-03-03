@@ -1,0 +1,117 @@
+{
+  "@timestamp": "2025-10-15T00:00:00Z",
+  "incident_id": "INC-2025-1015-032",
+  "severity": "high",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "ransomware_detection",
+  "title": "Ransomware encryption attempt blocked",
+  "description": "Ransomware encryption attempt blocked - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "endpoint-256",
+    "file-shares"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "ransomware-detection",
+    "endpoint",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-15T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-10-15T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-10-15T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-15T01:14:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-15T01:46:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-10-15T01:46:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 106,
+  "resolution_summary": "Ransomware encryption attempt blocked resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for ransomware_detection incident",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1486 - Data Encrypted for Impact",
+      "T1490 - Inhibit System Recovery"
+    ],
+    "prevention": [
+      "M1053 - Data Backup",
+      "M1040 - Behavior Prevention on Endpoint",
+      "M1049 - Antivirus/Antimalware"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1486",
+    "T1490"
+  ],
+  "mitre_prevention_ids": [
+    "M1053",
+    "M1040",
+    "M1049"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Multiple endpoints compromised, potential for lateral movement, data at risk",
+  "estimated_cost": 26500,
+  "sla_met": true,
+  "mttr": 106,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: endpoint-256, file-shares",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "endpoint-256",
+    "file-shares"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for ransomware_detection incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Ransomware encryption attempt blocked resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by endpoint-team within 106 minutes of detection"
+}

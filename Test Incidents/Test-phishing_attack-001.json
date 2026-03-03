@@ -1,0 +1,41 @@
+{
+  "@timestamp": "2025-12-25T08:15:00Z",
+  "incident_id": "Test-phishing_attack-001",
+  "severity": "medium",
+  "status": "unresolved",
+  "category": "security",
+  "type": "phishing_attack",
+  "title": "Spike in inbound emails containing suspicious macro-enabled Office documents",
+  "affected_systems": [
+    "email-gateway"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "phishing",
+    "security",
+    "medium"
+  ],
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1566 - Phishing"
+    ],
+    "prevention": [
+      "M1026 - User Training",
+      "M1038 - Network Intrusion Prevention"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1566"
+  ],
+  "mitre_prevention_ids": [
+    "M1026",
+    "M1038"
+  ]
+}

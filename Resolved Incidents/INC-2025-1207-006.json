@@ -1,0 +1,126 @@
+{
+  "@timestamp": "2025-12-07T00:00:00Z",
+  "incident_id": "INC-2025-1207-006",
+  "severity": "high",
+  "status": "resolved",
+  "category": "security",
+  "type": "leaked_credentials",
+  "title": "AWS credentials leaked in public repository",
+  "description": "AWS credentials leaked in public repository - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "aws-prod-account",
+    "s3-buckets",
+    "ec2-instances"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "leaked-credentials",
+    "security",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-07T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-12-07T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-12-07T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-07T03:26:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-07T04:55:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-12-07T04:55:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 295,
+  "resolution_summary": "AWS credentials leaked in public repository resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for leaked_credentials incident",
+  "mitre": {
+    "tactic": [
+      "Credential Access",
+      "Initial Access"
+    ],
+    "technique": [
+      "T1552 - Unsecured Credentials",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1027 - Password Policies",
+      "M1047 - Audit",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0006",
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1552",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1027",
+    "M1047",
+    "M1041"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Significant security exposure, potential data loss, reputation damage risk, compliance concerns",
+  "estimated_cost": 73750,
+  "sla_met": false,
+  "mttr": 295,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: aws-prod-account, s3-buckets",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "aws-prod-account",
+    "s3-buckets",
+    "ec2-instances"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [
+    "Updated WAF rules and firewall policies",
+    "Enhanced authentication and authorization mechanisms",
+    "Implemented additional logging and audit trails",
+    "Strengthened endpoint detection and response capabilities"
+  ],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for leaked_credentials incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "AWS credentials leaked in public repository resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by security-team within 295 minutes of detection"
+}

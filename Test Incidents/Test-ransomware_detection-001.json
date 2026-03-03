@@ -1,0 +1,39 @@
+{
+  "@timestamp": "2025-12-25T10:30:00Z",
+  "incident_id": "Test-ransomware_detection-001",
+  "severity": "critical",
+  "status": "unresolved",
+  "category": "security",
+  "type": "ransomware_detection",
+  "title": "Files on shared drive are being renamed with .crypto extension rapidly",
+  "affected_systems": [
+    "file-shares"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Endpoint Protection Agent",
+  "tags": [
+    "ransomware",
+    "security",
+    "critical"
+  ],
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1486 - Data Encrypted for Impact"
+    ],
+    "prevention": [
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1486"
+  ],
+  "mitre_prevention_ids": [
+    "M1041"
+  ]
+}

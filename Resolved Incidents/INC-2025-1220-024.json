@@ -1,0 +1,124 @@
+{
+  "@timestamp": "2025-12-20T00:00:00Z",
+  "incident_id": "INC-2025-1220-024",
+  "severity": "high",
+  "status": "resolved",
+  "category": "security",
+  "type": "phishing_attack",
+  "title": "Spear phishing targeting executives",
+  "description": "Spear phishing targeting executives - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "exec-accounts",
+    "email-gateway"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "phishing-attack",
+    "security",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-20T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-12-20T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-12-20T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-20T05:24:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-20T07:43:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-12-20T07:43:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 463,
+  "resolution_summary": "Spear phishing targeting executives resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for phishing_attack incident",
+  "mitre": {
+    "tactic": [
+      "Initial Access",
+      "Credential Access"
+    ],
+    "technique": [
+      "T1566 - Phishing",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1017 - User Training",
+      "M1032 - Multi-factor Authentication",
+      "M1021 - Restrict Web-Based Content"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001",
+    "TA0006"
+  ],
+  "mitre_technique_ids": [
+    "T1566",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1017",
+    "M1032",
+    "M1021"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Significant security exposure, potential data loss, reputation damage risk, compliance concerns",
+  "estimated_cost": 115750,
+  "sla_met": false,
+  "mttr": 463,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: exec-accounts, email-gateway",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "exec-accounts",
+    "email-gateway"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [
+    "Updated WAF rules and firewall policies",
+    "Enhanced authentication and authorization mechanisms",
+    "Implemented additional logging and audit trails",
+    "Strengthened endpoint detection and response capabilities"
+  ],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for phishing_attack incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Spear phishing targeting executives resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by security-team within 463 minutes of detection"
+}

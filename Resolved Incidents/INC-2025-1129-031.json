@@ -1,0 +1,115 @@
+{
+  "@timestamp": "2025-11-29T00:00:00Z",
+  "incident_id": "INC-2025-1129-031",
+  "severity": "high",
+  "status": "resolved",
+  "category": "application",
+  "type": "vulnerable_dependency",
+  "title": "Log4j vulnerability detected in multiple services",
+  "description": "Log4j vulnerability detected in multiple services - incident detected and resolved in Q4 2025",
+  "affected_systems": [
+    "java-services",
+    "logging-infrastructure"
+  ],
+  "assigned_to": "application-team",
+  "detection_method": "Automated monitoring",
+  "tags": [
+    "vulnerable-dependency",
+    "application",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-29T00:00:00Z",
+      "event": "Incident detected by monitoring system",
+      "actor": "monitoring-system"
+    },
+    {
+      "timestamp": "2025-11-29T00:02:00Z",
+      "event": "Alert acknowledged by on-call engineer",
+      "actor": "oncall@company.com"
+    },
+    {
+      "timestamp": "2025-11-29T00:15:00Z",
+      "event": "Root cause identified",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-29T03:18:00Z",
+      "event": "Fix applied and testing",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-29T04:43:00Z",
+      "event": "Incident resolved and services restored",
+      "actor": "engineering-team"
+    }
+  ],
+  "resolved_timestamp": "2025-11-29T04:43:00Z",
+  "resolved_by": "engineering@company.com",
+  "resolution_time_minutes": 283,
+  "resolution_summary": "Log4j vulnerability detected in multiple services resolved successfully. Systems restored to normal operation",
+  "root_cause_analysis": "Root cause analysis completed for vulnerable_dependency incident",
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1190 - Exploit Public-Facing Application",
+      "T1203 - Exploitation for Client Execution"
+    ],
+    "prevention": [
+      "M1051 - Update Software",
+      "M1016 - Vulnerability Scanning"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1190",
+    "T1203"
+  ],
+  "mitre_prevention_ids": [
+    "M1051",
+    "M1016"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Application critical functionality impaired, significant user impact, revenue at risk",
+  "estimated_cost": 70750,
+  "sla_met": false,
+  "mttr": 283,
+  "mtta": 2,
+  "remediation_actions": [
+    "Isolated and secured affected systems: java-services, logging-infrastructure",
+    "Applied immediate patches and configuration updates to affected components",
+    "Verified system integrity and restored normal operations",
+    "Conducted security validation and compliance checks"
+  ],
+  "systems_remediated": [
+    "java-services",
+    "logging-infrastructure"
+  ],
+  "preventive_measures": [
+    "Enhanced monitoring and alerting for similar attack patterns and anomalies",
+    "Updated security policies and access control mechanisms",
+    "Implemented additional validation and testing procedures",
+    "Scheduled regular security audits and compliance reviews"
+  ],
+  "security_controls_updated": [],
+  "documentation_updated": [
+    "Incident response runbook updated with lessons learned",
+    "Security procedures documentation enhanced",
+    "System architecture diagrams updated",
+    "Recovery and rollback procedures documented"
+  ],
+  "lessons_learned": "Root cause analysis completed for vulnerable_dependency incident",
+  "follow_up_tasks": [
+    "Conduct post-incident review with all stakeholders",
+    "Update disaster recovery and business continuity plans",
+    "Schedule training sessions for affected teams",
+    "Implement long-term preventive measures by Q1 2026"
+  ],
+  "resolution": "Log4j vulnerability detected in multiple services resolved successfully. Systems restored to normal operation",
+  "action_taken": "Resolved by application-team within 283 minutes of detection"
+}
