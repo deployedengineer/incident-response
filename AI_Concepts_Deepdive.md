@@ -86,7 +86,7 @@ This is an n8n JavaScript parsing bug triggered by Gemini's function call respon
 
 - Agent+Tool Node prompt placement (not Tool Node only or Agent Node only)
 - Claude Opus 4.5 as the search model
-- Explicit `<600 word` token budget in the system prompt
+- Explicitly use the parameter `max number of tokens` for the token budget
 
 **Conclusion:** Google Grounding is best for Gemini-native products. For multi-model production incident response, Tavily is a simpler and more reliable architectural choice.
 
