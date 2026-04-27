@@ -1,0 +1,147 @@
+{
+  "@timestamp": "2025-12-24T10:36:25Z",
+  "incident_id": "INC-2025-1224-008",
+  "severity": "high",
+  "status": "resolved",
+  "category": "application",
+  "type": "vulnerable_dependency",
+  "title": "Critical vulnerability in production dependency",
+  "description": "Snyk SCA fired a critical-severity alert for CVE-2025-50821 (CVSS 9.1), a path traversal vulnerability in the 'serve-static' npm package version 1.14.x used by web-app-prod, api-services, and the frontend build pipeline. The vulnerability allows an unauthenticated remote attacker to read arbitrary files from the server filesystem by sending specially crafted URL paths containing '../' sequences that bypass the package's sanitization logic. The npm advisory (GHSA-qf8x-vqjq-v8j4) was published at 23:00 UTC on Dec 23. The package is used to serve static assets and the vulnerability is exploitable on endpoints where user-controlled URL path segments reach the serve-static middleware.",
+  "affected_systems": [
+    "web-app-prod",
+    "api-services",
+    "frontend"
+  ],
+  "assigned_to": "application-team",
+  "detection_method": "Snyk SCA — critical CVE-2025-50821 (serve-static path traversal, CVSS 9.1) alert on 3 production Node.js services within 12 minutes of npm advisory publication",
+  "tags": [
+    "vulnerable-dependency",
+    "application",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-24T10:36:25Z",
+      "event": "Snyk SCA fired critical alert for CVE-2025-50821 (serve-static 1.14.x path traversal, CVSS 9.1) on web-app-prod, api-services, and frontend; Snyk webhook delivered to PagerDuty within 12 minutes of npm advisory GHSA-qf8x-vqjq-v8j4 publication",
+      "actor": "snyk-sca"
+    },
+    {
+      "timestamp": "2025-12-24T10:44:16Z",
+      "event": "On-call application security engineer b.kato@company.com acknowledged; WAF path traversal rules (../, %2e%2e/, %252e%252e/) deployed immediately to all 3 services as interim mitigation; Cloudflare custom rule applied in 90 seconds",
+      "actor": "b.kato@company.com"
+    },
+    {
+      "timestamp": "2025-12-24T11:29:45Z",
+      "event": "Exposure analysis: web-app-prod serves static assets via serve-static at /static/ path — user-controlled path segments confirmed reachable; api-services uses serve-static only for Swagger UI (internal, authenticated) — lower risk; frontend build-time use only — not runtime exploitable",
+      "actor": "application-team"
+    },
+    {
+      "timestamp": "2025-12-24T12:43:45Z",
+      "event": "serve-static 1.16.1 (patched version) available on npm; package.json updated across all 3 services; Snyk test run confirmed 0 CVE-2025-50821 findings; staging deployment tested with path traversal PoC — vulnerability confirmed fixed",
+      "actor": "application-team"
+    },
+    {
+      "timestamp": "2025-12-24T13:22:45Z",
+      "event": "Production deployment of serve-static 1.16.1 completed for all 3 services; WAF path traversal rule retained as defense-in-depth; access logs reviewed for path traversal attempts in 3-hour exposure window — 0 matching patterns found; incident closed",
+      "actor": "b.kato@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-24T13:22:45Z",
+  "resolved_by": "b.kato@company.com",
+  "resolution_time_minutes": 166,
+  "resolution_summary": "A WAF path traversal blocking rule was deployed within 90 seconds as an interim mitigation. The serve-static 1.16.1 patched package was deployed to all 3 production services within 2 hours of the CVE alert. Access log analysis for the 3-hour exposure window (from CVE publication to WAF deployment) found 0 path traversal attempts. The frontend service was confirmed to use serve-static only at build time (not runtime), reducing the exploitable surface to 2 services. Snyk CI gate was updated to fail builds with CVSS >= 9.0 npm CVEs.",
+  "root_cause_analysis": "The serve-static package was pinned at version 1.14.2 in the package-lock.json files of all 3 services. npm package pinning is a standard reproducible-build practice, but it prevents automatic uptake of security patch releases. The company's dependency update policy required Snyk PR auto-fix to be reviewed and merged weekly, but serve-static was not a direct dependency — it was a transitive dependency of express, which was the direct dependency. Dependabot and Snyk were configured with 'ignore transitive vulnerabilities with a fix in parent' but in this case the parent (express) had not yet released a patched version, leaving the transitive vulnerability unresolvable through the direct dependency. The team was unaware of the CVE until Snyk's real-time advisory monitoring triggered the alert.",
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1190 - Exploit Public-Facing Application"
+    ],
+    "prevention": [
+      "M1051 - Update Software",
+      "M1016 - Vulnerability Scanning"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1190"
+  ],
+  "mitre_prevention_ids": [
+    "M1051",
+    "M1016"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Application critical functionality impaired, significant user impact, revenue at risk",
+  "estimated_cost": 32500,
+  "sla_met": true,
+  "mttr": 166,
+  "mtta": 7,
+  "remediation_actions": [
+    "Deployed Cloudflare WAF path traversal blocking rules for all 3 services within 90 seconds: blocking patterns ../, ..\\.., %2e%2e%2f, %252e%252e%252f URL-encoded variants in request paths",
+    "Confirmed exploitability assessment: web-app-prod /static/ endpoint passes URL path to serve-static without sanitization — PoC confirmed (tested in isolated staging copy); api-services Swagger endpoint is authenticated — medium risk; frontend uses serve-static build-time only — not runtime exploitable",
+    "Updated package.json and package-lock.json for web-app-prod and api-services: changed serve-static to ^1.16.1 (minimum patched version); ran npm audit — 0 remaining critical findings",
+    "Ran Snyk test against updated package-lock.json: Snyk confirmed 0 instances of CVE-2025-50821 in dependency tree for all 3 services",
+    "Deployed serve-static 1.16.1 to staging; ran path traversal PoC: GET /static/..%2f..%2fetc%2fpasswd — confirmed HTTP 404 (path normalized and resolved correctly; vulnerability fixed)",
+    "Deployed to production via rolling deployment: api-services → web-app-prod (5-minute health check window each); monitored error rates in Datadog — 0 deployment errors",
+    "Reviewed access logs in Cloudflare Analytics for path traversal patterns in exposure window (2025-12-23T23:00Z to 2025-12-24T00:02Z — 62 minutes of unmitigated exposure): 0 requests matching ../ patterns to /static/ endpoint"
+  ],
+  "systems_remediated": [
+    "web-app-prod",
+    "api-services",
+    "frontend"
+  ],
+  "preventive_measures": [
+    "Snyk Jira integration configured: critical npm CVEs now auto-create P0 tickets with 24-hour SLA and cannot be closed without confirming patched package version in production",
+    "Transitive dependency vulnerability handling policy updated: serve-static and high-use transitive dependencies now monitored directly in Snyk project, not only via parent packages",
+    "WAF path traversal rule promoted to permanent baseline rule across all production services — blocks known path traversal patterns as a defense-in-depth measure independent of application patch status",
+    "npm package pinning policy reviewed: critical security patches may override version pins without full PR review cycle; emergency exception process documented",
+    "Exposure window metric added to vulnerability response SLA: time from CVE publication to WAF interim mitigation now tracked as a key performance indicator (target: <5 min)"
+  ],
+  "security_controls_updated": [
+    "Snyk CI gate updated: any CVSS >= 9.0 npm vulnerability blocks the deployment pipeline; transitive vulnerabilities with direct overrides now included",
+    "Cloudflare WAF updated with permanent path traversal ruleset covering ../, ..\\, URL-encoded variants, and double-encoded variants",
+    "npm audit integrated into production deployment pipeline: npm audit --audit-level=critical must return 0 findings before any production deployment proceeds",
+    "Snyk webhook to PagerDuty confirmed: critical CVE alerts now deliver in <15 minutes of npm advisory publication via Snyk real-time advisory monitoring"
+  ],
+  "documentation_updated": [
+    "Node.js Dependency Security Guidelines updated: transitive dependency monitoring procedure, emergency version pin override process, and serve-static CVE case study",
+    "WAF Ruleset Documentation updated: path traversal permanent rule added with rationale and test cases",
+    "Vulnerability Response Runbook updated: npm/Node.js specific CVE response section added covering package-lock.json update procedure, `npm audit` commands, and Snyk validation steps",
+    "SEC-5389 Jira ticket archived with CVE-2025-50821 details, PoC testing results, and WAF log evidence of zero exploitation"
+  ],
+  "lessons_learned": "Transitive dependency vulnerabilities require explicit monitoring coverage — Snyk's 'ignore transitive with fix in parent' policy created a blind spot because the parent package had not yet released a fix, leaving the vulnerability unreported until the npm advisory triggered the real-time monitor. The 62-minute window between CVE publication and WAF mitigation (before the Snyk alert triggered the oncall) represents a valuable optimization target: integrating real-time npm advisory RSS feeds directly into WAF auto-mitigation could reduce this window to under 5 minutes for known attack pattern categories like path traversal.",
+  "follow_up_tasks": [
+    "APP-SEC-041: Configure Snyk direct monitoring for top-50 transitive dependencies across all Node.js services — Owner: DevSecOps, Due: 2025-12-31",
+    "APP-SEC-042: Integrate npm security advisory RSS feed into SIEM for real-time WAF auto-mitigation trigger — Owner: Security Engineering, Due: 2026-01-10",
+    "APP-SEC-043: Add npm audit --audit-level=critical as a required deployment gate across all 6 Node.js production services — Owner: DevSecOps, Due: 2025-12-31",
+    "APP-SEC-044: Review all package-lock.json files for other unpinned transitive dependencies with known CVEs — Owner: AppSec, Due: 2025-12-31"
+  ],
+  "resolution": "serve-static 1.16.1 deployed to all 3 services; 0 exploitation attempts in access logs; WAF path traversal blocking retained as permanent defense-in-depth control",
+  "action_taken": "Resolved by application-team within 128 minutes of Snyk alert; zero exploitation confirmed; transitive dependency monitoring gap identified and remediated",
+  "entities": {
+    "users": [
+      "j.park@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "customer-portal-prod",
+      "static-file-server"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "Transitive dependency vulnerabilities were not actively monitored for packages consumed by dependencies rather than directly declared in package.json; the vulnerable serve-static version was introduced 3 weeks prior via an express dependency update and remained undetected until Snyk's next scheduled weekly scan",
+  "what_went_well": [
+    "No exploitation attempts were observed in access logs or WAF telemetry during the 3-week exposure window — path traversal patterns were absent from all log analysis",
+    "Snyk fix PR was reviewed and merged within 4 hours of the alert, keeping remediation well within the 24-hour critical CVE SLA",
+    "WAF path traversal blocking rule was deployed as defense-in-depth within the same incident window and confirmed zero matching requests in the prior 30 days"
+  ],
+  "what_went_wrong": [
+    "Snyk was configured to monitor directly-declared dependencies only; transitive dependencies introduced via parent package updates were outside the monitoring scope",
+    "The vulnerable serve-static version was silently introduced 3 weeks prior via an express upgrade and was not detected until the next scheduled scan cycle",
+    "No runtime application self-protection (RASP) or continuous path traversal monitoring existed to detect exploitation attempts against the file-serving layer"
+  ]
+}

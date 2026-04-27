@@ -1,0 +1,40 @@
+{
+  "@timestamp": "2025-12-29T10:00:00Z",
+  "incident_id": "Test-prompt_injection-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "security",
+  "type": "prompt_injection",
+  "title": "Prompt injection attack on AcmeGPT Copilot system",
+  "affected_systems": [
+    "acmegpt-copilot-api"
+  ],
+  "description": "Custom SIEM correlation rule detected a high volume of API requests to the Copilot system containing known prompt injection signatures (e.g., ignoring previous instructions, system prompt extraction). The requests bypassed the initial WAF filtering but triggered the semantic analyzer.",
+  "alert_source": "Custom SIEM",
+  "rule_name": "Prompt injection pattern in API input",
+  "entities": {
+    "users": ["api_client_778"],
+    "ips": ["52.33.109.12"],
+    "hosts": [],
+    "domains": [],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "behavioral",
+  "confidence": "medium",
+  "assigned_to": "security-team",
+  "detection_method": "SIEM correlation (prompt injection pattern + semantic analyzer trigger)",
+  "tags": [
+    "prompt-injection",
+    "security",
+    "high"
+  ],
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": []
+}

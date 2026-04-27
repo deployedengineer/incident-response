@@ -1,0 +1,52 @@
+{
+  "@timestamp": "2025-12-28T11:05:00Z",
+  "incident_id": "Test-unauthorized_access_attempt-001",
+  "severity": "critical",
+  "status": "unresolved",
+  "category": "security",
+  "type": "unauthorized_access_attempt",
+  "title": "Successful AWS IAM ConsoleLogin from anomalous geography on privileged admin account",
+  "affected_systems": [
+    "aws-account-prod"
+  ],
+  "description": "AWS CloudTrail logged a successful ConsoleLogin event for an administrative IAM user originating from an anomalous geographical location. The login bypassed typical geolocation restrictions, suggesting possible credential theft.",
+  "alert_source": "AWS CloudTrail",
+  "rule_name": "Unusual ConsoleLogin from new geography",
+  "entities": {
+    "users": ["admin_superuser"],
+    "ips": ["175.45.176.10"],
+    "hosts": [],
+    "domains": [],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "anomaly",
+  "confidence": "high",
+  "assigned_to": "network-security-team",
+  "detection_method": "CloudTrail Event Analysis",
+  "tags": [
+    "iam",
+    "unauthorized-access",
+    "critical"
+  ],
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1032 - Multi-factor Authentication"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1032"
+  ]
+}

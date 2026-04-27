@@ -1,0 +1,129 @@
+{
+  "@timestamp": "2025-12-12T03:45:10Z",
+  "incident_id": "INC-2025-1212-029",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "service_outage",
+  "title": "Kubernetes control plane failure",
+  "description": "Datadog Kubernetes State Metrics and Prometheus kube-apiserver metrics detected the Kubernetes control plane (k8s-control-plane, EKS managed, us-east-1) becoming unresponsive at 03:11 UTC. The kube-apiserver's API request latency spiked from a normal 45ms to >10 seconds, and etcd cluster leader election failed repeatedly. All kubectl operations returned 'context deadline exceeded' and the Kubernetes scheduler and controller-manager entered a leader election loop. All running Pods in all 14 namespaces continued running (the data plane was healthy) but no new Pods could be scheduled, no ConfigMaps could be updated, and no Deployments could be reconciled — effectively freezing the cluster's operational state for 95 minutes.",
+  "affected_systems": [
+    "k8s-control-plane",
+    "all-services"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Datadog Kubernetes State Metrics — 'kube-apiserver API request latency P99 > 5s for 3 consecutive minutes' + kube-state-metrics 'etcd_leader_changes_seen_total' spike",
+  "tags": [
+    "service-outage",
+    "infrastructure",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-12T03:45:10Z",
+      "event": "Datadog kube-apiserver latency alert: P99 latency 10.4 seconds (normal: 45ms); etcd leader election failing (etcd_leader_changes_seen_total: 47 in 5 minutes); all kubectl commands returning 'context deadline exceeded'; PagerDuty P1 generated",
+      "actor": "datadog-kubernetes"
+    },
+    {
+      "timestamp": "2025-12-12T03:49:54Z",
+      "event": "On-call Platform SRE w.chang@company.com acknowledged; confirmed EKS control plane health via AWS Console showing 'degraded' status; AWS Support case #134891002 opened with 'urgent' priority; existing Pods confirmed running (data plane healthy)",
+      "actor": "w.chang@company.com"
+    },
+    {
+      "timestamp": "2025-12-12T04:09:40Z",
+      "event": "Root cause identified with AWS Support: etcd had accumulated 8.2 GB of revision history (etcd database size exceeded 8 GB health threshold); etcd compaction job (runs every 5 minutes) had failed silently for 11 days due to a permission issue on the etcd snapshot S3 bucket IAM role; database bloat was causing etcd read latency to cascade into kube-apiserver timeouts",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-12T05:00:40Z",
+      "event": "AWS Support executed emergency etcd compaction: etcdctl compact $(etcdctl endpoint status --write-out='json' | jq '.[0].Status.header.revision') followed by etcdctl defrag --endpoints=<all-endpoints>; etcd database size reduced from 8.2 GB to 420 MB; kube-apiserver latency returned to 52ms",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-12T05:29:40Z",
+      "event": "All kubectl operations normal; kube-scheduler and controller-manager elected leaders; all Deployments reconciled; Datadog control plane metrics green; etcd compaction S3 IAM role corrected; incident closed",
+      "actor": "w.chang@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-12T05:29:40Z",
+  "resolved_by": "w.chang@company.com",
+  "resolution_time_minutes": 104,
+  "resolution_summary": "AWS Support performed emergency etcd compaction and defrag, reducing the etcd database from 8.2 GB to 420 MB within 51 minutes of root cause identification. kube-apiserver API response latency returned to 52ms immediately after defrag. All Pods that were running before the control plane failure continued running throughout (no service disruption to end users); the impact was operational: no new deployments, no ConfigMap changes, and no Pod scaling were possible for 95 minutes. The root cause was etcd compaction job failure due to a broken S3 bucket IAM role for etcd snapshots — the compaction job silently failed for 11 days, allowing revision accumulation to fill the etcd database.",
+  "root_cause_analysis": "EKS etcd compaction is a scheduled maintenance operation that runs every 5 minutes, removing outdated key-value revisions from etcd's BoltDB storage. The compaction job was configured to save a snapshot to S3 before each compaction as a safety net. On Nov 30, a platform engineer updated the etcd snapshot S3 bucket name as part of a storage reorganization but did not update the EKS node IAM role policy that was used to write to the snapshot bucket. The compaction job began failing silently at this point — the failure mode was a non-fatal S3 permission error that was logged but not alerted on (etcd logs were not ingested into the SIEM). Over 11 days without compaction, etcd's revision history grew from a normal 300 MB to 8.2 GB, at which point the BoltDB read performance degraded severely enough to cause kube-apiserver timeouts at P99.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 5000,
+  "business_impact": "Kubernetes control plane frozen for 95 minutes; no deployments, scaling, or config changes possible; operational teams blocked",
+  "estimated_cost": 80000,
+  "sla_met": true,
+  "mttr": 104,
+  "mtta": 4,
+  "remediation_actions": [
+    "AWS Support emergency etcd compaction: etcdctl compact <latest-revision>; etcdctl defrag --endpoints=https://etcd-0:2379,https://etcd-1:2379,https://etcd-2:2379; etcd database reduced from 8.2 GB to 420 MB in 18 minutes",
+    "Confirmed kube-apiserver recovery: kubectl get nodes returned in 120ms (vs >10s timeout); kubectl get deployments --all-namespaces returned 47 deployments with correct status; scheduler and controller-manager elected leaders",
+    "Fixed etcd snapshot S3 IAM role: updated EKS node IAM policy to allow s3:PutObject to new snapshot bucket ARN; tested etcd compaction job manually — confirmed S3 snapshot saved successfully",
+    "Reviewed 11-day accumulation window for etcd key churn: identified high-frequency key writers (autoscaler, cert-manager) as primary contributors to revision growth; rate-limited cert-manager reconciliation frequency from 10s to 60s intervals",
+    "Validated all 14 production namespaces post-recovery: all Deployments at correct desired replica count; all ConfigMaps intact; no lost state from the control plane freeze (etcd data was fully consistent, only read performance was degraded)",
+    "Enabled etcd database size Datadog metric: size_bytes monitored with alert at 4 GB (50% of health threshold) — provides 5-day warning window at observed normal growth rate"
+  ],
+  "systems_remediated": [
+    "k8s-control-plane",
+    "all-services"
+  ],
+  "preventive_measures": [
+    "etcd database size Prometheus alert: etcd_debugging_mvcc_db_total_size_in_bytes > 4 GB triggers PagerDuty P2; > 6 GB triggers P1; provides multi-day warning before health threshold is reached",
+    "etcd compaction job failure alerting: etcd snapshot S3 PUT failure now generates CloudWatch alarm and PagerDuty alert within 15 minutes of first failure",
+    "S3 bucket naming change process updated: any S3 bucket referenced by EKS node IAM roles requires a dual-update PR (bucket rename + IAM policy update) reviewed by Platform lead",
+    "etcd maintenance runbook created: compaction procedure, defrag steps, database size monitoring, and AWS Support escalation path for control plane issues"
+  ],
+  "security_controls_updated": [
+    "CloudWatch metric alarm for etcd snapshot S3 failures: PutObject error count > 0 for etcd snapshot bucket triggers PagerDuty P2 alert within 15 minutes — silent failure eliminated",
+    "Datadog Kubernetes State Metrics dashboard updated: etcd database size, compaction success rate, and leader election change rate added as key metrics with threshold-based alerting",
+    "EKS node IAM policy change procedure updated: changes to EKS node IAM roles now require a checklist verification that all downstream resource ARNs (S3, KMS, SQS) are updated simultaneously",
+    "ExternalDNS and cert-manager reconciliation intervals tuned: high-frequency reconcilers contributing to etcd key churn reduced from 10s to 60s intervals; validated no functional impact"
+  ],
+  "documentation_updated": [
+    "Kubernetes Control Plane Runbook created: etcd compaction procedure, kube-apiserver latency diagnosis, leader election debugging, and AWS Support escalation path",
+    "EKS IAM Role Change Procedure updated: mandatory downstream resource ARN verification checklist; dual-update requirement for S3 bucket renames",
+    "etcd Health Monitoring Guide created: database size limits, compaction frequency, defrag scheduling, and S3 snapshot verification procedure",
+    "INFRA-2025-1212 Jira ticket archived with AWS Support case reference, etcd compaction telemetry, and IAM policy fix diff"
+  ],
+  "lessons_learned": "etcd compaction failures are silent by design — the job fails and logs an error, but the cluster continues operating (etcd is consistent, just slow to compact). This silent degradation over 11 days is a dangerous pattern: the operational team had no visibility into the accumulating risk until the control plane froze. The monitoring gap (no etcd database size alert, no compaction failure alert) was the primary failure. Running Pods continue operating during control plane failures — this important Kubernetes reliability property meant no end-user impact during the 95-minute freeze, but it also masks the severity of the incident from non-operational observers.",
+  "follow_up_tasks": [
+    "INFRA-1212-01: etcd database size alert deployed: 4 GB = P2, 6 GB = P1 — Owner: SRE, Due: 2025-12-19",
+    "INFRA-1212-02: etcd snapshot S3 failure CloudWatch alarm deployed to all EKS clusters — Owner: Platform, Due: 2025-12-19",
+    "INFRA-1212-03: High-frequency reconciler tuning review: all controllers with <30s reconcile intervals to be reviewed for etcd impact — Owner: Platform, Due: 2025-12-26",
+    "INFRA-1212-04: EKS IAM role change checklist deployed as a GitHub PR template requirement for all platform infrastructure PRs — Owner: Platform, Due: 2025-12-19"
+  ],
+  "resolution": "etcd compacted from 8.2 GB to 420 MB; control plane fully recovered; 95-minute operational freeze with zero end-user service disruption; monitoring gap closed",
+  "action_taken": "Resolved by infrastructure-team within 95 minutes with AWS Support; etcd compaction failure from IAM misconfiguration over 11-day period confirmed as root cause",
+  "entities": {
+    "users": [
+      "w.chang@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "k8s-control-plane"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog Kubernetes State Metrics",
+  "detection_gap": "No alerting existed on etcd database size growth or compaction job failures; etcd application logs were not ingested into Datadog or the SIEM, making the 11-day compaction job failure pattern completely invisible to the operations team; the S3 IAM role for etcd snapshots was not validated when the bucket was renamed",
+  "what_went_well": [
+    "All running Pods and workloads continued operating throughout the 95-minute control plane freeze — no end-user service disruption occurred due to the Kubernetes data plane/control plane separation",
+    "AWS Support DRT engaged within 8 minutes of the Support case being opened and correctly diagnosed etcd database bloat as root cause",
+    "etcd data integrity was fully preserved; the issue was read performance degradation from BoltDB bloat, not data corruption or loss"
+  ],
+  "what_went_wrong": [
+    "etcd compaction job failed silently for 11 days due to an S3 IAM permission error — the failure was logged but no alert was configured for compaction job failures",
+    "A storage reorganization that renamed the etcd snapshot S3 bucket did not include updating the EKS node IAM role policy as part of the same atomic change",
+    "No monitoring existed on etcd database size growth — by the time the control plane became unresponsive, the database had grown from a normal 300 MB to 8.2 GB"
+  ]
+}

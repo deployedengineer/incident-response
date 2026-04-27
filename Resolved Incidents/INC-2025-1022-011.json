@@ -1,0 +1,155 @@
+{
+  "@timestamp": "2025-10-22T02:49:34Z",
+  "incident_id": "INC-2025-1022-011",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "ransomware_detection",
+  "title": "Ransomware activity detected on file server",
+  "description": "CrowdStrike Falcon EDR detected active ransomware encryption on file-server-prod (hostname: FS-PROD-01), identifying the process SvcHost64.exe (non-Microsoft binary) executing mass file rename operations targeting the \\\\FS-PROD-01\\shared-ops share. Approximately 14,700 files had already been encrypted with a .crypt extension before the behavioral engine reached the kill threshold. The volume shadow copy service was also found disabled — vssadmin.exe had been called 7 minutes prior to the first encrypt event, indicating pre-staged attack preparation. Falcon isolated the server from the network within 800ms of the behavioral trigger.",
+  "affected_systems": [
+    "file-server-prod",
+    "backup-system"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "CrowdStrike Falcon EDR — Behavioral IOA (mass .crypt file rename + VSS deletion on file server; 800ms automated isolation)",
+  "tags": [
+    "ransomware-detection",
+    "endpoint",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-22T02:49:34Z",
+      "event": "CrowdStrike Falcon fired critical IOA on FS-PROD-01: mass .crypt file rename at 4,200 files/min with prior VSS deletion; 14,700 files encrypted before process kill; server automatically isolated from network",
+      "actor": "crowdstrike-falcon"
+    },
+    {
+      "timestamp": "2025-10-22T02:54:10Z",
+      "event": "Incident Commander l.navarro@company.com declared P0 war room; endpoint-team, infra-team, and CISO notified; backup-system mount points immediately disconnected to prevent encryption of backup targets",
+      "actor": "l.navarro@company.com"
+    },
+    {
+      "timestamp": "2025-10-22T03:19:24Z",
+      "event": "Initial attack vector identified: compromised service account SVC_FILEOPS (last legitimate use: Oct 18) used to deploy SvcHost64.exe via PsExec from a lateral movement pivot point (WS-OPS-112, not yet isolated); WS-OPS-112 also isolated",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-22T06:20:24Z",
+      "event": "Extent of encryption confirmed: 14,700 files in \\shared-ops\\finance-docs affected; backup-system confirmed clean (last clean backup: Oct 21 23:00Z, 1 hour prior to attack); restoration from backup initiated",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-22T07:45:24Z",
+      "event": "FS-PROD-01 and WS-OPS-112 reimaged; 14,700 files restored from clean backup in 87 minutes; SVC_FILEOPS service account deleted; all service accounts audited for similar privilege levels; incident closed",
+      "actor": "l.navarro@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-22T07:45:24Z",
+  "resolved_by": "l.navarro@company.com",
+  "resolution_time_minutes": 295,
+  "resolution_summary": "CrowdStrike Falcon isolated FS-PROD-01 and killed the ransomware process within 800ms, containing the blast radius to 14,700 files in the \\shared-ops\\finance-docs directory. Disconnecting backup-system mount points within 2 minutes prevented the encryption from reaching backup targets. All 14,700 encrypted files were restored from the Oct 21 23:00Z clean backup (87-minute restore time). Both FS-PROD-01 and the lateral movement pivot WS-OPS-112 were reimaged. A full forensic investigation identified the attack chain: phishing → WS-OPS-112 compromise → SVC_FILEOPS credential theft via LSASS → lateral movement to file server → ransomware deployment via PsExec.",
+  "root_cause_analysis": "The attack originated with a phishing email 72 hours prior that compromised the workstation WS-OPS-112 belonging to an operations team member. The threat actor conducted reconnaissance for 70 hours before extracting the service account SVC_FILEOPS credential via LSASS dumping (blocked by Credential Guard on other systems but not on WS-OPS-112 which ran an older OS build). SVC_FILEOPS held Domain Admin-equivalent rights over file server mounts — a privilege level far beyond what was needed for its function (automated file archiving). The attacker used PsExec to deploy SvcHost64.exe on FS-PROD-01 under the SVC_FILEOPS identity. The VSS deletion and encryption execution were pre-staged as a scheduled task, meaning the attacker had left the initial access point before the ransomware triggered.",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1486 - Data Encrypted for Impact",
+      "T1490 - Inhibit System Recovery"
+    ],
+    "prevention": [
+      "M1053 - Data Backup",
+      "M1040 - Behavior Prevention on Endpoint",
+      "M1049 - Antivirus/Antimalware"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1486",
+    "T1490"
+  ],
+  "mitre_prevention_ids": [
+    "M1053",
+    "M1040",
+    "M1049"
+  ],
+  "affected_users_count": 5000,
+  "business_impact": "Critical impact to endpoint systems affecting service delivery",
+  "estimated_cost": 235000,
+  "sla_met": false,
+  "mttr": 295,
+  "mtta": 4,
+  "remediation_actions": [
+    "CrowdStrike Falcon killed SvcHost64.exe process on FS-PROD-01 and placed server in automatic network isolation — 800ms from behavioral trigger to isolation",
+    "Immediately unmounted backup-system share mappings from all production file servers to prevent encryption of backup targets (completed T+2min)",
+    "Isolated WS-OPS-112 (the lateral movement pivot) from the network via CrowdStrike RTR command",
+    "Confirmed backup-system last clean snapshot: 2025-10-21T23:00:00Z (1 hour prior to attack); initiated restore of 14,700 encrypted files from \\shared-ops\\finance-docs",
+    "Deleted SVC_FILEOPS Active Directory service account; audited all 34 service accounts for Domain Admin or file server mount privileges — found 2 additional over-privileged accounts, downscoped immediately",
+    "Reimaged FS-PROD-01 and WS-OPS-112 from clean baseline images; ran CrowdStrike forensic sweep on all 12 servers that WS-OPS-112 had authenticated against in the 72-hour dwell period",
+    "Submitted SvcHost64.exe sample (SHA256: 3d8c1f7a2e4b9607...) and IOCs to CrowdStrike Intelligence team; confirmed attribution to FIN7-affiliated affiliate"
+  ],
+  "systems_remediated": [
+    "file-server-prod",
+    "backup-system"
+  ],
+  "preventive_measures": [
+    "Credential Guard enabled on all remaining workstations running Windows builds below 22H2 (WS-OPS-112 was running 21H1 without Credential Guard)",
+    "Service account privileged access model redesigned: all SVC_ accounts now scoped to least-privilege JITA (Just-In-Time Access) via CyberArk PAM",
+    "Backup-system share mounts changed to read-only from production file servers; write access requires explicit time-limited PAM checkout",
+    "CrowdStrike behavioral IOA threshold for file server mass file operations lowered: >1,000 file renames/min now triggers automatic isolation (previous: 5,000)",
+    "Quarterly ransomware backup restoration drills scheduled: IT team will perform live file restore from backup within 4-hour RTO target"
+  ],
+  "security_controls_updated": [
+    "CrowdStrike Falcon prevention policy for file servers updated: vssadmin shadow delete now triggers automatic process kill and host isolation without console approval",
+    "Active Directory tiering model implemented: service accounts restricted to Tier 1 (servers) or Tier 2 (workstations) — cross-tier authentication now blocked by PAW policy",
+    "PsExec and similar admin tools blocked via CrowdStrike application control on all non-IT-admin workstations",
+    "SIEM correlation rule added: alert on any service account authenticating to >3 different hostnames within 1 hour (lateral movement detection)"
+  ],
+  "documentation_updated": [
+    "Ransomware Incident Response Runbook updated: backup mount disconnection procedure added as step 2 (before forensic imaging) with explicit SLA of T+2min",
+    "Service Account Privilege Audit Procedure formalized: quarterly review of all SVC_ accounts with sign-off by IAM team lead",
+    "Business Continuity Plan updated: finance-docs restore procedure documented with 87-minute actual RTO benchmark from this incident",
+    "Threat Intelligence Bulletin TB-2025-051 published: FIN7-affiliate TTPs, LSASS extraction indicators, and SvcHost64.exe IOCs"
+  ],
+  "lessons_learned": "The 70-hour dwell time between initial phishing compromise and ransomware execution is the most critical finding — the threat actor had extensive time to conduct reconnaissance, steal credentials, and pre-stage the attack while remaining completely undetected. Credential Guard's absence on a single workstation (WS-OPS-112) running an older OS build was the pivotal control failure that enabled the entire attack chain. Service account privilege over-scoping (SVC_FILEOPS with Domain Admin-level file server access) meant that a single credential theft gave the attacker all the access needed. Backups saved the data; the restoration took 87 minutes against a 4-hour RTO target, but the financial and operational cost of the investigation, reimaging, and business disruption was $234K.",
+  "follow_up_tasks": [
+    "EP-2380: Enforce Credential Guard on all Windows endpoints below 22H2 — identify 67 non-compliant endpoints and schedule forced OS upgrades — Owner: Endpoint, Due: 2025-11-15",
+    "EP-2381: Deploy CyberArk PAM for all service accounts; retire all SVC_ accounts with standing Domain Admin rights — Owner: IAM, Due: 2025-12-01",
+    "EP-2382: Implement honeypot file shares with decoy files to detect active encryption earlier in the kill chain — Owner: Detection Engineering, Due: 2025-12-15",
+    "EP-2383: Conduct 72-hour threat hunt on all systems that WS-OPS-112 authenticated against during the dwell period — Owner: Threat Hunt, Due: 2025-10-29"
+  ],
+  "resolution": "14,700 encrypted files restored from clean backup; FS-PROD-01 and WS-OPS-112 reimaged; SVC_FILEOPS deleted; attack chain fully mapped and IOCs shared with CrowdStrike Intelligence",
+  "action_taken": "Resolved by endpoint-team within 281 minutes; financial impact $234K from investigation, reimaging, and productivity loss",
+  "entities": {
+    "users": [
+      "h.osei@company.com"
+    ],
+    "ips": [
+      "193.106.191.12"
+    ],
+    "hosts": [
+      "fs-finance-01",
+      "ws-finance-ho-014"
+    ],
+    "domains": [
+      "financedocs-portal.net"
+    ],
+    "hashes": [
+      "4a3b2c1d9e8f76543210fedcba987654"
+    ]
+  },
+  "detection_gap": "Email gateway did not quarantine the macro-enabled phishing attachment at initial delivery; Defender Safe Attachments sandbox was triggered but the LockBit dropper's anti-sandbox evasion techniques (environment fingerprinting, delayed payload extraction) prevented successful detonation during the analysis window",
+  "what_went_well": [
+    "CrowdStrike Falcon behavioral detection halted LockBit after approximately 14,700 files were encrypted — less than 1% of the total file share content",
+    "Backup system was air-gapped and fully intact; complete restoration was accomplished with no data loss and no ransom payment consideration",
+    "Swift host isolation prevented LockBit from spreading beyond the initial compromised workstation to other finance segment hosts"
+  ],
+  "what_went_wrong": [
+    "Email gateway failed to quarantine the macro-enabled phishing attachment at initial delivery; the LockBit dropper was delivered before URL and attachment reputation was updated",
+    "Macro execution policy allowed the employee to enable macros on an external-sender document; no IT-enforced block existed for macro-enabled documents from external senders",
+    "File server had no ransomware-specific canary files or honeypot directories that would have triggered behavioral alerts at the first file modification"
+  ]
+}

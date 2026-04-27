@@ -1,0 +1,131 @@
+{
+  "@timestamp": "2025-10-18T14:19:32Z",
+  "incident_id": "INC-2025-1018-026",
+  "severity": "low",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "configuration_drift",
+  "title": "Firewall rules not matching baseline",
+  "description": "Palo Alto Networks Panorama generated a configuration compliance alert after detecting that 4 firewall rules on PA-Series-FW-02 (prod perimeter) deviated from the approved security policy baseline. The deviations were: (1) an 'ANY-ANY' permit rule with source zone='trust' was in position 3 of the policy table, bypassing more restrictive rules below it; (2) two outbound rules had 'application=any' instead of the approved application-specific allowlist; (3) a temporary contractor VPN rule (tag: TEMP-2025-Q2, expiration: 2025-07-31) remained active 79 days past its documented expiry. The 'ANY-ANY' rule was identified as the highest risk deviation — it effectively allowed any traffic from the internal trust zone to reach any external destination, bypassing application inspection.",
+  "affected_systems": [
+    "firewall-prod",
+    "network-security"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Palo Alto Networks Panorama — automated configuration compliance check against approved baseline policy snapshot SNAP-2025-08-01",
+  "tags": [
+    "configuration-drift",
+    "infrastructure",
+    "low"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-18T14:19:32Z",
+      "event": "Panorama weekly compliance check COMP-2025-1018 flagged 4 firewall rules on PA-Series-FW-02 as non-compliant: 1 ANY-ANY rule, 2 application=any rules, 1 expired contractor VPN rule; PagerDuty P3 alert generated",
+      "actor": "palo-alto-panorama"
+    },
+    {
+      "timestamp": "2025-10-18T14:27:20Z",
+      "event": "On-call network engineer l.obi@company.com acknowledged; assessed ANY-ANY rule as highest risk; identified rule was inserted by a network administrator during an emergency maintenance window Oct 13 and not subsequently removed",
+      "actor": "l.obi@company.com"
+    },
+    {
+      "timestamp": "2025-10-18T15:05:21Z",
+      "event": "Root cause confirmed: ANY-ANY rule added by n.singh@company.com on Oct 13 during a contracted VoIP system migration to temporarily allow traffic while new application signatures were being created; migration completed Oct 14 but the rule was not removed; Panorama change management log confirmed the rule lacked a ticket reference and expiry tag",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-18T17:51:21Z",
+      "event": "All 4 non-compliant rules corrected: ANY-ANY rule deleted; application=any rules updated to application-specific allowlists; expired contractor VPN rule deleted; Panorama compliance check re-run confirmed all rules matched baseline",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-18T19:09:21Z",
+      "event": "VoIP application signatures deployed and tested on PA-Series-FW-02; firewall policy change review process updated with mandatory expiry tags; incident closed",
+      "actor": "l.obi@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-18T19:09:21Z",
+  "resolved_by": "l.obi@company.com",
+  "resolution_time_minutes": 289,
+  "resolution_summary": "All 4 non-compliant firewall rules were corrected within 259 minutes of the Panorama compliance alert. The ANY-ANY permit rule was deleted after confirming the VoIP traffic it was added to support was now covered by correctly defined application signatures. Panorama traffic logs were reviewed for the 5-day ANY-ANY window (Oct 13-18) to identify any anomalous traffic that may have leveraged the permissive rule — 3 internal hosts had established previously-blocked external connections during the window, all confirmed as legitimate VoIP test traffic.",
+  "root_cause_analysis": "A network administrator added the ANY-ANY trust-to-any permit rule during an emergency VoIP migration maintenance window on Oct 13 without creating a change ticket, applying an expiry tag, or scheduling a removal reminder. Panorama's change management enforcement was set to 'warn' mode (not 'block') for rule additions lacking ticket references, meaning the rule was accepted without mandatory review. The two application=any rules were legacy rules from a 2023 SD-WAN migration that had never been scoped down to specific applications after the migration completed. The expired contractor VPN rule had passed its documented expiry date by 79 days without an automated cleanup mechanism.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 45,
+  "business_impact": "Permissive firewall rule created uncontrolled outbound access from internal network for 5 days",
+  "estimated_cost": 4500,
+  "sla_met": true,
+  "mttr": 289,
+  "mtta": 7,
+  "remediation_actions": [
+    "Deleted ANY-ANY trust-to-any permit rule from PA-Series-FW-02 position 3; deployed VoIP application signature (app-id: sip, rtp, rtcp) rules as proper replacement",
+    "Updated 2 application=any rules to specific application allowlists: identified traffic types from 90-day traffic log analysis and created precise App-ID based rules for each",
+    "Deleted expired contractor VPN rule (tag: TEMP-2025-Q2); verified no active contractor sessions using the rule over the prior 79-day period (0 sessions confirmed in GlobalProtect logs)",
+    "Reviewed Panorama traffic logs for Oct 13-18 during ANY-ANY active window: identified 3 internal hosts (10.0.14.x, 10.0.14.y, 10.0.14.z) with previously-blocked external HTTPS connections; all confirmed as VoIP test traffic initiated by n.singh@company.com during migration",
+    "Ran full Panorama compliance report against all 4 production firewalls: 12 additional application=any rules found on FW-03 and FW-04 from pre-2024 migrations; scheduled for remediation in INFRA-2025-1049",
+    "n.singh@company.com briefed on change management policy: emergency changes require a ticket within 2 hours and must include a rule expiry tag"
+  ],
+  "systems_remediated": [
+    "firewall-prod",
+    "network-security"
+  ],
+  "preventive_measures": [
+    "Panorama change management enforcement changed from 'warn' to 'block' mode: any rule addition without a ticket reference is rejected at commit time and requires out-of-band override",
+    "Firewall rule lifecycle policy implemented: all rules must have an 'expiry' tag in format YYYY-MM-DD; Panorama automation alerts 7 days before expiry and auto-deletes 30 days after with no renewal",
+    "Application=any rules banned from production perimeter firewalls by Panorama policy: any rule using 'application=any' on the perimeter firewall generates an immediate compliance violation",
+    "Quarterly firewall rule review scheduled: all rules older than 12 months reviewed against current traffic patterns and either revalidated or removed"
+  ],
+  "security_controls_updated": [
+    "Panorama change management policy set to enforce mode: rule commits without ITSM ticket reference and expiry tag blocked at Panorama commit stage",
+    "Panorama compliance check frequency increased to every 6 hours (from daily); ANY-ANY permit rules now trigger immediate P1 alert regardless of zone",
+    "Firewall rule naming convention enforced: automated compliance check rejects any rule without an owner, creation date, expiry date, and ticket reference in the rule description",
+    "PA-Series FW-02 through FW-04 post-migration cleanup task created: INFRA-2025-1049 covers 12 application=any rules across 3 firewalls"
+  ],
+  "documentation_updated": [
+    "Firewall Change Management Procedure updated: emergency changes must be followed by a ticket within 2 hours; ANY rule additions require Security Architect co-approval",
+    "Firewall Rule Lifecycle Policy created: max active duration, expiry tag requirements, quarterly review procedure, and auto-expiry enforcement documentation",
+    "Network Security Runbook updated: Panorama compliance alert response procedure, traffic log review queries, and emergency change remediation steps",
+    "INFRA-2025-1026 Jira closed; INFRA-2025-1049 opened for application=any legacy rule remediation across all 4 perimeter firewalls"
+  ],
+  "lessons_learned": "Emergency maintenance changes are the most common source of permanent firewall rule drift — the pressure of a live outage creates conditions where a temporary workaround is applied without the discipline to schedule its removal. Enforcing a ticket reference and expiry tag at commit time (block mode in Panorama) is a simple control that prevents this class of drift from ever reaching production. The 5-day ANY-ANY exposure on a perimeter firewall, while ultimately benign in this case, represents a complete bypass of application inspection and is a critical risk even for legitimate internal traffic during that window.",
+  "follow_up_tasks": [
+    "INFRA-1049: Remediate 12 application=any legacy rules on FW-03 and FW-04 — traffic log analysis required for each — Owner: Network, Due: 2025-11-01",
+    "INFRA-1050: Deploy Panorama block mode enforcement for all 4 production firewalls — Owner: Network, Due: 2025-10-22",
+    "INFRA-1051: Implement firewall rule expiry automation in Panorama: 7-day warning + 30-day auto-delete — Owner: Network, Due: 2025-10-29",
+    "INFRA-1052: Quarterly firewall rule review scheduled for Jan 2026; all rules >12 months old require revalidation — Owner: Network Architecture, Due: 2026-01-15"
+  ],
+  "resolution": "4 non-compliant firewall rules corrected; ANY-ANY rule removed; no malicious traffic confirmed in 5-day exposure window; Panorama enforcement mode activated",
+  "action_taken": "Resolved by infrastructure-team within 259 minutes of Panorama compliance alert",
+  "entities": {
+    "users": [
+      "l.obi@company.com",
+      "n.singh@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "PA-Series-FW-02",
+      "firewall-prod"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Palo Alto Panorama",
+  "detection_gap": "Panorama compliance checks ran weekly rather than daily, creating a 5-day window where the ANY-ANY trust-to-any permit rule was active without detection; Panorama was configured in warn mode rather than block mode, allowing firewall rule commits without mandatory ticket references or expiry tags",
+  "what_went_well": [
+    "Panorama traffic log review covering the full 5-day ANY-ANY exposure window confirmed no malicious traffic leveraged the permissive rule",
+    "All 3 internal hosts that established previously-blocked external connections during the window were confirmed as legitimate VoIP test traffic",
+    "The 79-day-overdue contractor VPN rule (tag: TEMP-2025-Q2) was identified and removed as part of the same remediation pass"
+  ],
+  "what_went_wrong": [
+    "Network engineer added the ANY-ANY rule during an emergency VoIP migration window without creating a change ticket, applying an expiry tag, or scheduling a removal reminder",
+    "Panorama change management was in warn mode — rule commits lacking ticket references were warned but not blocked",
+    "No automated lifecycle enforcement existed for temporary firewall rules; expired rules required manual cleanup"
+  ]
+}

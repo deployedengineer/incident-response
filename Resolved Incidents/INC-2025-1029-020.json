@@ -1,0 +1,148 @@
+{
+  "@timestamp": "2025-10-29T09:32:21Z",
+  "incident_id": "INC-2025-1029-020",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "application",
+  "type": "vulnerable_dependency",
+  "title": "Zero-day vulnerability in web framework",
+  "description": "GitHub Advanced Security Dependabot and Snyk simultaneously fired critical alerts for CVE-2025-41893 (CVSS 9.8), a newly disclosed zero-day remote code execution vulnerability in Django 4.2.x (specifically in the template rendering engine). The vulnerability allows an unauthenticated attacker to achieve arbitrary Python execution via crafted template tags in user-controlled input. The company's primary web application (web-app-prod) and its 3 microservices (auth-service, api-backend, notification-service) all run Django 4.2.8 — the vulnerable version. The CVE was disclosed publicly at 08:00 UTC with no patch available at detection time; CISA added it to the Known Exploited Vulnerabilities catalog at 09:30 UTC.",
+  "affected_systems": [
+    "web-app-prod",
+    "auth-service",
+    "api-backend"
+  ],
+  "assigned_to": "application-team",
+  "detection_method": "GitHub Advanced Security Dependabot + Snyk SCA — simultaneous critical CVE-2025-41893 (Django 4.2.x RCE, CVSS 9.8) alerts on all 4 production services",
+  "tags": [
+    "vulnerable-dependency",
+    "application",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-29T09:32:21Z",
+      "event": "GitHub Dependabot and Snyk fired simultaneous critical alerts for CVE-2025-41893 (Django 4.2.x RCE, CVSS 9.8) affecting web-app-prod, auth-service, api-backend, and notification-service; CISA KEV listing confirmed at 09:30 UTC; no patch available at alert time",
+      "actor": "github-dependabot"
+    },
+    {
+      "timestamp": "2025-10-29T09:40:48Z",
+      "event": "Application Security Engineer k.ibrahim@company.com declared P0; WAF rule deployed via Cloudflare to block template tag injection patterns while patch was unavailable; affected services placed in enhanced monitoring mode",
+      "actor": "k.ibrahim@company.com"
+    },
+    {
+      "timestamp": "2025-10-29T10:32:57Z",
+      "event": "Exposure assessment: CVE requires user-provided input to reach Django template renderer; auth-service (no user template input) and notification-service (internal only) assessed as unexploitable in current architecture; web-app-prod and api-backend have user-controlled input paths confirmed exploitable",
+      "actor": "application-team"
+    },
+    {
+      "timestamp": "2025-10-29T16:05:57Z",
+      "event": "Django Security Team released emergency patch 4.2.9 at 05:00 UTC; Dependabot PRs auto-generated; patch tested in staging and validated in 28 minutes; production deployment pipeline initiated",
+      "actor": "application-team"
+    },
+    {
+      "timestamp": "2025-10-29T19:39:57Z",
+      "event": "All 4 services upgraded to Django 4.2.9; CloudTrail and application logs reviewed for CVE-2025-41893 exploitation indicators — 0 matching attempts found; WAF rule retained as defense-in-depth; incident closed",
+      "actor": "k.ibrahim@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-29T19:39:57Z",
+  "resolved_by": "k.ibrahim@company.com",
+  "resolution_time_minutes": 607,
+  "resolution_summary": "A WAF rule blocking the Django template injection attack vector was deployed within 2 minutes of detection as an interim mitigation while no official patch was available. Architectural analysis confirmed only 2 of 4 services (web-app-prod and api-backend) were practically exploitable — auth-service and notification-service do not expose user-controlled template input. The Django 4.2.9 emergency patch was deployed to all 4 services within 4.5 hours of its release. Log analysis confirmed zero exploitation attempts matching the CVE-2025-41893 attack pattern during the exposure window.",
+  "root_cause_analysis": "The vulnerability existed in all versions of Django 4.2.x up to 4.2.8 — the company's services had been running the vulnerable version for 3 months since the last dependency update cycle. The quarterly dependency update cadence left a 3-month window in which any critical CVE disclosed between update cycles would leave production services exposed. Dependabot was configured for weekly PR generation but had a backlog of 47 unreviewed PRs due to a lack of dedicated engineering time for dependency maintenance. The absence of a security-specific dependency update SLA meant the weekly Dependabot PRs were treated with the same priority as feature work.",
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1190 - Exploit Public-Facing Application"
+    ],
+    "prevention": [
+      "M1051 - Update Software",
+      "M1016 - Vulnerability Scanning"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1190"
+  ],
+  "mitre_prevention_ids": [
+    "M1051",
+    "M1016"
+  ],
+  "affected_users_count": 5000,
+  "business_impact": "Critical application vulnerability risking unauthorized code execution and full system compromise",
+  "estimated_cost": 140000,
+  "sla_met": false,
+  "mttr": 607,
+  "mtta": 8,
+  "remediation_actions": [
+    "Deployed Cloudflare WAF rule blocking Django template tag injection patterns ({{ and {% sequences in GET/POST parameters with user-agent filtering) at T+2min as interim mitigation before patch availability",
+    "Conducted exploitation risk assessment per service: web-app-prod (search functionality passes user input to template context — HIGH RISK); api-backend (response formatting uses template strings — HIGH RISK); auth-service (no template rendering of user input — LOW RISK); notification-service (internal triggers only — LOW RISK)",
+    "Monitored Django GitHub advisory and security mailing list for patch release; received notification of 4.2.9 release at 05:00 UTC and immediately began patch validation",
+    "Tested Django 4.2.9 patch in staging environment: ran CI test suite (847 tests, 0 failures), ran CVE-specific PoC against staging (confirmed vulnerability fixed), validated application functionality in 28 minutes",
+    "Deployed Django 4.2.9 to all 4 production services via blue-green deployment with 5-minute health check between each service rollout: api-backend → auth-service → notification-service → web-app-prod",
+    "Reviewed application logs (Datadog Log Management) for CVE-2025-41893 exploitation indicators: searched for template injection patterns in request parameters from 29 Oct 00:00 to patch deployment at 09:15 UTC — 0 matching attempts detected",
+    "Updated Snyk vulnerability policy: CVSS >= 9.0 CVEs now escalate to a 24-hour emergency patch SLA ticket in the security queue, bypassing standard PR review cycle"
+  ],
+  "systems_remediated": [
+    "web-app-prod",
+    "auth-service",
+    "api-backend"
+  ],
+  "preventive_measures": [
+    "Vulnerability SLA policy created: Critical CVEs (CVSS >= 9.0) require patch deployment within 24 hours; High (CVSS 7.0-8.9) within 7 days; Medium within 30 days",
+    "Dependabot PR backlog cleared: dedicated 'Dependency Update Friday' engineering sprint allocated; backlog of 47 PRs reviewed and merged in 2 days post-incident",
+    "Snyk runtime monitoring deployed: container image scanning added to production Kubernetes cluster, identifying vulnerable packages in running containers, not just at build time",
+    "WAF template injection rule retained permanently as defense-in-depth for web-app-prod and api-backend — blocks exploitation even if future Django template vulnerabilities are undisclosed",
+    "Architectural review initiated: evaluate feasibility of sandboxed template rendering to eliminate class of template RCE vulnerabilities across all services"
+  ],
+  "security_controls_updated": [
+    "Dependabot configuration updated: critical security PRs now labeled 'security-critical' and auto-assigned to Application Security team for 24-hour review SLA",
+    "Snyk organizational policy updated: CVSS >= 9.0 findings break the CI pipeline in staging — code cannot be deployed if any critical unpatched CVE exists in production dependencies",
+    "Cloudflare WAF custom ruleset updated with Django-specific template injection patterns as permanent blocking rule (not alerting)",
+    "CISA KEV feed integrated into Snyk organizational policy: any KEV-listed vulnerability triggers immediate P0 Jira ticket regardless of CVSS score"
+  ],
+  "documentation_updated": [
+    "Vulnerability Management Policy created: CVSS-based SLA tiers, escalation path for CISA KEV listings, and emergency patch deployment procedure",
+    "Dependency Maintenance Runbook created: Dependabot PR review cadence, staging test procedure for security patches, and blue-green deployment checklist",
+    "Application Security Threat Model updated: Django template rendering identified as attack surface; sandboxing mitigations documented as future work",
+    "SEC-4376 Jira ticket archived with CVE-2025-41893 details, WAF rule configuration, patch validation results, and zero-exploitation confirmation"
+  ],
+  "lessons_learned": "A 47-PR Dependabot backlog is a systemic signal that dependency maintenance is underprioritized — by the time a zero-day CVE hits, the organization was already behind on dozens of dependency updates. The quarterly update cycle created an inherent vulnerability window that only zero-day events make visible. The WAF-as-interim-mitigation approach (deploying a blocking rule before patch availability) is a critical operational capability that must be practiced and ready, not improvised under pressure. Architecture matters: the 2 services that were unexploitable did not accept user-controlled template input — design decisions made at the application layer directly determined blast radius.",
+  "follow_up_tasks": [
+    "APP-SEC-001: Clear all 47-PR Dependabot backlog; implement 'Dependency Update Friday' as recurring sprint slot — Owner: Engineering, Due: 2025-11-07",
+    "APP-SEC-002: Deploy Snyk CI gate for CVSS >= 9.0 vulnerabilities in staging pipeline — Owner: DevSecOps, Due: 2025-11-07",
+    "APP-SEC-003: Integrate CISA KEV RSS feed into Slack #security-alerts channel with auto-ticket creation in Jira — Owner: Security Tooling, Due: 2025-11-14",
+    "APP-SEC-004: Architectural feasibility study for sandboxed template rendering in web-app-prod and api-backend — Owner: Application Security, Due: 2025-12-01"
+  ],
+  "resolution": "Django 4.2.9 emergency patch deployed to all 4 services; WAF interim mitigation blocked attack vector during zero-patch window; zero exploitation confirmed in logs",
+  "action_taken": "Resolved by application-team within 562 minutes; zero exploitation confirmed; vulnerability SLA policy created to prevent recurrence",
+  "entities": {
+    "users": [
+      "s.chen@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "api-gateway-prod",
+      "user-api-prod",
+      "report-api-prod"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "No SLA existed for critical CVE remediation in the engineering backlog; 47 unreviewed Dependabot PRs had accumulated, creating prioritization ambiguity where critical CVEs were not differentiated from informational findings; no continuous DAST scanning was deployed post-deployment to detect active exploitation attempts against publicly-disclosed vulnerabilities",
+  "what_went_well": [
+    "WAF rule blocking the CVE-specific payload pattern was deployed within 23 minutes of vulnerability identification, providing immediate protection while patching proceeded",
+    "Snyk and CISA KEV cross-reference enabled accurate service-by-service exploitability triage within 90 minutes",
+    "Patch was deployed to all 6 affected services within 4 hours of identification with zero downtime via rolling deployment"
+  ],
+  "what_went_wrong": [
+    "47 Dependabot PRs had accumulated without review; the critical CVE was not differentiated from lower-priority findings until CISA KEV cross-reference was run manually",
+    "No critical CVE SLA existed — the team had no defined obligation to remediate within a specific timeframe for CVSS 9.8+ findings",
+    "Service exploitability assessment relied on architectural analysis and was treated as non-exploitable; this assessment cannot be guaranteed and should not be treated as definitive"
+  ]
+}

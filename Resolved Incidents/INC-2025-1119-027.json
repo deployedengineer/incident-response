@@ -1,0 +1,130 @@
+{
+  "@timestamp": "2025-11-19T23:54:18Z",
+  "incident_id": "INC-2025-1119-027",
+  "severity": "high",
+  "status": "resolved",
+  "category": "application",
+  "type": "memory_leak",
+  "title": "API service memory exhaustion",
+  "description": "Datadog APM and Kubernetes kube-state-metrics detected a memory exhaustion event on 3 of 6 Pods running user-api in the kubernetes-cluster (namespace: production). All 3 affected Pods had breached their memory limit of 2 GB (kubernetes container memory limit) and were OOMKilled by the Kubernetes scheduler at approximately 23:30 UTC. Because the user-api Deployment's PodDisruptionBudget (PDB) only guaranteed 4 running replicas, the simultaneous loss of 3 Pods caused the service to operate with only 3 replicas — below the PDB minimum of 4 — triggering health check failures and P99 latency degradation from 95ms to 14 seconds.",
+  "affected_systems": [
+    "user-api",
+    "kubernetes-cluster"
+  ],
+  "assigned_to": "application-team",
+  "detection_method": "Datadog APM — 'user-api P99 latency > 5s' alert + Kubernetes kube-state-metrics OOMKill event counter > 0 for user-api pods",
+  "tags": [
+    "memory-leak",
+    "application",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-19T23:54:18Z",
+      "event": "Datadog APM alert: user-api P99 latency 14.1 seconds, error rate 23.4%; kube-state-metrics shows 3 user-api Pods in OOMKilled state; Kubernetes scheduler restarting Pods; PagerDuty P1 generated",
+      "actor": "datadog-apm"
+    },
+    {
+      "timestamp": "2025-11-19T23:58:33Z",
+      "event": "On-call SRE a.park@company.com acknowledged; kubectl rollout restart deployment/user-api initiated to force all pods to restart with clean memory; within 90 seconds all 6 pods healthy with fresh heap",
+      "actor": "a.park@company.com"
+    },
+    {
+      "timestamp": "2025-11-20T00:18:27Z",
+      "event": "Root cause identified: user-api v2.3.1 deployed Nov 18 introduced a GraphQL query subscription handler that accumulated WebSocket connection objects in a Map without removing them when connections closed; each closed connection left a dangling Map entry retaining the full connection context",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-20T00:32:27Z",
+      "event": "Fix developed: Map cleanup on WebSocket 'close' event added; connection lifecycle management wrapped in try-finally to ensure Map.delete() called on any disconnect; deployed to staging and validated with 1-hour WebSocket load test showing stable memory",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-20T00:45:27Z",
+      "event": "user-api v2.3.2 deployed via rolling update; all 6 Pods healthy; memory stable at 680-740 MB per Pod (vs 2 GB limit ceiling); P99 latency returned to 88ms; incident closed",
+      "actor": "a.park@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-20T00:45:27Z",
+  "resolved_by": "a.park@company.com",
+  "resolution_time_minutes": 51,
+  "resolution_summary": "kubectl rollout restart restored all 6 user-api Pods with clean memory within 90 seconds of acknowledgment. Root cause was a WebSocket connection Map leak introduced in v2.3.1 — 68,000 WebSocket connections had been active during the 18-hour period since deployment, each leaving a dangling Map entry with an average context object size of 28 KB, totaling approximately 1.9 GB of leaked memory per Pod at the time of OOMKill. v2.3.2 added proper Map cleanup on WebSocket close events. Memory stable at 680-740 MB per Pod with no growth trend confirmed over 2 hours post-deployment.",
+  "root_cause_analysis": "user-api v2.3.1 added real-time data subscription capabilities via GraphQL subscriptions over WebSocket. The implementation used a JavaScript Map to track active subscription contexts (connectionId → subscriptionContext). When a WebSocket connection closed, the 'close' event handler invoked cleanup for the GraphQL subscription resolver but did not call Map.delete(connectionId) on the main connection registry Map. Over 18 hours with 68,000 connection events, the Map grew to 68,000 entries × 28 KB average context size = 1.9 GB of unreachable memory that was not garbage-collected because the Map (a root reference) held a reference to each entry. The Kubernetes container memory limit of 2 GB was hit when accumulated leak exceeded the limit. The PodDisruptionBudget configuration requiring 4/6 minimum replicas meant losing 3 Pods simultaneously violated the PDB — this was an under-tested failure scenario.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 1200,
+  "business_impact": "user-api P99 latency 14 seconds, 23% error rate for 42 minutes; real-time subscriptions unavailable; user profile and activity feed features degraded",
+  "estimated_cost": 10000,
+  "sla_met": true,
+  "mttr": 51,
+  "mtta": 4,
+  "remediation_actions": [
+    "kubectl rollout restart deployment/user-api -n production: all 6 Pods restarted in rolling fashion (2 at a time per PodDisruptionBudget); all 6 Pods healthy within 90 seconds",
+    "Confirmed memory returned to baseline: kubectl top pod -n production -l app=user-api showing 680-740 MB per Pod (vs 2 GB limit); 18-hour accumulated leak of 1.9 GB per Pod cleared by restart",
+    "Identified the Map leak: captured heap snapshot from a staging replica running v2.3.1 under WebSocket load; Chrome DevTools Memory analysis confirmed 68,000 Map entries under GQL_SUBSCRIPTION_CONTEXTS key",
+    "Developed fix in v2.3.2: added subscriptionContextMap.delete(connectionId) in WebSocket 'close' and 'error' event handlers; wrapped in try-finally to ensure deletion even on abrupt connection close; added subscriptionContextMap.size as a Prometheus metric for monitoring",
+    "Validated fix in staging: 1-hour WebSocket load test with 2,000 concurrent connections (connect, subscribe, disconnect after random 30-120 second interval); subscriptionContextMap.size monitored via Grafana — confirmed bounded at <2,100 (active connections only) with no growth trend",
+    "Deployed v2.3.2 via rolling update (maxUnavailable: 1, maxSurge: 1); monitored memory per Pod in Datadog for 2 hours post-deployment — stable at 680-740 MB"
+  ],
+  "systems_remediated": [
+    "user-api",
+    "kubernetes-cluster"
+  ],
+  "preventive_measures": [
+    "Kubernetes container memory limit for user-api increased from 2 GB to 3 GB with a 2 GB request: provides OOMKill headroom while the service processes a growing number of concurrent connections during normal growth",
+    "subscriptionContextMap.size Prometheus metric added: alert triggers when map size exceeds 110% of current max concurrent WebSocket connections — detects future Map growth anomalies before OOMKill",
+    "WebSocket connection lifecycle unit test suite added: tests verify Map.size stays bounded across 10,000 simulated connect/subscribe/disconnect cycles",
+    "PodDisruptionBudget updated: minAvailable increased from 4 to 5 out of 6 Pods — simultaneous loss of 2+ Pods now triggers alert rather than service degradation"
+  ],
+  "security_controls_updated": [
+    "Datadog OOMKill alert modified: any OOMKilled Pod in the production namespace now triggers immediate PagerDuty P2 alert (was previously only captured in Kubernetes events with no alerting)",
+    "Kubernetes HPA (Horizontal Pod Autoscaler) updated: scale-up trigger now includes a custom metric 'subscriptionContextMap_growth_rate_per_minute > 100' — scales before memory pressure hits OOM territory",
+    "Helm chart values for user-api updated: memory limit 3 GB, request 2 GB; resource management settings reviewed for all 12 microservices in kubernetes-cluster",
+    "Prometheus alert rule added: subscriptionContextMap_size > (max_concurrent_websockets × 1.1) triggers PagerDuty P2 within 5 minutes of breach"
+  ],
+  "documentation_updated": [
+    "Node.js/GraphQL Engineering Standards updated: WebSocket and long-lived connection resource lifecycle management checklist; Map/Set cleanup on connection close required for all connection registry implementations",
+    "Kubernetes SRE Runbook updated: OOMKill response procedure including kubectl rollout restart, heap snapshot capture, and memory leak diagnosis steps",
+    "GraphQL Subscription Implementation Guide created: correct WebSocket lifecycle event handling with Map cleanup example; common memory leak patterns in GraphQL subscription resolvers",
+    "APP-2025-1119 Jira postmortem documented with heap snapshot analysis, Map size metrics, WebSocket test results, and v2.3.1 vs v2.3.2 code diff"
+  ],
+  "lessons_learned": "GraphQL subscriptions and WebSocket connections require explicit resource lifecycle management on the server side — JavaScript's garbage collector cannot collect objects still referenced by a root-level Map, regardless of whether the associated connection is closed. The debug path (heap snapshot showing 68,000 Map entries) was straightforward once the tool was applied, but this diagnostic step should be part of any high-memory alert runbook, not discovered during incident investigation. The PDB failure scenario (losing 3 of 6 Pods simultaneously) exposed an under-tested failure mode: the PDB provides protection against graceful disruptions but does not help when multiple Pods fail non-gracefully (OOMKill). Sizing PDB minimum at (n - 1) out of n Pods is the more robust configuration.",
+  "follow_up_tasks": [
+    "APP-1119-01: WebSocket lifecycle unit tests deployed to user-api CI pipeline with 10,000 connect/disconnect cycle coverage — Owner: API Team, Due: 2025-11-26",
+    "APP-1119-02: OOMKill alert deployed for all production Pods in kubernetes-cluster — Owner: SRE, Due: 2025-11-22",
+    "APP-1119-03: Review all 12 microservices for similar Map/Set accumulation patterns in WebSocket or SSE handlers — Owner: Platform, Due: 2025-11-26",
+    "APP-1119-04: PodDisruptionBudget updated to minAvailable=(n-1) for all stateless microservices — Owner: Platform, Due: 2025-11-22"
+  ],
+  "resolution": "All 6 Pods restarted; 1.9 GB Map leak cleared; v2.3.2 fix deployed with bounded Map size; OOMKill alerting added for all production Pods",
+  "action_taken": "Resolved by application-team within 42 minutes; WebSocket connection Map leak identified and patched in v2.3.2",
+  "entities": {
+    "users": [
+      "a.park@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "user-api",
+      "kubernetes-cluster"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog APM + Kubernetes kube-state-metrics",
+  "detection_gap": "No monitoring existed on the user-api WebSocket connection registry (subscriptionContextMap) size or heap memory growth rate; Kubernetes OOMKill events were captured in kube-state-metrics but no Datadog alert was configured on OOMKill events for production Pods; the PodDisruptionBudget protected against voluntary disruption but provided no protection against simultaneous OOMKills",
+  "what_went_well": [
+    "kubectl rollout restart restored all 6 user-api Pods to healthy state within 90 seconds of acknowledgment",
+    "Heap snapshot captured before restart enabled definitive root cause identification from a static artifact — no live reproduction was needed",
+    "Staging WebSocket load test (1-hour, 2,000 concurrent connections) conclusively confirmed fix stability before v2.3.2 was promoted to production"
+  ],
+  "what_went_wrong": [
+    "GraphQL subscription handler in v2.3.1 registered WebSocket connection contexts in a Map without deregistering on connection close — a lifecycle management gap that was not caught in code review",
+    "No memory growth rate monitoring existed; the 28 KB per connection accumulation built over 18 hours before OOMKill threshold was reached",
+    "PodDisruptionBudget was configured for minAvailable=4 but this only protects against voluntary disruption; simultaneous OOMKills reduced replicas below operational capacity despite the PDB"
+  ]
+}

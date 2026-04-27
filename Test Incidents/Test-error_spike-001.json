@@ -1,0 +1,40 @@
+{
+  "@timestamp": "2025-12-26T14:45:00Z",
+  "incident_id": "Test-error_spike-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "application",
+  "type": "error_spike",
+  "title": "API Gateway 500 Internal Server Error rate exceeded 15% threshold",
+  "affected_systems": [
+    "api-gateway-prod"
+  ],
+  "description": "Sustained high rate of HTTP 5xx errors recorded from api-gateway-prod. Error rate consistently exceeded the 15% SLA threshold for over 10 consecutive minutes, impacting downstream microservices calling the payments endpoint.",
+  "alert_source": "Datadog",
+  "rule_name": "HTTP 5xx rate exceeds SLA threshold",
+  "entities": {
+    "users": [],
+    "ips": [],
+    "hosts": ["api-gateway-prod.internal.net"],
+    "domains": [],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "threshold",
+  "confidence": "high",
+  "assigned_to": "sre-team",
+  "detection_method": "Synthetics & APM",
+  "tags": [
+    "error-spike",
+    "application",
+    "high"
+  ],
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": []
+}

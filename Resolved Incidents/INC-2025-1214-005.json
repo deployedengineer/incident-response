@@ -1,0 +1,147 @@
+{
+  "@timestamp": "2025-12-14T14:20:10Z",
+  "incident_id": "INC-2025-1214-005",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "ddos_attack",
+  "title": "Distributed denial-of-service attack on public API",
+  "description": "Cloudflare WAF Analytics and AWS Shield Advanced detected a multi-vector DDoS attack against the company's public API (public-api, fronted by load-balancer and cdn) beginning at 14:08 UTC. The attack combined a volumetric UDP flood (28 Gbps peak) targeting the load balancer's elastic IP with a simultaneous Layer 7 HTTP GET flood (112,000 requests/second) against the CDN-origin endpoint GET /v1/products. The UDP flood was absorbed by AWS Shield Advanced scrubbing infrastructure; the HTTP flood bypassed the CDN's cached response layer by varying Cache-Busting query parameters (?cb=<random>), forcing cache misses on every request and passing all 112,000 RPS to origin. The origin public-api handling only 8,000 RPS capacity was overwhelmed within 4 minutes, generating 100% HTTP 503 responses for all legitimate API consumers.",
+  "affected_systems": [
+    "public-api",
+    "load-balancer",
+    "cdn"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "AWS Shield Advanced — volumetric UDP flood detection (28 Gbps) + Cloudflare Analytics — HTTP GET flood 112,000 RPS with cache-busting pattern on /v1/products",
+  "tags": [
+    "ddos-attack",
+    "infrastructure",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-14T14:20:10Z",
+      "event": "AWS Shield Advanced alert: volumetric UDP flood 28 Gbps targeting load-balancer EIP; simultaneous Cloudflare alert: HTTP GET flood 112,000 RPS with cache-busting query strings on /v1/products; public-api HTTP 503 rate 100%; PagerDuty P1 generated",
+      "actor": "aws-shield-cloudflare"
+    },
+    {
+      "timestamp": "2025-12-14T14:24:49Z",
+      "event": "On-call infrastructure lead k.adeyemi@company.com acknowledged; activated AWS Shield Advanced DRT engagement (DDoS Response Team); enabled Cloudflare 'I'm Under Attack' mode for public-api zone; deployed Cloudflare WAF rule to block requests with ?cb= query parameter pattern",
+      "actor": "k.adeyemi@company.com"
+    },
+    {
+      "timestamp": "2025-12-14T14:44:13Z",
+      "event": "Cache-busting WAF rule effective: HTTP flood reduced from 112,000 to 4,200 RPS; UDP flood being scrubbed by Shield Advanced; public-api error rate dropped from 100% to 8%; AWS Shield Advanced DRT engaged and tuning mitigation signatures",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-14T19:58:13Z",
+      "event": "Attack sustained for 5+ hours at reduced intensity; AWS Shield Advanced maintained full UDP mitigation; Cloudflare custom WAF rules tuned through 6 iterations to address evolving HTTP attack vectors; attack traffic reducing to <2,000 RPS",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-14T22:19:13Z",
+      "event": "Attack subsided completely; public-api serving 7,800 RPS at 0.2% error rate; Cloudflare Bot Management enabled as permanent defense; AWS Shield Response Team final report received; incident closed",
+      "actor": "k.adeyemi@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-14T22:19:13Z",
+  "resolved_by": "k.adeyemi@company.com",
+  "resolution_time_minutes": 479,
+  "resolution_summary": "The cache-busting HTTP flood vector was neutralized within 13 minutes by blocking requests containing the ?cb= query parameter pattern, reducing the HTTP flood from 112,000 to 4,200 RPS. The AWS Shield Advanced DRT managed the 28 Gbps UDP flood throughout its 5.5-hour duration. The attack evolved through 6 distinct phases as the attacker adapted to WAF rules — each adaptation was countered with updated Cloudflare WAF signatures within 15-30 minutes. Total public-api outage was 13 minutes (14:08-14:21 UTC) before partial recovery; full restoration to <2% error rate required the DRT's UDP mitigation to fully engage. Attack attributed to a DDoS-for-hire operation based on Cloudflare threat intelligence.",
+  "root_cause_analysis": "The HTTP flood bypassed CDN caching by appending a random cache-buster query parameter (?cb=<random string>) that the CDN treated as a unique URL, forcing origin requests for what would otherwise be cached responses. The /v1/products endpoint, which has a 5-minute CDN TTL and normally serves 95% of requests from CDN cache, was forced into 100% origin passthrough. The public-api origin was not sized to handle direct internet-scale traffic (8,000 RPS capacity vs. CDN-cached effective capacity of 200,000+ RPS). No WAF rule existed to block cache-busting query parameter patterns, and no CDN normalization rule stripped unknown query parameters before cache key evaluation.",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1498 - Network Denial of Service"
+    ],
+    "prevention": [
+      "M1037 - Filter Network Traffic",
+      "M1031 - Network Intrusion Prevention"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1498"
+  ],
+  "mitre_prevention_ids": [
+    "M1037",
+    "M1031"
+  ],
+  "affected_users_count": 5000,
+  "business_impact": "100% public API failure for 13 minutes; 8% error rate for 5+ hours during sustained attack; customer API consumers and third-party integrators affected",
+  "estimated_cost": 390000,
+  "sla_met": false,
+  "mttr": 479,
+  "mtta": 4,
+  "remediation_actions": [
+    "Deployed Cloudflare WAF rule 'Cache-Bust-Block': block all requests to /v1/products containing query parameter key matching pattern ^cb$ or ^cachebuster$ or ^_=; reduced HTTP flood from 112,000 to 4,200 RPS within 4 minutes of deployment",
+    "Enabled Cloudflare query string normalization for CDN origin: unknown query parameters stripped from cache key before origin forwarding; /v1/products requests now cache-hit regardless of unknown query parameters appended by attackers",
+    "AWS Shield Advanced DRT engagement: DRT applied BGP-level traffic diversion to AWS scrubbing centers for the load-balancer EIP; 28 Gbps UDP flood fully mitigated at network edge without reaching load balancer",
+    "Iterated Cloudflare WAF rules through 6 attack phase adaptations: attacker shifted from ?cb= to User-Agent rotation, then to POST method flood, then to slow HTTP; each adaptation countered with updated WAF signatures within 15-30 minutes",
+    "Enabled Cloudflare Bot Management for public-api zone: invisible browser fingerprinting applied to all non-cached API requests; blocked 91% of subsequent attack traffic adaptations without additional WAF rule changes",
+    "Origin public-api auto-scaling group minimum capacity increased from 4 to 12 instances during incident; sustained at 12 instances for 72-hour post-attack monitoring window"
+  ],
+  "systems_remediated": [
+    "public-api",
+    "load-balancer",
+    "cdn"
+  ],
+  "preventive_measures": [
+    "CDN query string normalization deployed permanently: all query parameters not in an approved allowlist are stripped from cache key evaluation; eliminates cache-busting attack vector",
+    "Cloudflare Bot Management enabled as baseline protection for public-api: bot-driven requests blocked or challenged before reaching origin; reduces effective attack surface to human-browser traffic",
+    "AWS Shield Advanced proactive engagement activated for all company EIPs: AWS DRT engaged automatically for any volumetric event >1 Gbps without requiring a support case from the operations team",
+    "Public API origin capacity planning updated: origin sized to handle direct internet traffic at CDN bypass capacity (80,000 RPS) rather than CDN cache-miss capacity (8,000 RPS)"
+  ],
+  "security_controls_updated": [
+    "Cloudflare query string normalization rule deployed: unknown query parameters excluded from CDN cache key; allowlist maintained for legitimate pagination/filter parameters (?page=, ?limit=, ?filter=)",
+    "AWS Shield Advanced proactive engagement enabled for load-balancer and CDN origin IPs; DRT auto-engaged for events >1 Gbps (previously required manual case opening)",
+    "Cloudflare L7 DDoS managed ruleset sensitivity set to 'high' for public-api endpoint group: earlier detection of HTTP flood patterns before origin impact",
+    "Datadog ALB metrics alarm: RequestCountPerTarget > 6,000 RPS (75% of origin capacity) triggers PagerDuty P1; provides 60-second warning before origin saturation at observed attack growth rate"
+  ],
+  "documentation_updated": [
+    "DDoS Response Playbook updated: multi-vector DDoS response procedure, cache-busting mitigation, Cloudflare WAF iteration process, and AWS Shield Advanced DRT engagement steps",
+    "CDN Security Configuration Guide updated: query string normalization policy, CDN cache key design principles, cache-busting attack indicators",
+    "Public API Capacity Planning document updated: origin sizing requirement for DDoS headroom at bypass capacity; auto-scaling group minimum instance guidance",
+    "NET-2025-1214 Jira ticket archived with AWS Shield Advanced DRT final report, Cloudflare WAF rule evolution log, and attack timeline"
+  ],
+  "lessons_learned": "Cache-busting DDoS is a well-known CDN bypass technique that transforms a fully cached endpoint into an uncached one at zero cost to the attacker. CDN query string normalization (stripping unknown parameters before cache key evaluation) is a simple, non-breaking configuration change that eliminates this vector entirely and should be a default CDN security configuration. Multi-vector attacks that combine volumetric floods with application-layer bypasses require coordinated mitigation across both network-layer (Shield Advanced) and application-layer (Cloudflare WAF) tools simultaneously — siloing these responses delays mitigation. The DRT's value is highest in sustained attacks that evolve over hours, not in the first 15 minutes.",
+  "follow_up_tasks": [
+    "NET-1214-01: CDN query string normalization deployed with approved-allowlist for all public API CDN distributions — Owner: Platform, Due: 2025-12-21",
+    "NET-1214-02: Origin auto-scaling group minimum capacity review: size for CDN bypass capacity across all public-facing origins — Owner: Platform, Due: 2025-12-21",
+    "NET-1214-03: AWS Shield Advanced proactive engagement enabled for all company VIP IPs — Owner: Cloud Security, Due: 2025-12-19",
+    "NET-1214-04: DDoS response tabletop exercise with infrastructure, network, and product teams — Owner: SRE, Due: 2026-01-09"
+  ],
+  "resolution": "Cache-busting WAF rule mitigated HTTP flood in 13 minutes; UDP flood absorbed by Shield Advanced DRT; CDN normalization deployed as permanent fix; SLA breach for 470-minute attack duration",
+  "action_taken": "Resolved by infrastructure-team within 470 minutes; 13-minute outage window; SLA breached due to sustained 5.5-hour attack requiring iterative WAF rule tuning",
+  "entities": {
+    "users": [
+      "k.adeyemi@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "public-api",
+      "load-balancer",
+      "cdn"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "AWS Shield Advanced + Cloudflare WAF Analytics",
+  "detection_gap": "CDN cache key evaluation was not normalized to strip unknown query parameters, allowing cache-busting ?cb=<random> patterns to force 100% origin passthrough on a fully cacheable endpoint; no WAF rule existed for cache-busting parameter patterns; origin API was sized for CDN cache-miss traffic (8,000 RPS) not direct internet-scale traffic",
+  "what_went_well": [
+    "Cloudflare WAF rule blocking the ?cb= cache-busting pattern reduced the HTTP flood from 112,000 to 4,200 RPS within 4 minutes of deployment",
+    "AWS Shield Advanced DRT absorbed the 28 Gbps UDP flood continuously throughout its 5.5-hour duration with no further manual intervention required",
+    "Through 6 distinct attack vector adaptations, custom WAF signatures were deployed within 15-30 minutes of each new pattern — total public-api outage was limited to 13 minutes"
+  ],
+  "what_went_wrong": [
+    "CDN query string normalization was not deployed — a single missing configuration made an entirely cacheable endpoint bypassable with a trivial query parameter",
+    "Origin public-api was not sized for direct internet-scale traffic; the CDN cache provided a 25x effective capacity multiplier that completely masked the origin's DDoS vulnerability",
+    "No DDoS response runbook existed for multi-vector attacks; response coordination across Shield Advanced (L3/4) and Cloudflare (L7) required improvisation during the attack"
+  ]
+}

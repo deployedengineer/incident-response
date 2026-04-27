@@ -1,0 +1,131 @@
+{
+  "@timestamp": "2025-12-24T21:14:16Z",
+  "incident_id": "INC-2025-1224-030",
+  "severity": "high",
+  "status": "resolved",
+  "category": "api",
+  "type": "error_spike",
+  "title": "Rate limiting failures causing cascading errors",
+  "description": "Datadog APM detected a cascading error event originating from the rate-limiter service (Redis-backed, Lua scripting, api-gateway integration) at 21:07 UTC on December 24. The rate-limiter's underlying Redis cluster (sentinel mode, 3 nodes) experienced a master node failure at 21:06 UTC during an automated Redis patch cycle. The Sentinel failover completed in 47 seconds (within the configured 30-second threshold — unexpectedly slow due to network partition during Christmas Eve maintenance window). During the 47-second failover window, the rate-limiter's Lua scripts returned READONLY errors to the api-gateway (the old master was now a replica). The api-gateway had no rate-limit bypass fallback configured — it treated READONLY errors as rate-limit enforcement failures and returned HTTP 429 Too Many Requests to ALL API clients, regardless of their actual request count. This caused a complete 100% HTTP 429 error cascade for 47 seconds, followed by a partial recovery period where stale rate-limit counters caused incorrect throttling for an additional 71 minutes.",
+  "affected_systems": [
+    "rate-limiter",
+    "api-gateway"
+  ],
+  "assigned_to": "api-team",
+  "detection_method": "Datadog APM — 'api-gateway HTTP 429 rate > 80% for 1 minute' alert + Redis Sentinel failover event in Datadog Redis integration metrics",
+  "tags": [
+    "error-spike",
+    "api",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-24T21:14:16Z",
+      "event": "Datadog APM: api-gateway HTTP 429 error rate 100% for 47 seconds; Redis Sentinel master failover in progress (redis-rate-limiter-master-01); rate-limiter Lua scripts returning READONLY errors; all API clients receiving HTTP 429 incorrectly",
+      "actor": "datadog-apm"
+    },
+    {
+      "timestamp": "2025-12-24T21:19:34Z",
+      "event": "On-call engineer f.abena@company.com acknowledged; Redis Sentinel failover confirmed complete (redis-rate-limiter-replica-02 elected new master); api-gateway 429 rate dropped from 100% to 18% as new master accepted writes; READONLY error period ended",
+      "actor": "f.abena@company.com"
+    },
+    {
+      "timestamp": "2025-12-24T21:38:49Z",
+      "event": "Root cause confirmed: api-gateway rate-limit Redis client had no READONLY exception handling — client treated any Redis error as a failed rate-limit check and returned HTTP 429; stale counters from the pre-failover master not ported during 47-second failover causing counter drift; 18% incorrect throttling continued",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-24T22:45:49Z",
+      "event": "Rate-limiter counter reset applied for all affected API keys (those that had received incorrect 429s during failover window); api-gateway deployed with 'fail-open' behavior for Redis errors (allow requests when rate-limiter is unavailable rather than block all); Redis client updated to handle READONLY by retrying on new master",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-24T23:21:49Z",
+      "event": "Rate-limiter fully operational on new master; api-gateway 429 rate returned to 0.2% (legitimate rate-limiting only); counter reset validated against API key usage logs; no further incorrect throttling; incident closed",
+      "actor": "f.abena@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-24T23:21:49Z",
+  "resolved_by": "f.abena@company.com",
+  "resolution_time_minutes": 127,
+  "resolution_summary": "The 47-second Redis Sentinel failover caused a complete HTTP 429 cascade due to the api-gateway's fail-closed behavior on Redis errors. Sentinel failover completed naturally, restoring partial rate-limiter function. The api-gateway was updated to fail-open (allow requests) when Redis is unavailable, with a 60-second window before reverting to a static rate-limit fallback. Rate-limiter counters for all 847 affected API keys were reset to eliminate incorrect counter drift from the failover window. The Christmas Eve Redis patch cycle was identified as an inappropriate maintenance window — Redis maintenance is now blocked during peak traffic periods.",
+  "root_cause_analysis": "The rate-limiter was implemented using Redis INCR + EXPIRE Lua scripts to atomically count and expire request windows. When the Redis master failed during patch rotation, the 3 replica nodes entered READONLY mode pending Sentinel failover. The api-gateway's Redis client was not configured to handle READONLY errors gracefully — instead of failing open (allowing requests) or retrying on the new master, it treated any Redis error as a rate-limit enforcement failure and returned HTTP 429. This fail-closed behavior is appropriate for preventing abuse but catastrophic during infrastructure failover events because it denies service to all clients regardless of their actual request rate. The Sentinel failover took 47 seconds rather than the configured 30-second timeout because a brief network partition during the patch rotation delayed Sentinel quorum formation.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 1200,
+  "business_impact": "100% HTTP 429 error cascade for 47 seconds; partial incorrect throttling (18%) for 71 additional minutes; Christmas Eve peak API traffic period severely affected",
+  "estimated_cost": 30000,
+  "sla_met": true,
+  "mttr": 127,
+  "mtta": 5,
+  "remediation_actions": [
+    "Confirmed Redis Sentinel failover completion: redis-cli -h redis-sentinel:26379 SENTINEL get-master-addr-by-name rate-limiter returned replica-02 as new master; PING returned PONG; READONLY error period ended",
+    "Updated api-gateway Redis client: added READONLY exception handler with exponential-backoff retry (3 attempts, 100ms/200ms/400ms) directed at Sentinel-resolved new master; if all retries fail, fail-open behavior allows requests",
+    "Deployed api-gateway fail-open fallback: Redis unavailable for >3 seconds triggers 'permissive mode' — requests allowed with a warning log; permissive mode reverts to aggressive static rate limiting (10 req/min hardcoded) after 60 seconds to limit abuse window",
+    "Reset rate-limiter counters for 847 API keys that received incorrect 429 responses during failover window: KEYS rate:* pattern identified affected keys; TTL-expired keys already cleared; active keys reset via DEL command on new master",
+    "Reviewed API key usage during outage window: confirmed 847 incorrectly throttled API keys belonged to 312 distinct customers; enterprise customers with affected SLAs identified and contacted; no keys had actual rate-limit violations during the period",
+    "Cancelled remaining Dec 24 Redis patch maintenance window: patching rescheduled to Jan 6 UTC 02:00 (post-holiday, low-traffic window)"
+  ],
+  "systems_remediated": [
+    "rate-limiter",
+    "api-gateway"
+  ],
+  "preventive_measures": [
+    "Redis client fail-open behavior deployed: rate-limiter Redis unavailability no longer causes HTTP 429 cascade; permissive mode with static fallback provides DDoS protection during Redis failover windows",
+    "Redis Sentinel failover maintenance window policy: Redis master rotation is now blocked during high-traffic periods (Dec 20 - Jan 5, and any day where 7-day rolling average traffic exceeds 150% of baseline)",
+    "Redis Sentinel failover time reduced: minimum_failover_timeout set from 30 to 20 seconds; down_after_milliseconds reduced from 5,000 to 3,000 ms; validated in staging with forced master failure (failover now completes in 18-22 seconds)",
+    "Rate-limiter counter drift recovery procedure documented: counter reset script for affected API keys included in Redis failover runbook; can be executed within 5 minutes of any future failover event"
+  ],
+  "security_controls_updated": [
+    "Api-gateway Redis client updated to Sentinel-aware mode: client always resolves master from Sentinel before write operations; handles READONLY errors with automatic master-re-resolution",
+    "Rate-limiter Redis cluster upgraded to 5 nodes (from 3): improved Sentinel quorum formation speed; network-partition-resistant quorum (3/5 available needed vs 2/3); reduces failover network sensitivity",
+    "Datadog Redis Sentinel monitor added: Sentinel failover event triggers PagerDuty P2 with 'rate-limiter failover in progress' context; gives operations team 30-second heads-up before impact",
+    "Redis patch rotation procedure updated: patch rotation must complete master→replica→replica order; master patched last; each step validated with sentinel SENTINEL sentinels before proceeding to next node"
+  ],
+  "documentation_updated": [
+    "Rate Limiter Runbook updated: Redis failover response procedure, counter reset script for affected API keys, fail-open behavior description, and permissive mode timeout configuration",
+    "Redis Operations Runbook updated: Sentinel failover procedure, maintenance window blackout dates, READONLY error escalation steps, and 5-node topology documentation",
+    "Api-gateway Configuration Guide updated: Redis client fail-open policy, permissive mode parameters, and static fallback rate-limit values",
+    "API-2025-1224-030 Jira postmortem published with Sentinel failover timeline, HTTP 429 cascade analysis, counter reset procedure, and maintenance window policy update"
+  ],
+  "lessons_learned": "Rate-limiting infrastructure that fails closed (denies all requests on Redis error) trades abuse prevention for availability — during a Redis failover, it creates a guaranteed self-inflicted DoS. The fail-open pattern with a time-bounded static fallback is the correct tradeoff: brief periods of unmetered access are an acceptable business risk compared to guaranteed 100% service denial during infrastructure maintenance. Redis Sentinel failover configuration (down_after_milliseconds, minimum_failover_timeout) requires tuning relative to the application's tolerance for READONLY errors — the default values provided acceptable behavior in low-traffic conditions but were too slow for a production rate-limiter. Blocking infrastructure maintenance during peak traffic periods (holidays, end-of-quarter) must be a hard policy enforced by the deployment pipeline, not a soft recommendation.",
+  "follow_up_tasks": [
+    "RATE-1224-01: Redis Sentinel-aware client deployed to api-gateway: READONLY retry and fail-open behavior — Owner: API Team, Due: 2025-12-31",
+    "RATE-1224-02: Redis cluster scaled to 5 nodes; Sentinel timeout parameters tuned — Owner: Platform, Due: 2025-12-31",
+    "RATE-1224-03: Redis maintenance blackout dates configured in change management platform: Dec 15 - Jan 7 annually; plus any high-traffic event periods — Owner: Platform, Due: 2025-12-31",
+    "RATE-1224-04: Datadog Redis Sentinel failover event alert deployed with 30-second early warning to PagerDuty — Owner: SRE, Due: 2025-12-27"
+  ],
+  "resolution": "Redis Sentinel failover completed; fail-open behavior deployed to api-gateway; 847 API key counters reset; Redis maintenance window policy enforced for peak periods",
+  "action_taken": "Resolved by api-team within 118 minutes; root cause was fail-closed rate-limiter behavior during Redis master failover; architectural fix (fail-open) deployed",
+  "entities": {
+    "users": [
+      "f.abena@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "rate-limiter",
+      "api-gateway",
+      "redis-rate-limiter-master-01"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog APM",
+  "detection_gap": "Rate-limiter was designed with fail-closed behavior — Redis READONLY errors were treated as rate-limit enforcement failures, returning HTTP 429 to all clients regardless of actual request count; no resilience mechanism existed for expected Redis Sentinel failover events; no Sentinel failover alerting existed to give operations teams advance warning before customer impact",
+  "what_went_well": [
+    "Redis Sentinel failover completed naturally within 47 seconds, limiting the 100% HTTP 429 cascade to under 1 minute without any manual intervention",
+    "Rate-limiter counter reset for all ~850 affected API keys was executed within 30 minutes of the failover completing",
+    "Fail-open architecture with a time-bounded static fallback was designed, validated, and deployed within the same incident window"
+  ],
+  "what_went_wrong": [
+    "Rate-limiter fail-closed design treated Redis Sentinel failover — an expected operational event — as an emergency that warranted denying all API traffic",
+    "Redis patch rotation was scheduled for Christmas Eve peak traffic without adequate risk evaluation; maintenance blackout dates were not enforced",
+    "No Sentinel failover event alerting existed; the operations team had no advance warning and responded reactively after customer impact had already begun"
+  ]
+}

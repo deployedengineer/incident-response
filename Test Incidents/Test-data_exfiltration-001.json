@@ -1,0 +1,52 @@
+{
+  "@timestamp": "2025-12-27T09:22:00Z",
+  "incident_id": "Test-data_exfiltration-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "security",
+  "type": "data_exfiltration",
+  "title": "Unusually high GetObject requests on customer-data bucket from unrecognized IP",
+  "affected_systems": [
+    "s3-customer-data"
+  ],
+  "description": "AWS GuardDuty detected a highly unusual volume of GetObject requests targeting the s3-customer-data bucket originating from a previously unseen Tor exit node IP. The volume exceeds the 99th percentile of baseline historical access patterns for this bucket.",
+  "alert_source": "AWS GuardDuty",
+  "rule_name": "Exfiltration:S3/ObjectRead.Unusual",
+  "entities": {
+    "users": [],
+    "ips": ["185.23.44.11"],
+    "hosts": [],
+    "domains": [],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "anomaly",
+  "confidence": "high",
+  "assigned_to": "security-team",
+  "detection_method": "CloudTrail Log Analytics",
+  "tags": [
+    "s3",
+    "exfiltration",
+    "high"
+  ],
+  "mitre": {
+    "tactic": [
+      "Exfiltration"
+    ],
+    "technique": [
+      "T1530 - Data from Cloud Storage"
+    ],
+    "prevention": [
+      "M1022 - Restrict File and Directory Permissions"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0010"
+  ],
+  "mitre_technique_ids": [
+    "T1530"
+  ],
+  "mitre_prevention_ids": [
+    "M1022"
+  ]
+}

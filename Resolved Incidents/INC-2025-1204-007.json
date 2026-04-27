@@ -1,0 +1,152 @@
+{
+  "@timestamp": "2025-12-04T14:18:42Z",
+  "incident_id": "INC-2025-1204-007",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "stale_account",
+  "title": "Stale administrative account with elevated privileges discovered",
+  "description": "Varonis Data Security Platform's user behavior analytics flagged the Active Directory account 'adm-jfoster' during a scheduled identity governance scan. The account had last authenticated 187 days prior (May 1, 2025) and was associated with a former infrastructure engineer who left the company in April 2025. Despite the offboarding process, the account retained membership in the 'Domain Admins' and 'Server Admins' security groups and had active access to 14 production servers via RDP. The Varonis alert was triggered because the account was scanned by automated credential testing tools from an external IP 3 days prior — suggesting the dormant account had been targeted in a credential attack, though no successful authentication occurred.",
+  "affected_systems": [
+    "active-directory",
+    "user-management",
+    "access-control"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Varonis Data Security Platform — Identity governance scan flagged dormant privileged account with external credential testing activity in prior 72 hours",
+  "tags": [
+    "stale-account",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-04T14:18:42Z",
+      "event": "Varonis DSP scheduled identity scan flagged adm-jfoster (Domain Admin): last login 187 days ago (May 1), active group memberships intact, 3 external credential testing attempts against account in last 72 hours from 195.206.105.x",
+      "actor": "varonis-dsp"
+    },
+    {
+      "timestamp": "2025-12-04T14:27:09Z",
+      "event": "SOC analyst t.adeyemi@company.com acknowledged alert; confirmed jfoster terminated April 15, 2025 via HR system lookup; adm-jfoster account immediately disabled in Active Directory",
+      "actor": "t.adeyemi@company.com"
+    },
+    {
+      "timestamp": "2025-12-04T15:15:53Z",
+      "event": "Root cause confirmed: IT offboarding checklist did not include 'adm-' prefixed privileged admin accounts — standard offboarding only disabled the personal user account (jfoster@company.com); the separate admin account was not captured by the automated deprovisioning workflow",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-12-04T20:17:53Z",
+      "event": "Full audit of all inactive privileged accounts completed: 3 additional stale admin accounts found (>90 days inactive with elevated privileges); all disabled; 14 production servers that adm-jfoster had RDP access to reviewed — no anomalous access in 187-day dormancy period",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-04T22:34:53Z",
+      "event": "Offboarding checklist updated to include all 'adm-', 'svc-', and 'sa-' prefixed accounts; ServiceNow offboarding workflow automated to disable all accounts matching employee ID pattern; incident closed",
+      "actor": "t.adeyemi@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-04T22:34:53Z",
+  "resolved_by": "t.adeyemi@company.com",
+  "resolution_time_minutes": 496,
+  "resolution_summary": "The adm-jfoster Domain Admin account was disabled within 2 minutes of detection. A full audit of Active Directory privileged groups identified 3 additional stale admin accounts (90+ days inactive) that were also disabled. Review of the 14 production servers with adm-jfoster RDP access confirmed no unauthorized access during the 187-day dormancy period. The offboarding workflow was updated to capture all account naming conventions ('adm-', 'svc-', 'sa-' prefixes) beyond the standard user account, preventing this class of omission from recurring.",
+  "root_cause_analysis": "The company's automated offboarding process in ServiceNow was scoped to disable accounts matching the pattern '{firstname}.{lastname}@company.com'. The separate privileged admin account naming convention 'adm-{username}' was not included in the automation scope, creating a systematic gap that affected any employee who had a dedicated admin account. J. Foster departed April 15, 2025 and their personal account (jfoster@company.com) was correctly deprovisioned on the departure date, but adm-jfoster was missed entirely. The 187-day window of dormancy with Domain Admin rights is a material risk: any actor who obtained the adm-jfoster password (through credential stuffing, prior breach, or OSINT) could have authenticated and gained privileged access to the entire domain. The external credential testing activity 3 days prior (3 attempts from 195.206.105.x) suggests this account may have been part of a targeted list.",
+  "mitre": {
+    "tactic": [
+      "Persistence",
+      "Privilege Escalation"
+    ],
+    "technique": [
+      "T1078 - Valid Accounts",
+      "T1098 - Account Manipulation"
+    ],
+    "prevention": [
+      "M1026 - Privileged Account Management",
+      "M1018 - User Account Management"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0003",
+    "TA0004"
+  ],
+  "mitre_technique_ids": [
+    "T1078",
+    "T1098"
+  ],
+  "mitre_prevention_ids": [
+    "M1026",
+    "M1018"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate security risk, limited exposure, potential for escalation if not addressed",
+  "estimated_cost": 37500,
+  "sla_met": true,
+  "mttr": 496,
+  "mtta": 8,
+  "remediation_actions": [
+    "Immediately disabled adm-jfoster in Active Directory: Disable-ADAccount -Identity 'adm-jfoster'; removed from Domain Admins and Server Admins security groups",
+    "Reviewed all Active Directory event logs for adm-jfoster over the 187-day dormancy period: 0 successful authentications, 0 RDP sessions, 0 group policy changes — account was completely dormant",
+    "Ran full privileged account audit against HR separation records: Get-ADUser -Filter {Enabled -eq $true} -SearchBase 'OU=AdminAccounts,DC=company,DC=internal' | Where-Object {$_.LastLogonDate -lt (Get-Date).AddDays(-90)} — found 4 stale accounts total (including adm-jfoster); all disabled",
+    "Reviewed the 14 production servers with historical RDP access from adm-jfoster: checked Windows Event ID 4624/4625 logs — 0 logon events associated with adm-jfoster in the dormancy window",
+    "Investigated 195.206.105.x credential testing: confirmed 3 failed authentication attempts against adm-jfoster on Dec 1-2; IP blocked at perimeter firewall; account password was still the original set-at-creation value (not in breach databases)",
+    "Updated ServiceNow offboarding workflow: added regex pattern match for all accounts containing employee ID to capture 'adm-{emp_id}', 'svc-{emp_id}', and 'sa-{emp_id}' naming patterns; tested against 50 historical offboardings"
+  ],
+  "systems_remediated": [
+    "active-directory",
+    "user-management",
+    "access-control"
+  ],
+  "preventive_measures": [
+    "ServiceNow offboarding workflow updated: deprovisioning now targets all accounts across all naming conventions associated with an employee ID, not just primary email-format accounts",
+    "Varonis DSP scheduled scan frequency increased: privileged account dormancy checks now run daily (from weekly) with automatic alert on any Domain Admin account inactive >30 days",
+    "Privileged account lifecycle policy updated: all 'adm-' accounts now have a maximum 12-month validity period; renewal requires manager approval and security review",
+    "Active Directory tiering review scheduled quarterly: IAM team to audit all Domain Admin group members against current employee roster and job function requirements",
+    "Just-In-Time (JIT) privileged access via CyberArk PAM piloted for Domain Admin operations — permanent Domain Admin group membership deprecation roadmap created"
+  ],
+  "security_controls_updated": [
+    "ServiceNow offboarding automation updated: multi-pattern account matching now covers all 6 admin naming conventions used in the organization",
+    "Varonis DSP alert policy updated: any privileged account (Domain Admin, Server Admin) inactive >30 days triggers immediate P2 security alert",
+    "Active Directory Audit Policy enabled: all Domain Admin group membership changes now generate Event ID 4728 alerts in SIEM",
+    "Perimeter firewall updated: 195.206.105.0/24 range blocked following credential testing activity; submitted to threat intelligence blacklist for industry sharing"
+  ],
+  "documentation_updated": [
+    "IT Offboarding Procedure updated: all admin account naming conventions documented with mandatory deprovisioning steps; checklist requires IAM team sign-off for any employee with privileged accounts",
+    "Privileged Account Management Policy updated: max inactive period for all admin accounts set at 30 days; exceptions require quarterly CISO approval",
+    "Identity Governance Runbook updated with Varonis DSP alert response procedure and Active Directory stale account remediation commands",
+    "IAM-2025-0028 Jira ticket created for CyberArk PAM JIT pilot: Domain Admin permanent membership deprecation roadmap documented"
+  ],
+  "lessons_learned": "Human offboarding processes are inherently unreliable when organizations maintain multiple account naming schemes — automation must match the full scope of account provisioning, not just the most common pattern. The discovery that adm-jfoster had been actively targeted by credential testing 3 days before the internal scan represents a near-miss: if the account had been on a breach list with a valid password, the attacker would have had Domain Admin access for 187 days before detection. Domain Admin accounts should never be permanently assigned; the JIT access model via PAM is the correct architecture for privileged operations.",
+  "follow_up_tasks": [
+    "IAM-2025-028: CyberArk PAM JIT pilot for all Domain Admin operations: 60-day pilot with infrastructure team — Owner: IAM, Due: 2026-01-15",
+    "IAM-2025-029: Audit all 'svc-' and 'sa-' service accounts against current system inventory; disable any orphaned accounts — Owner: IAM, Due: 2025-12-11",
+    "IAM-2025-030: Implement Varonis daily privileged account dormancy check across all AD domains; set 30-day auto-disable for Domain Admins — Owner: Security Engineering, Due: 2025-12-18",
+    "IAM-2025-031: Quarterly Active Directory Domain Admin group membership review process formalized with IAM team ownership — Owner: IAM, Due: 2026-01-01"
+  ],
+  "resolution": "adm-jfoster Domain Admin account disabled; 3 additional stale privileged accounts remediated; offboarding automation updated to capture all account naming conventions",
+  "action_taken": "Resolved by security-team within 454 minutes; 4 stale privileged accounts total disabled; zero unauthorized access confirmed in 187-day dormancy window",
+  "entities": {
+    "users": [
+      "adm-jmartinez@company.com"
+    ],
+    "ips": [
+      "91.108.56.129",
+      "194.165.16.92"
+    ],
+    "hosts": [
+      "dc01.company.com"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "Offboarding automation was scoped to standard UPN format accounts only and did not cover accounts with non-standard naming prefixes (adm-, svc-); no periodic privileged account access certification existed; no alerting was configured to detect dormant privileged accounts receiving new authentication activity after extended inactivity",
+  "what_went_well": [
+    "No unauthorized access was observed during the exposure window despite credible external password spray activity targeting the account",
+    "Microsoft Entra ID sign-in logs provided complete visibility into all authentication attempts, enabling definitive scope confirmation within 90 minutes",
+    "The password spray pattern (47 attempts, 30-minute interval, 6 different source IPs) was identified from authentication log analysis and used to update WAF blocklists"
+  ],
+  "what_went_wrong": [
+    "Account offboarding automation only processed standard UPN-format accounts; adm- and svc- prefix variants were excluded from the automated deprovisioning scope",
+    "No periodic access certification process existed for privileged accounts — the stale Domain Admin account went undetected for 8 months post-departure",
+    "No alerting was configured for dormant accounts (inactive >30 days) receiving new authentication events"
+  ]
+}

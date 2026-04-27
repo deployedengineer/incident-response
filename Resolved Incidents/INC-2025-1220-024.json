@@ -1,0 +1,153 @@
+{
+  "@timestamp": "2025-12-20T07:54:49Z",
+  "incident_id": "INC-2025-1220-024",
+  "severity": "high",
+  "status": "resolved",
+  "category": "security",
+  "type": "phishing_attack",
+  "title": "Spear phishing targeting executives",
+  "description": "Microsoft Defender for Office 365 flagged a highly targeted spear-phishing email delivered to 4 C-suite executives (CEO, CFO, COO, CTO) at 23:47 UTC on Dec 19. The email impersonated the company's external legal counsel (sender: m.anderson@whitehurst-legal.co, a lookalike for the genuine whitehurst-legal.com domain) and referenced a live contract negotiation by name. The email contained a OneDrive link to a document requiring 'e-signature via DocuSign' that redirected to a credential harvesting page. The CFO clicked the link and was directed to the fake DocuSign portal; Okta Conditional Access blocked the subsequent login attempt from an unrecognized device. The CFO's account credentials are considered compromised and were immediately invalidated.",
+  "affected_systems": [
+    "exec-accounts",
+    "email-gateway"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Microsoft Defender for Office 365 — Spear-phishing detection (lookalike sender domain + executive targeting pattern); Okta Conditional Access block alert",
+  "tags": [
+    "phishing-attack",
+    "security",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-20T07:54:49Z",
+      "event": "Microsoft Defender for O365 retrospectively flagged the executive spear-phishing email (delivered 23:47 UTC Dec 19) via ZAP with verdict 'Spear Phishing — High Confidence'; simultaneously Okta Conditional Access blocked a login attempt to CFO r.blackwood@company.com from unrecognized device/IP (Berlin, DE)",
+      "actor": "microsoft-defender-o365"
+    },
+    {
+      "timestamp": "2025-12-20T08:01:02Z",
+      "event": "CISO p.reagan@company.com and on-call incident commander notified via PagerDuty P1; CFO r.blackwood@company.com called directly and confirmed clicking the link; Okta account immediately force-logout and password reset initiated",
+      "actor": "p.reagan@company.com"
+    },
+    {
+      "timestamp": "2025-12-20T08:43:16Z",
+      "event": "CFO Okta session forensics completed: login attempt from 185.220.101.34 (Berlin — Tor exit node) blocked by Conditional Access before any access granted; no emails read, no files accessed, no OAuth tokens issued; credentials treated as compromised",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-12-20T13:52:16Z",
+      "event": "All 4 executive accounts received enhanced monitoring; legal counsel (whitehurst-legal.com) notified of lookalike domain abuse; sender domain whitehurst-legal.co blocked; investigation of attacker reconnaissance scope completed (OSINT on contract details traced to a LinkedIn post by CFO 2 weeks prior)",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-20T16:11:16Z",
+      "event": "CFO account re-provisioned with new credentials and FIDO2 hardware key; all executive accounts migrated to phishing-resistant MFA; whitehurst-legal.co infrastructure reported to domain registrar for takedown; incident closed",
+      "actor": "p.reagan@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-20T16:11:16Z",
+  "resolved_by": "p.reagan@company.com",
+  "resolution_time_minutes": 496,
+  "resolution_summary": "The CFO clicked the spear-phishing link and was directed to a fake DocuSign portal, at which point Okta Conditional Access blocked the login attempt from an unrecognized device (Tor exit node, Berlin). Forensic analysis confirmed no OAuth tokens were issued, no emails were read by the attacker, and no files were accessed. The CFO's Okta credentials were force-invalidated within 2 minutes of detection. All 4 targeted executive accounts were migrated to FIDO2 hardware key MFA (phishing-resistant). The attacker's reconnaissance was traced to a public LinkedIn post by the CFO referencing the ongoing contract negotiation — providing the social engineering context used to craft the email.",
+  "root_cause_analysis": "The attacker registered the lookalike domain whitehurst-legal.co (vs the genuine whitehurst-legal.com) 8 days before the attack and configured valid SPF/DKIM/DMARC records to pass email authentication checks. The email referenced a real, ongoing contract negotiation by its correct project name — suggesting the attacker gathered sensitive business context from the CFO's public LinkedIn activity and corporate press releases. The spear-phishing email evaded automated scanning because it contained no malicious attachments or embedded URLs (the OneDrive link pointed to a legitimate Microsoft domain that redirected to the harvesting page only after authentication, bypassing URL detonation). Okta Conditional Access was the sole control that prevented credential use — the existing MFA policy used TOTP (time-based OTP), which would have been susceptible to adversary-in-the-middle interception had the attacker been operating in real time.",
+  "mitre": {
+    "tactic": [
+      "Initial Access",
+      "Credential Access"
+    ],
+    "technique": [
+      "T1566 - Phishing",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1017 - User Training",
+      "M1032 - Multi-factor Authentication",
+      "M1021 - Restrict Web-Based Content"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001",
+    "TA0006"
+  ],
+  "mitre_technique_ids": [
+    "T1566",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1017",
+    "M1032",
+    "M1021"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Significant security exposure, potential data loss, reputation damage risk, compliance concerns",
+  "estimated_cost": 115000,
+  "sla_met": false,
+  "mttr": 496,
+  "mtta": 6,
+  "remediation_actions": [
+    "Force-invalidated CFO r.blackwood@company.com Okta session and password within 2 minutes of alert; revoked all active OAuth tokens issued to the account in the prior 30 days",
+    "Confirmed Okta Conditional Access block was effective: login attempt from 185.220.101.34 (known Tor exit node, Berlin) denied before any access; forensic review of Okta system log confirmed 0 tokens issued",
+    "Manually purged the spear-phishing email from all 4 executive mailboxes via Microsoft Defender admin portal; blocked whitehurst-legal.co domain at email gateway and DNS",
+    "Reported whitehurst-legal.co to Namecheap domain registrar and Microsoft MSRC (OneDrive redirect abuse) for emergency takedown; domain suspended within 6 hours",
+    "Engaged external threat intelligence firm to conduct executive OSINT audit: identified 3 LinkedIn posts and 1 press release as sources the attacker used for social engineering context; advised removal or restriction",
+    "Re-provisioned CFO account with new credentials; immediately enrolled all 4 targeted executives in YubiKey FIDO2 hardware key MFA before re-enabling accounts",
+    "Notified whitehurst-legal.com (genuine legal counsel) of domain spoofing — they added brand monitoring via Corsair and configured a client advisory warning about the lookalike domain"
+  ],
+  "systems_remediated": [
+    "exec-accounts",
+    "email-gateway"
+  ],
+  "preventive_measures": [
+    "All C-suite and VP-level accounts migrated to FIDO2 hardware key MFA (YubiKey 5 NFC) — phishing-resistant and not susceptible to adversary-in-the-middle attacks",
+    "Executive email accounts enrolled in Microsoft Defender for O365 Priority Account Protection: enhanced scanning, priority investigation, dedicated threat monitoring",
+    "Corporate OSINT audit procedure created: quarterly review of executive public social media, press releases, and LinkedIn profiles for business-sensitive information that could enable spear-phishing",
+    "Defender for O365 impersonation protection expanded to include all known external legal counsel, banking, and investor contact list domains with 0-day lookalike detection",
+    "Board and C-suite security briefing scheduled quarterly: CISO to present current spear-phishing campaign intelligence and social engineering tactics"
+  ],
+  "security_controls_updated": [
+    "Okta Conditional Access policy updated: any executive account login from an unrecognized device now requires FIDO2 hardware key — TOTP no longer accepted for Tier 0 accounts",
+    "Microsoft Defender for O365 impersonation protection list updated with 47 external business partner domains and their common lookalike variants",
+    "Email gateway updated: any email referencing contract keywords (NDA, agreement, DocuSign, e-signature) from external senders requires manual security review if sender domain is <30 days old",
+    "Proofpoint CLEAR (Closed-Loop Email Analysis and Response) integrated: automatic executive phishing submissions correlated to global threat intelligence within 30 seconds"
+  ],
+  "documentation_updated": [
+    "Executive VIP Security Playbook created: covers enhanced monitoring, FIDO2 enrollment, OSINT hygiene, and escalation path for C-suite security incidents",
+    "Spear-Phishing Incident Response Runbook updated: FIDO2 emergency provisioning procedure, Okta forensic query templates, and executive notification protocol",
+    "Legal Vendor Communication Protocol updated: all contract-related document requests from legal counsel must be re-validated via a known-good phone number before any link is clicked",
+    "Incident documented in SEC-5298 Jira ticket with full forensic timeline, Okta logs, and attacker OSINT profile for future threat hunting reference"
+  ],
+  "lessons_learned": "TOTP-based MFA is not sufficient protection for high-value targets against targeted spear-phishing campaigns — an adversary with real-time AiTM (Adversary-in-the-Middle) proxy capability could relay the OTP before it expires, bypassing TOTP entirely. FIDO2/WebAuthn is cryptographically bound to the origin domain and cannot be replayed against a lookalike domain. The CFO's LinkedIn posts about the ongoing contract negotiation provided the attacker with the precise social engineering context needed to craft a convincing email — executive digital footprint management needs to be as rigorous as technical security controls.",
+  "follow_up_tasks": [
+    "EXEC-SEC-001: Complete FIDO2 YubiKey enrollment for all 28 VP+ accounts — Owner: IAM, Due: 2025-12-27",
+    "EXEC-SEC-002: Quarterly executive OSINT audit: review and advise on public social media exposure for all C-suite — Owner: Threat Intel, Due: 2026-01-15",
+    "EXEC-SEC-003: Deploy Defender for O365 Priority Account Protection for all executives and department heads (Tier 0/1 accounts) — Owner: Email Security, Due: 2025-12-24",
+    "EXEC-SEC-004: Conduct executive security awareness workshop covering spear-phishing, social engineering, and FIDO2 usage — Owner: CISO, Due: 2026-01-10"
+  ],
+  "resolution": "CFO credentials invalidated; Okta Conditional Access confirmed no access granted; all executive accounts migrated to FIDO2 phishing-resistant MFA",
+  "action_taken": "Resolved by security-team within 463 minutes; incident declared P1 due to C-suite targeting; FIDO2 migration completed for all 4 targeted accounts",
+  "entities": {
+    "users": [
+      "cfo@company.com"
+    ],
+    "ips": [
+      "185.220.101.20"
+    ],
+    "hosts": [],
+    "domains": [
+      "1drv.ms",
+      "m365-secure-login-validation.com"
+    ],
+    "hashes": []
+  },
+  "detection_gap": "Email security controls did not detect the phishing attempt because the attacker used a legitimate Microsoft OneDrive redirect URL as the initial link, bypassing domain reputation checks; no enhanced email scrutiny or additional sender validation was configured for messages targeting C-suite recipients",
+  "what_went_well": [
+    "CFO did not enter credentials on the fake Microsoft 365 login page — the attack was contained at the email interaction stage",
+    "Microsoft Entra ID Conditional Access blocked the simulated re-authentication from an unmanaged, geographically anomalous device",
+    "DMARC strict enforcement was confirmed active on company.com — the attacker could not spoof the company domain directly"
+  ],
+  "what_went_wrong": [
+    "Attacker used a legitimate OneDrive redirect URL which bypassed email gateway domain reputation filtering — the initial redirect was to a trusted Microsoft domain",
+    "No executive-specific enhanced email scrutiny or additional Defender Safe Links policy was configured despite this sector being actively targeted by BEC campaigns",
+    "Credentials were treated as potentially compromised due to limited visibility into whether the CFO interacted with the credential harvesting page before intervention"
+  ]
+}

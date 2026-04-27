@@ -1,0 +1,155 @@
+{
+  "@timestamp": "2025-12-22T02:07:51Z",
+  "incident_id": "INC-2025-1222-019",
+  "severity": "high",
+  "status": "resolved",
+  "category": "security",
+  "type": "data_exfiltration",
+  "title": "Unusual S3 bucket access patterns detected",
+  "description": "AWS GuardDuty fired 'Discovery:S3/AnomalousBehavior' for IAM role arn:aws:iam::123456789:role/data-warehouse-etl, which performed 4,847 ListObjects operations and 1,293 GetObject calls across 7 S3 buckets in 38 minutes — a 47x deviation from the 30-day baseline of ~90 S3 API calls per hour. The role access originated from an IP (167.71.45.29) not associated with the legitimate ETL pipeline's EC2 Auto Scaling group. CloudTrail confirmed the unusual activity was conducted using a valid session token obtained via AssumeRole from the legitimate pipeline, suggesting the pipeline EC2 instance itself had been compromised. GetObject calls targeted customer-segment export files and internal analytics datasets.",
+  "affected_systems": [
+    "s3-customer-data",
+    "s3-access-logs"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "AWS GuardDuty — 'Discovery:S3/AnomalousBehavior' (47x baseline deviation in S3 API call volume from unexpected source IP via compromised IAM role session)",
+  "tags": [
+    "data-exfiltration",
+    "security",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-22T02:07:51Z",
+      "event": "AWS GuardDuty 'Discovery:S3/AnomalousBehavior' fired: data-warehouse-etl IAM role performing 47x baseline S3 API call volume from IP 167.71.45.29 (not associated with ETL EC2 ASG); 1,293 GetObject calls against customer-segment S3 buckets in 38 minutes",
+      "actor": "aws-guardduty"
+    },
+    {
+      "timestamp": "2025-12-22T02:14:21Z",
+      "event": "Cloud security engineer h.yamamoto@company.com revoked data-warehouse-etl IAM role's active session tokens via STS policy; ETL pipeline paused; source IP 167.71.45.29 blocked at security group and NACL level",
+      "actor": "h.yamamoto@company.com"
+    },
+    {
+      "timestamp": "2025-12-22T02:56:46Z",
+      "event": "Compromised ETL EC2 instance identified: i-0a1b2c3d4e (ETL-WORKER-03); CrowdStrike Falcon on instance shows process python3 exfil.py running from /tmp with outbound S3 GetObject calls routed through SOCKS5 proxy to 167.71.45.29; instance terminated and replaced",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-12-22T04:46:46Z",
+      "event": "CloudTrail forensic scope: 1,293 GetObject calls returned 847 successful responses (406 denied after lockout); objects were customer segment CSV files (non-PII analytics aggregates) plus 2 internal ML training datasets; no PII field confirmed in transferred objects",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-12-22T05:40:46Z",
+      "event": "ETL pipeline restarted on clean replacement EC2 instances; IMDSv2 enforced on all ETL nodes; GuardDuty anomaly baseline re-established; GDPR assessment complete; incident closed",
+      "actor": "h.yamamoto@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-22T05:40:46Z",
+  "resolved_by": "h.yamamoto@company.com",
+  "resolution_time_minutes": 212,
+  "resolution_summary": "The compromised data-warehouse-etl IAM role session was revoked within 2 minutes of GuardDuty detection, stopping the active exfiltration. The compromised ETL EC2 instance (i-0a1b2c3d4e) was identified and terminated within 15 minutes. CloudTrail forensics confirmed 847 S3 objects were successfully downloaded before the lockout — all were customer segment analytics aggregates and ML training datasets containing no direct PII (no names, emails, or financial account numbers). A DPO assessment confirmed no GDPR notification was required. The ETL pipeline was restored on clean EC2 instances with IMDSv2 mandatory token enforcement to prevent future SSRF-based metadata service attacks.",
+  "root_cause_analysis": "The attacker compromised EC2 instance i-0a1b2c3d4e (running the data warehouse ETL pipeline) via a Server-Side Request Forgery (SSRF) vulnerability in the ETL web service's HTTP callback feature, which allowed unauthenticated requests to internal endpoints including the EC2 Instance Metadata Service (IMDS). The attacker queried http://169.254.169.254/latest/meta-data/iam/security-credentials/ to obtain the data-warehouse-etl role's temporary session credentials. IMDSv1 was enabled on the instance (no token required for IMDS access), making the SSRF trivially exploitable — IMDSv2 would have required a PUT request with a session token before credential access, blocking SSRF-based IMDS exploitation. The ETL web service's HTTP callback was publicly exposed without authentication as a feature for pipeline webhook integration.",
+  "mitre": {
+    "tactic": [
+      "Exfiltration",
+      "Collection"
+    ],
+    "technique": [
+      "T1530 - Data from Cloud Storage Object",
+      "T1552 - Unsecured Credentials",
+      "T1552.005 - Cloud Instance Metadata API"
+    ],
+    "prevention": [
+      "M1057 - Data Loss Prevention",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0010",
+    "TA0009"
+  ],
+  "mitre_technique_ids": [
+    "T1530",
+    "T1552",
+    "T1552.005"
+  ],
+  "mitre_prevention_ids": [
+    "M1057",
+    "M1041"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Significant security exposure, potential data loss, reputation damage risk, compliance concerns",
+  "estimated_cost": 45000,
+  "sla_met": true,
+  "mttr": 212,
+  "mtta": 6,
+  "remediation_actions": [
+    "Revoked all active STS session tokens for data-warehouse-etl role: aws iam put-role-policy --role-name data-warehouse-etl --policy-name DenyAll --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Action\":\"*\",\"Resource\":\"*\"}]}'; stopped active exfiltration within 90 seconds",
+    "Blocked 167.71.45.29 at EC2 security group and VPC NACL level; terminated compromised EC2 instance i-0a1b2c3d4e using AWS EC2 terminate-instances API",
+    "Forensic scope via CloudTrail Lake query: 1,293 GetObject calls initiated; 847 returned HTTP 200 (before lockout); 406 returned 403 after deny policy applied; confirmed all 847 objects were analytics aggregates (no PII fields present in schema)",
+    "Reviewed all 847 transferred S3 objects against data classification schema: 845 customer-segment aggregate CSV files (group-level analytics, no individual records), 2 ML training datasets with anonymized features — no PII in any",
+    "Enforced IMDSv2 (require_tokens = required) on all ETL EC2 instances via launch template update; terminated and replaced all 5 running ETL instances with new IMDSv2-enforced fleet",
+    "Patched the SSRF vulnerability in the ETL web service HTTP callback: added authentication header requirement and allowlist of approved callback domains; deployed in 90 minutes",
+    "DPO GDPR assessment completed: no personal data in transferred objects; no notification required; incident documented in breach register"
+  ],
+  "systems_remediated": [
+    "s3-customer-data",
+    "s3-access-logs"
+  ],
+  "preventive_measures": [
+    "IMDSv2 enforced across all EC2 instances organization-wide: AWS Config rule 'ec2-imdsv2-check' deployed; non-compliant instances automatically remediated via SSM State Manager",
+    "ETL web service HTTP callback endpoint secured: authentication token required for all webhook callbacks; internal-only SSRF-safe HTTP client library deployed",
+    "S3 bucket policies for customer-data buckets updated: GetObject requests now require session tag 'aws:PrincipalTag/SourceService=etl-pipeline' — compromised credential sessions without the tag are denied",
+    "GuardDuty auto-remediation deployed for S3/AnomalousBehavior: >10x baseline S3 API call volume triggers automatic STS session revocation Lambda within 60 seconds",
+    "Data classification review of all S3 buckets: PII-containing buckets now have additional S3 Object Lock and per-object encryption with customer-managed keys in KMS"
+  ],
+  "security_controls_updated": [
+    "AWS Config rule 'ec2-imdsv2-check' deployed with auto-remediation: any instance not enforcing IMDSv2 is automatically updated via SSM within 1 hour of creation",
+    "GuardDuty EventBridge rule updated: S3/AnomalousBehavior finding with severity >6 triggers automatic IAM role session revocation Lambda",
+    "S3 bucket policies for production data buckets updated with Source Service Session Tag requirement — prevents use of stolen EC2 role credentials from external IPs",
+    "WAF rule added to ETL web service load balancer: blocks any request containing 169.254.169.254 (IMDS address) in URL, header, or body"
+  ],
+  "documentation_updated": [
+    "Cloud Security Architecture document updated: IMDSv2 mandatory for all EC2 instances documented as non-negotiable security baseline; SSRF mitigation patterns added",
+    "AWS Incident Response Runbook updated: GuardDuty S3 anomaly response procedure with STS revocation command, CloudTrail forensic scope query, and IMDS exploitation forensics",
+    "ETL Pipeline Security Design document created: covers SSRF-safe HTTP client requirements, authentication for all external-facing endpoints, and IAM role least-privilege scoping",
+    "GDPR Breach Register updated: INC-2025-1222-019 documented with object classification evidence and DPO assessment conclusion"
+  ],
+  "lessons_learned": "IMDSv1 on EC2 instances is a systemic security debt that enables an entire class of SSRF-to-cloud-credential-theft attacks — this was a well-known attack vector (widely exploited in the 2019 Capital One breach using the same IMDS credential theft technique). IMDSv2 enforcement should have been part of the baseline AMI hardening standard, not an optional configuration. S3 bucket anomaly detection via GuardDuty's behavioral baseline was effective, but the 38-minute window before detection allowed 847 objects to be transferred — the auto-remediation Lambda (triggered at >10x baseline) would have stopped this at approximately 900 API calls (about 6 minutes into the campaign).",
+  "follow_up_tasks": [
+    "CLOUD-1222-01: Deploy AWS Config ec2-imdsv2-check auto-remediation across all 4 AWS accounts and 3 regions — Owner: Cloud, Due: 2025-12-29",
+    "CLOUD-1222-02: Complete S3 data classification audit: identify all buckets containing PII and apply Object Lock + CMK encryption — Owner: Data Governance, Due: 2026-01-15",
+    "CLOUD-1222-03: Deploy GuardDuty auto-remediation Lambda for S3/AnomalousBehavior across all AWS accounts — Owner: Cloud Security, Due: 2025-12-29",
+    "CLOUD-1222-04: Security review of all internal web services with HTTP callback features for SSRF exposure — Owner: Application Security, Due: 2026-01-10"
+  ],
+  "resolution": "IAM role sessions revoked; ETL instance terminated; 847 analytics aggregate objects confirmed transferred with no PII content; IMDSv2 enforced fleet-wide; GDPR notification not required",
+  "action_taken": "Resolved by security-team within 179 minutes of GuardDuty detection; SSRF via IMDSv1 confirmed as root cause; 5 ETL instances replaced with hardened IMDSv2 fleet",
+  "entities": {
+    "users": [
+      "svc-etl-role"
+    ],
+    "ips": [
+      "167.71.45.29"
+    ],
+    "hosts": [
+      "data-export-prod",
+      "i-0a1b2c3d4e5f67890"
+    ],
+    "domains": [
+      "169.254.169.254"
+    ],
+    "hashes": []
+  },
+  "detection_gap": "IMDSv1 was enabled on the data-export EC2 instance without an organizational enforcement policy (SCP) requiring IMDSv2; the SSRF vulnerability in the data-export service URL parameter was not identified during security code review or in DAST scanning runs against the staging environment",
+  "what_went_well": [
+    "AWS GuardDuty UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS alert fired within minutes of the first S3 operation from the attacker's IP",
+    "Temporary STS credential was invalidated via IAM conditions (aws:SourceIp deny policy) within 11 minutes of the GuardDuty alert, preventing further unauthorized API calls",
+    "CloudTrail forensic analysis confirmed exfiltration was limited to 847 analytics objects with no PII, no customer data, and no financial records in scope"
+  ],
+  "what_went_wrong": [
+    "IMDSv1 was permitted on the EC2 instance, enabling credential theft with a single unauthenticated HTTP request — IMDSv2 requires a token exchange that SSRF cannot complete",
+    "SSRF vulnerability in the url parameter of /v1/export/data was not identified in security code review or DAST scanning, allowing the attack chain to be fully realized",
+    "No organization-wide AWS SCP enforced IMDSv2 requirement across all EC2 instances — mitigation was left to individual service teams"
+  ]
+}

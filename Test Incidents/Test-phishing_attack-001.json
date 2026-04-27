@@ -1,0 +1,54 @@
+{
+  "@timestamp": "2025-12-25T08:15:00Z",
+  "incident_id": "Test-phishing_attack-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "security",
+  "type": "phishing_attack",
+  "title": "Spike in inbound emails containing suspicious macro-enabled Office documents",
+  "affected_systems": [
+    "email-gateway"
+  ],
+  "description": "Microsoft Defender for Office 365 intercepted and quarantined multiple emails matching high-confidence phishing patterns. The emails contain malicious macro-enabled attachments and are spoofing an internal IT support address.",
+  "alert_source": "Microsoft Defender for O365",
+  "rule_name": "Phishing email delivered - high confidence",
+  "entities": {
+    "users": ["m.chen@ourdomain.com"],
+    "ips": ["45.12.88.90"],
+    "hosts": [],
+    "domains": ["login-ourdomain-helpdesk.com", "it-support-spoof@ourdomain.com"],
+    "hashes": []
+  },
+  "files": [],
+  "assigned_to": "security-team",
+  "detection_method": "Email gateway pattern matching (macro + sender spoof)",
+  "tags": [
+    "phishing",
+    "security",
+    "high"
+  ],
+  "signal_type": "behavioral",
+  "confidence": "high",
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1566 - Phishing"
+    ],
+    "prevention": [
+      "M1017 - User Training",
+      "M1054 - Software Configuration"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1566"
+  ],
+  "mitre_prevention_ids": [
+    "M1017",
+    "M1054"
+  ]
+}

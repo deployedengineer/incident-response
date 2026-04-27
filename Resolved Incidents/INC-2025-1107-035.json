@@ -1,0 +1,146 @@
+{
+  "@timestamp": "2025-11-07T07:12:59Z",
+  "incident_id": "INC-2025-1107-035",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "ddos_attack",
+  "title": "Volumetric DDoS attack on DNS infrastructure",
+  "description": "Cloudflare DDoS Analytics detected a volumetric DNS amplification attack targeting the company's authoritative DNS servers (authoritative-ns, hosted on Route 53), generating 4.8 million DNS query responses per second during the peak 22-minute attack window. The attack used a UDP reflection pattern: thousands of compromised third-party DNS resolvers were directed to send ANY-type queries spoofed with the company's DNS server IP, causing the amplification responses to flood the target IP. Route 53's distributed architecture absorbed most traffic without service impact, but 2 of the 4 authoritative nameserver IPs registered 12-14% packet loss during the peak, causing intermittent DNS resolution failures for ~3% of end-user queries resolving company.com.",
+  "affected_systems": [
+    "dns-servers",
+    "authoritative-ns"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Cloudflare DDoS Analytics — 'DNS query flood: >1M queries/second' threshold alert; Route 53 Health Check failure rate >5% on 2 of 4 nameserver IPs",
+  "tags": [
+    "ddos-attack",
+    "infrastructure",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-07T07:12:59Z",
+      "event": "Cloudflare DDoS Analytics alert: authoritative DNS receiving 4.8M query responses/second (UDP reflection/amplification, ANY-type queries); Route 53 Health Checks showing 12-14% packet loss on ns1.company.com and ns2.company.com; ~3% end-user DNS resolution failure rate",
+      "actor": "cloudflare-ddos-analytics"
+    },
+    {
+      "timestamp": "2025-11-07T07:17:33Z",
+      "event": "On-call network engineer t.osei@company.com acknowledged; AWS Shield Advanced auto-mitigation already active (detected attack before alert); disabled DNS ANY query type responses on Route 53 to remove amplification factor; contacted AWS Support for enhanced mitigation",
+      "actor": "t.osei@company.com"
+    },
+    {
+      "timestamp": "2025-11-07T07:35:38Z",
+      "event": "Attack pattern confirmed as DNS amplification reflection: UDP ANY queries with spoofed source IPs targeting company DNS; AWS Shield Advanced absorbing majority of volumetric traffic; attack source identified as Mirai botnet variant based on CrowdStrike threat intel",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-07T08:03:38Z",
+      "event": "AWS Shield Advanced full mitigation engaged; Route 53 anycast routing actively diverting attack traffic to AWS scrubbing centers; packet loss on 2 affected nameserver IPs returned to <1%; DNS resolution failure rate returned to baseline 0.1%",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-07T08:22:38Z",
+      "event": "Attack subsided; AWS Shield Advanced mitigation rolled back to normal mode; DNS ANY query restriction retained as permanent hardening; DNS performance monitoring confirmed normal for 30 minutes; incident closed",
+      "actor": "t.osei@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-07T08:22:38Z",
+  "resolved_by": "t.osei@company.com",
+  "resolution_time_minutes": 69,
+  "resolution_summary": "AWS Shield Advanced auto-mitigation engaged within 60 seconds of the attack starting and absorbed the majority of the 4.8M QPS volumetric traffic. DNS ANY query responses were disabled within 2 minutes, removing the primary amplification factor. AWS Shield Advanced scrubbing centers fully mitigated the attack within 43 minutes. End-user DNS resolution failure rate returned to baseline (<0.1%) within 28 minutes of mitigation activation. The attack was attributed to a Mirai botnet variant based on source IP infrastructure matching campaign fingerprints in CrowdStrike Adversary Intelligence.",
+  "root_cause_analysis": "The attack exploited the DNS amplification technique using DNS ANY queries — a query type that returns all record types for a domain, producing response payloads 28-54x larger than the query request. By spoofing the source IP in the DNS requests, the attacker directed these large responses toward the target IP rather than their own. The company's authoritative nameservers were responding to ANY queries as designed (RFC-compliant), making them willing amplifiers in the attack chain. DNS ANY query responses have been considered a public internet security risk for years (RFC 8482 recommends servers return HINFO records instead), but no configuration to restrict or minimize ANY responses had been applied.",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1498 - Network Denial of Service"
+    ],
+    "prevention": [
+      "M1037 - Filter Network Traffic",
+      "M1031 - Network Intrusion Prevention"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1498"
+  ],
+  "mitre_prevention_ids": [
+    "M1037",
+    "M1031"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "3% DNS resolution failure rate for 28 minutes; intermittent service access issues for subset of users",
+  "estimated_cost": 5000,
+  "sla_met": true,
+  "mttr": 69,
+  "mtta": 4,
+  "remediation_actions": [
+    "Disabled DNS ANY query type responses on Route 53: aws route53resolver update-resolver-endpoint -- configured DENY policy for ANY query responses; attack amplification factor reduced from 48x to 0x for this vector",
+    "AWS Shield Advanced enhanced protection request filed with AWS Support (Case #133742893): AWS DDoS Response Team engaged within 8 minutes; additional scrubbing capacity allocated to us-east-1 anycast nodes",
+    "Confirmed AWS Shield Advanced auto-mitigation was active: CloudWatch ElasticLoadBalancing/NetworkLoadBalancer DDoS metrics showing 'DDoSAttack' event, 'MitigationsApplied' count > 0",
+    "Monitored Route 53 Health Check metrics during mitigation: ns1.company.com packet loss returned from 14% to 0.8% within 21 minutes of Shield Advanced full engagement; ns2.company.com returned from 12% to 0.6%",
+    "Reviewed Route 53 query logs for 3% resolution failure: confirmed failures were for company.com A record queries (most sensitive); no CNAME chain or MX record failures noted",
+    "Submitted Mirai botnet source IP list (847 IPs) to CrowdStrike threat intelligence for cross-customer sharing; AWS provided scrubbing telemetry for incident record"
+  ],
+  "systems_remediated": [
+    "dns-servers",
+    "authoritative-ns"
+  ],
+  "preventive_measures": [
+    "DNS ANY query restriction retained permanently per RFC 8482: authoritative nameservers now return HINFO 'RFC8482' for ANY queries instead of full record dumps, eliminating amplification utility",
+    "Route 53 Health Check failure rate alarm added: >5% failure rate on any authoritative nameserver IP triggers PagerDuty P2 alert (previously no DNS health check alarming existed)",
+    "AWS Shield Advanced configured for DNS-specific protection profiles: UDP flood and DNS amplification patterns added to enhanced detection configuration",
+    "Secondary DNS provider (NS1) provisioned as a hot-standby: in future attacks, Route 53 and NS1 share DNS query load via NS record delegation, halving the volumetric impact on each provider"
+  ],
+  "security_controls_updated": [
+    "Route 53 DNS response policy updated: ANY query type returns RFC 8482 HINFO response; removes DNS amplification attack vector from authoritative nameservers",
+    "AWS Shield Advanced proactive engagement enabled for company's VIP IP addresses (load balancer IPs, authoritative NS IPs): AWS DRT proactively notified for any >1M PPS events",
+    "Cloudflare DDoS Analytics alert threshold lowered: DNS query flood alert now fires at 500K QPS (from 1M QPS) — earlier warning before impact",
+    "NS1 secondary DNS configured: SOA serial synchronization with Route 53 via AXFR zone transfer; tested and validated with DNS propagation monitoring"
+  ],
+  "documentation_updated": [
+    "DNS Security Runbook created: DNS amplification attack response procedure, AWS Shield Advanced engagement steps, Route 53 ANY query restriction commands, and NS1 failover procedure",
+    "Network Architecture Document updated: dual DNS provider topology with Route 53 + NS1 hot standby documented; NS record delegation configuration",
+    "AWS Shield Advanced Configuration Guide updated: DNS-specific protection profiles, proactive engagement settings, and DDoS Response Team escalation procedure",
+    "NET-2025-1107 Jira ticket archived with attack telemetry, Shield Advanced scrubbing metrics, and source IP botnet attribution"
+  ],
+  "lessons_learned": "DNS amplification attacks targeting authoritative nameservers are a well-understood attack class with a simple, standards-based mitigation: restricting ANY query responses per RFC 8482 removes the amplification factor entirely. This hardening should have been applied at provisioning time, not in response to an attack. AWS Shield Advanced's anycast-based scrubbing is highly effective against volumetric DNS attacks but has a ~20-minute full engagement time — secondary DNS providers provide resilience during that window by distributing query load across multiple anycast networks.",
+  "follow_up_tasks": [
+    "NET-1107-01: Validate NS1 secondary DNS hot-standby: run quarterly failover test with traffic split 50/50 between Route 53 and NS1 — Owner: Network, Due: 2025-11-21",
+    "NET-1107-02: AWS Shield Advanced proactive engagement enabled for all company VIP IPs — Owner: Cloud Security, Due: 2025-11-11",
+    "NET-1107-03: DNS security audit: review entire RFC 8482 compliance and DNSSEC signing status for all company.com zones — Owner: Network, Due: 2025-11-21",
+    "NET-1107-04: Cloudflare DDoS Analytics integration with Splunk SIEM for DNS attack telemetry correlation — Owner: Network Security, Due: 2025-12-01"
+  ],
+  "resolution": "Attack mitigated by AWS Shield Advanced in 28 minutes; ANY query amplification factor eliminated; NS1 secondary DNS provisioned as hot-standby",
+  "action_taken": "Resolved by infrastructure-team within 62 minutes of Cloudflare DNS analytics alert",
+  "entities": {
+    "users": [
+      "t.osei@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "dns-servers",
+      "authoritative-ns"
+    ],
+    "domains": [
+      "company.com"
+    ],
+    "hashes": []
+  },
+  "alert_source": "Cloudflare DDoS Analytics",
+  "detection_gap": "DNS ANY query responses were not restricted per RFC 8482 guidance, making the company's authoritative nameservers willing amplifiers in the attack chain; no secondary DNS provider existed to absorb query load during AWS Shield Advanced's ~20-minute full engagement window; no Route 53 Health Check failure rate alerting existed before this incident",
+  "what_went_well": [
+    "AWS Shield Advanced auto-mitigation engaged within 60 seconds of the attack peak without requiring manual escalation or a Support case",
+    "Disabling DNS ANY query responses immediately removed the amplification factor, reducing the attack's effective volume",
+    "End-user DNS resolution failure rate was limited to approximately 3% during the 28-minute peak impact window — all running services remained operational"
+  ],
+  "what_went_wrong": [
+    "DNS ANY query responses were not restricted despite RFC 8482 being published in 2018, representing a multi-year exposure that was a known amplification risk",
+    "No secondary DNS provider existed; Route 53 was a single DNS authority, concentrating amplification impact on a single anycast network",
+    "No Route 53 Health Check failure rate alerting existed — packet loss on 2 nameserver IPs went undetected until the Cloudflare alert fired"
+  ]
+}

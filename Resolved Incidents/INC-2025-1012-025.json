@@ -1,0 +1,148 @@
+{
+  "@timestamp": "2025-10-12T10:52:06Z",
+  "incident_id": "INC-2025-1012-025",
+  "severity": "high",
+  "status": "resolved",
+  "category": "security",
+  "type": "stale_account",
+  "title": "Former contractor account still active",
+  "description": "Okta's identity governance weekly report flagged 'contractor.t.nguyen@company.com' as an active account with a last login of 203 days ago (March 22, 2025). Cross-referencing with the HR vendor management system confirmed T. Nguyen's contract ended February 28, 2025 — the account had been active and enabled for 42 days after contract termination with no deprovisioning action taken. The account held Okta group memberships providing access to production GitHub repositories, the AWS staging environment, Jira, and Confluence. An anomalous authentication event was detected: the account logged into GitHub from IP 91.213.8.14 (Eastern Europe — never previously used by this account) 48 hours before the report, browsing 3 production API service repositories.",
+  "affected_systems": [
+    "contractor-accounts",
+    "github-prod",
+    "aws-staging"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Okta identity governance weekly report (dormant account detection) + GitHub audit log anomalous access from new geographic IP",
+  "tags": [
+    "stale-account",
+    "security",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-12T10:52:06Z",
+      "event": "Okta identity governance report flagged contractor.t.nguyen@company.com: contract ended Feb 28, account active 42 days post-termination with no offboarding action; GitHub audit log shows authenticated access from 91.213.8.14 (Kyiv, UA) 48 hours prior — browsed repos: payment-service, auth-service, notification-api",
+      "actor": "okta-identity-governance"
+    },
+    {
+      "timestamp": "2025-10-12T11:01:59Z",
+      "event": "On-call security engineer c.petrov@company.com acknowledged; immediately suspended contractor.t.nguyen@company.com in Okta (all SSO sessions killed); GitHub PAT tokens associated with the account revoked",
+      "actor": "c.petrov@company.com"
+    },
+    {
+      "timestamp": "2025-10-12T11:54:46Z",
+      "event": "Root cause confirmed: contractor offboarding request was submitted to IT on Feb 28 but assigned to a ticketing queue that had a 7-day SLA backlog; ticket was closed without action after the original submitter left the company; no automated deprovisioning triggered for contractor accounts",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-10-12T16:49:46Z",
+      "event": "GitHub audit log forensic review completed: Oct 10 session from 91.213.8.14 showed 14 repository browsing events (no clone, no download, no commit); T. Nguyen contacted directly — confirmed he logged in out of personal curiosity and had not shared credentials; session treated as unauthorized access regardless",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-10-12T19:03:46Z",
+      "event": "Full contractor account audit completed: 7 additional contractor accounts found active past contract end dates; all deprovisioned; GitHub repository exposed to account scoped to least-privilege contractor access tier; incident closed",
+      "actor": "c.petrov@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-12T19:03:46Z",
+  "resolved_by": "c.petrov@company.com",
+  "resolution_time_minutes": 491,
+  "resolution_summary": "contractor.t.nguyen@company.com was immediately suspended in Okta and all GitHub Personal Access Tokens revoked. GitHub audit log forensics confirmed the Oct 10 session from the Eastern European IP browsed 3 repositories but performed no clone, download, or commit operations. T. Nguyen confirmed the access but this was treated as unauthorized regardless of intent. A full audit found 7 additional contractor accounts active past their end dates — all deprovisioned. The root failure was a manual offboarding queue with no automated deprovisioning for contractor identity lifecycle events.",
+  "root_cause_analysis": "The contractor offboarding process relied on a manual IT helpdesk ticket submission with a variable SLA. The ticket for T. Nguyen was submitted on Feb 28 but was assigned to a queue with a 7-business-day backlog due to a concurrent system migration project. The original requestor (T. Nguyen's manager) left the company 2 weeks later, and nobody followed up on the unresolved ticket. The ticket was auto-closed by the ITSM system after 45 days of inactivity. Unlike employee accounts (which were tied to HR system termination events that triggered automated Okta deprovisioning), contractor accounts had no automated lifecycle management — they required manual offboarding actions. The GitHub access from an Eastern European IP 203 days post-contract-end represents a serious insider threat risk scenario regardless of the claimed intent.",
+  "mitre": {
+    "tactic": [
+      "Persistence",
+      "Privilege Escalation"
+    ],
+    "technique": [
+      "T1078 - Valid Accounts",
+      "T1098 - Account Manipulation"
+    ],
+    "prevention": [
+      "M1026 - Privileged Account Management",
+      "M1018 - User Account Management"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0003",
+    "TA0004"
+  ],
+  "mitre_technique_ids": [
+    "T1078",
+    "T1098"
+  ],
+  "mitre_prevention_ids": [
+    "M1026",
+    "M1018"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Significant security exposure, potential data loss, reputation damage risk, compliance concerns",
+  "estimated_cost": 110000,
+  "sla_met": false,
+  "mttr": 491,
+  "mtta": 9,
+  "remediation_actions": [
+    "Immediately suspended contractor.t.nguyen@company.com in Okta: all active SSO sessions killed, MFA devices deregistered; suspended rather than deleted to preserve audit trail",
+    "Revoked all 3 GitHub PATs associated with the account via GitHub admin API: DELETE /user/installations and /user/repos token revocation for each PAT",
+    "Ran GitHub audit log query for the Oct 10 session (91.213.8.14): 14 repository view events on payment-service (3 files), auth-service (2 files), notification-api (1 file) — zero git clone, push, pull, or download events; IP geolocation confirmed Kyiv, UA",
+    "Reviewed all 3 exposed repositories for any code changes in the prior 30 days that had unexpected commits — none found; code integrity verified via git log --author='t.nguyen'",
+    "Conducted full contractor account audit: queried HR vendor management system for all contracts ended in 2025 and cross-referenced against Okta active accounts — found 7 additional contractors with accounts active past end dates (ranging from 11 to 67 days); all deprovisioned",
+    "Downscoped GitHub access for remaining contractor tier: contractor accounts now limited to forked read-only repositories, not production repository access",
+    "Notified Legal team of unauthorized access event for contractor T. Nguyen; former contractor informed their access constituted a breach of their NDA contractor agreement"
+  ],
+  "systems_remediated": [
+    "contractor-accounts",
+    "github-prod",
+    "aws-staging"
+  ],
+  "preventive_measures": [
+    "Okta Lifecycle Management integration with HR vendor management system deployed: contractor account expiration now auto-triggered on contract end date with T-7 day warning",
+    "Contractor account maximum validity period set as hard timeout: accounts auto-disabled at contract end date plus 1 business day regardless of ticket status",
+    "GitHub contractor access model redesigned: all contractors use 'external collaborator' role on forked repositories only — no production repository access",
+    "Okta weekly identity governance report converted to daily automated alert: any account with last login >90 days now generates a P3 ticket automatically",
+    "Contractor offboarding now requires dual approval: hiring manager + IAM team sign-off; neither party can close the ticket without the other's confirmation"
+  ],
+  "security_controls_updated": [
+    "Okta Lifecycle Management provisioning rules updated: contractor accounts now include contract_end_date attribute; automated deprovisioning workflow triggers on that date",
+    "GitHub access policy updated: contractor external collaborator access restricted to non-production repositories; production access requires explicit security exception with CISO approval",
+    "ITSM auto-close policy removed for security-related offboarding tickets: these tickets now require manual resolution confirmation and cannot be auto-closed",
+    "AWS staging environment access policy updated: contractor IAM roles now include a session duration maximum of 8 hours and require re-authentication daily"
+  ],
+  "documentation_updated": [
+    "Contractor Lifecycle Management Policy created: covers pre-engagement provisioning, access scoping, mid-contract access review, and automated deprovisioning requirements",
+    "IT Offboarding Procedure updated: separate contractor offboarding checklist created with 5-hour SLA from contract end date and automated escalation",
+    "GitHub Access Control Matrix updated: contractor tier access levels documented with production repository access explicitly prohibited",
+    "IAM-2025-0047 Jira ticket documenting the 8-contractor stale account audit findings archived for compliance record"
+  ],
+  "lessons_learned": "Contractor identity lifecycle management must be treated as a first-class automated workflow, not a manual ticketing process — the 42-day gap between contract end and deprovisioning represents an unacceptable window of unauthorized access risk, and the failure mode (manager leaving without follow-up) is entirely predictable. The GitHub access scoping for contractors was also too broad: viewing production source code for payment and authentication services is a significant IP and business risk even without data download. Repositories should be scoped to only what contractors actively work on, reviewed monthly, and revoked automatically at contract end.",
+  "follow_up_tasks": [
+    "IAM-2025-047: Complete Okta Lifecycle Management integration with HR vendor system — automate contractor deprovisioning on contract end date — Owner: IAM, Due: 2025-10-26",
+    "IAM-2025-048: Migrate all 23 existing contractors to 'external collaborator' forked repo model; remove production repository access — Owner: GitHub Admin, Due: 2025-10-19",
+    "IAM-2025-049: Conduct quarterly contractor access review — all active contractor accounts verified against current contract status — Owner: IAM, Due: 2026-01-01",
+    "IAM-2025-050: Legal review of contractor NDA/agreement to include explicit unauthorized access clause covering post-contract access — Owner: Legal, Due: 2025-11-01"
+  ],
+  "resolution": "contractor.t.nguyen@company.com suspended; 7 additional stale contractor accounts deprovisioned; Okta automated deprovisioning deployed for contractor lifecycle; no data exfiltration confirmed",
+  "action_taken": "Resolved by security-team within 444 minutes; 8 stale contractor accounts total remediated across the investigation",
+  "entities": {
+    "users": [
+      "t.rao.contractor@company.com"
+    ],
+    "ips": [],
+    "hosts": [],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "Contractor account access was not automatically revoked on contract end date; no time-bounded access enforcement existed at provisioning to set an account expiry date; GitHub PAT revocation was not included in the contractor offboarding automation, leaving privileged repository access active indefinitely after contract completion",
+  "what_went_well": [
+    "Okta and GitHub audit logs provided complete sequential visibility into all access events during the prolonged activity window, enabling definitive scope confirmation",
+    "SOAR playbook successfully revoked the GitHub PAT and terminated all active Okta sessions within minutes of alert acknowledgment",
+    "CloudTrail logs confirmed the contractor's repository access was limited to the 3 previously-authorized repos — no lateral movement to other code or sensitive systems was observed"
+  ],
+  "what_went_wrong": [
+    "Contractor account access was not automatically revoked when the contract end date passed — manual HR-to-IT handoff process had failed to trigger offboarding",
+    "No automated notification or escalation existed when contractor accounts remained active beyond their documented contract end date",
+    "Intent could not be independently verified beyond the contractor's statement — the activity was treated as unauthorized access regardless, as required by policy"
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "@timestamp": "2025-10-31T22:18:48Z",
+  "incident_id": "INC-2025-1031-016",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "service_outage",
+  "title": "Database cluster complete outage",
+  "description": "Datadog database monitoring detected complete unavailability of the primary PostgreSQL cluster (postgres-cluster, 3-node RDS Multi-AZ) at 22:17 UTC on Oct 30. All 3 replica-nodes had failed over simultaneously after the primary instance ran out of available connections (max_connections=500 exceeded; actual connection count hit 502 at failure). The connection surge was traced to a batch processing job (nightly-analytics-etl) that was mis-configured with a connection pool size of 300 per worker, and had been scaled to 2 workers by an auto-scaling policy triggered by CPU load — resulting in 600 attempted connections against a cluster with a 500 connection limit. All application services that depended on the database began returning HTTP 500 at 22:17 UTC.",
+  "affected_systems": [
+    "postgres-cluster",
+    "replica-nodes"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Datadog RDS Integration monitor — 'PostgreSQL connection count > 95% of max_connections' threshold trigger; simultaneous HTTP 500 spike on all application services",
+  "tags": [
+    "service-outage",
+    "infrastructure",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-31T22:18:48Z",
+      "event": "Datadog RDS monitor alerted: postgres-cluster connection count reached 502/500 (max_connections exceeded); primary instance unavailable; RDS Multi-AZ failover initiated automatically but replica also overwhelmed; all app services returning HTTP 500; PagerDuty P1 fired",
+      "actor": "datadog-rds-monitor"
+    },
+    {
+      "timestamp": "2025-10-31T22:22:19Z",
+      "event": "On-call DBA r.fontaine@company.com acknowledged; nightly-analytics-etl job identified as connection surge source (RDS performance insights showing 2 ETL workers × 300 pool size = 600 attempted connections); ETL job immediately terminated via ECS task stop command",
+      "actor": "r.fontaine@company.com"
+    },
+    {
+      "timestamp": "2025-10-31T22:40:25Z",
+      "event": "Root cause confirmed: nightly-analytics-etl connection pool size was 300 per worker (configured Oct 22 by a.chen@company.com for performance optimization); autoscaling policy scaled to 2 workers due to Oct 30 end-of-month analytics load spike; combined effect (600 connections) exceeded max_connections limit",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-01T03:54:25Z",
+      "event": "ETL job terminated; database connections drained and cluster recovered; pgBouncer connection pooling deployed as a proxy layer; ETL job pool size reconfigured to 50 per worker with max_workers=4 cap; deployed PgBouncer with pool_size=200 as database-level connection management layer",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-01T06:15:25Z",
+      "event": "All application services confirmed healthy; Datadog monitoring green; ETL job re-run completed successfully through PgBouncer; max_connections RDS alarm threshold corrected; incident closed",
+      "actor": "r.fontaine@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-01T06:15:25Z",
+  "resolved_by": "r.fontaine@company.com",
+  "resolution_time_minutes": 476,
+  "resolution_summary": "Terminating the nightly-analytics-etl job freed database connections within 15 minutes, allowing the cluster to recover without a full RDS multi-AZ failover. PgBouncer was deployed as a connection pooling proxy limiting total database connections to 200 regardless of application-layer pool configurations. The ETL job pool size was reduced from 300 to 50 per worker, with a hard cap of 4 maximum workers, ensuring the maximum possible connection demand is 200 — safely within the RDS max_connections limit of 500. Total outage duration was 5.5 hours due to the time required to deploy and validate PgBouncer.",
+  "root_cause_analysis": "A performance optimization change on Oct 22 increased the nightly-analytics-etl connection pool size from 50 to 300 per worker to reduce query latency. This change was tested against a staging RDS instance with max_connections=1000 (a larger instance type than production) and passed without issue. The production RDS instance has max_connections=500. The ETL auto-scaling policy was configured to scale up based on CPU utilization, not connection pool usage; the Oct 30 end-of-month analytics load spike triggered scale-out from 1 to 2 workers (automated, no human approval required). Two workers × 300 pool size = 600 attempted connections, exceeding the 500 hard limit. No alerting was configured for the 'connection pool size of ETL service' metric, so the risk was invisible until the cluster failed.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 5000,
+  "business_impact": "Complete database unavailability for 5.5 hours; all application services returning HTTP 500; $391K estimated revenue and productivity impact",
+  "estimated_cost": 390000,
+  "sla_met": false,
+  "mttr": 476,
+  "mtta": 3,
+  "remediation_actions": [
+    "Terminated nightly-analytics-etl ECS tasks: aws ecs stop-task --cluster analytics --task <task-id> for both running workers; connection count dropped from 502 to 34 (legitimate application connections) within 3 minutes",
+    "Confirmed RDS cluster recovery: SHOW max_connections; returned 500; SELECT count(*) FROM pg_stat_activity; returned 34; primary instance accepting new connections; all 3 replica-nodes synchronized",
+    "Deployed PgBouncer connection pooler on 2 EC2 instances in the prod VPC: configured pool_size=200, default_pool_size=20 per database/user pair; all application services DNS updated to point to PgBouncer endpoint",
+    "Reconfigured nightly-analytics-etl: connection pool size reduced from 300 to 50 per worker; max ECS service desired_count capped at 4 (max 200 connections, well within PgBouncer's 200-cap); deployed and validated",
+    "Ran ETL job test with 4 workers via PgBouncer: SELECT count(*) FROM pg_stat_activity peaked at 187 — confirmed within safe limits; full nightly job re-run completed in 3.2 hours (vs normal 2.8 hours — acceptable trade-off)",
+    "Reviewed all 14 microservices for connection pool sizes: found 3 services with pool sizes >50; reduced to 20 each to stay within PgBouncer queue budget"
+  ],
+  "systems_remediated": [
+    "postgres-cluster",
+    "replica-nodes"
+  ],
+  "preventive_measures": [
+    "PgBouncer connection pooler deployed permanently as a mandatory intermediary: no application can now exceed database-level connection limits regardless of application pool configuration",
+    "max_connections alarm set at 70% threshold (350/500): triggers PagerDuty P2 warning, giving 30 minutes to investigate before reaching the 500-connection failure point",
+    "ETL job autoscaling policy updated: scale-out now gated on both CPU >70% AND available PostgreSQL connection headroom >100 (via a custom CloudWatch metric from PgBouncer stats)",
+    "Database connection configuration review added to pre-deployment checklist: any change to connection pool sizes requires a staged test against an RDS instance of the same instance class as production"
+  ],
+  "security_controls_updated": [
+    "Datadog RDS integration alarms updated: 'PostgreSQL connections > 350 (70% of max)' now triggers P2 alert with 'connection approaching limit' context; the previous threshold was 95% (475/500) — too close to failure",
+    "PgBouncer deploy: database-level hard connection limit now enforced at PgBouncer layer regardless of application config; max_client_conn=1000, pool_size=200",
+    "AWS RDS parameter group updated: max_connections for postgres-cluster increased to 800 as a graduated buffer (RDS db.r6g.2xlarge can support 800); provides headroom while PgBouncer architecture is validated",
+    "ECS service autoscaling policies for analytics jobs updated to include a custom CloudWatch metric: 'DBConnectionHeadroom' must be >100 before any scale-out event is approved"
+  ],
+  "documentation_updated": [
+    "Database Operations Runbook updated: PostgreSQL connection exhaustion response procedure with PgBouncer stats commands and ETL termination procedure",
+    "ETL Engineering Standards updated: mandatory connection pool documentation in service config; autoscaling policies must account for max connection contribution",
+    "PgBouncer Architecture Document created: deployment topology, pool configuration, monitoring setup, and failover procedure",
+    "Incident postmortem published: OPS-2025-1031 with timeline, $391K impact calculation, and 4 corrective actions with owners and deadlines"
+  ],
+  "lessons_learned": "Connection pool sizes are infrastructure-level configuration with service-wide blast radius when misconfigured — a change to a single batch job's pool size caused a complete database outage affecting all services. Connection pooling infrastructure (PgBouncer/pgpool) provides the correct architectural isolation: applications believe they have unlimited connection capability but the pooler enforces database-level limits transparently. Autoscaling policies must account for the resource cost of each additional worker, not just CPU/memory — database connections are a scalable resource that autoscaling policies were completely blind to.",
+  "follow_up_tasks": [
+    "DB-OPS-001: Deploy PgBouncer in HA configuration (2 active instances with health check-based failover) — Owner: DBA, Due: 2025-11-14",
+    "DB-OPS-002: Review and adjust connection pool sizes for all 14 microservices to stay within PgBouncer budget — Owner: Platform, Due: 2025-11-07",
+    "DB-OPS-003: Implement 'DBConnectionHeadroom' custom CloudWatch metric for all ETL autoscaling policies — Owner: Platform, Due: 2025-11-07",
+    "DB-OPS-004: Upgrade postgres-cluster to db.r6g.4xlarge to increase max_connections to 1600 and reduce future connection constraint risk — Owner: DBA, Due: 2025-11-21"
+  ],
+  "resolution": "ETL job terminated; PgBouncer deployed as connection pooling layer; all application services restored; max_connections alarm threshold corrected to 70%",
+  "action_taken": "Resolved by infrastructure-team within 470 minutes; 5.5-hour outage due to connection exhaustion cascade; PgBouncer architecture deployed as permanent fix",
+  "entities": {
+    "users": [
+      "r.fontaine@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "postgres-cluster",
+      "replica-nodes"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog RDS Integration",
+  "detection_gap": "No monitoring existed on application-level connection pool sizes or aggregate connection demand across autoscaled ETL workers; autoscaling policy evaluated CPU utilization only and was completely blind to the database connection cost of each additional worker; no alerting threshold was configured for connection count approaching the RDS max_connections limit until it was breached",
+  "what_went_well": [
+    "Terminating the nightly-analytics-etl ECS tasks freed database connections within 3 minutes, allowing the cluster to recover without a full RDS Multi-AZ recreate",
+    "RDS Performance Insights correctly identified the ETL job as the connection surge source within 8 minutes of investigation",
+    "All application services were stateless and reconnected automatically once connection headroom was restored"
+  ],
+  "what_went_wrong": [
+    "ETL connection pool size was increased from 50 to 300 per worker without testing against a production-equivalent RDS instance (staging used db.r6g.4xlarge vs production db.r6g.2xlarge)",
+    "Autoscaling policy scaled ETL workers based solely on CPU utilization with no awareness of database connection demand",
+    "No alerting existed for connection count approaching max_connections until the hard limit of 500 was breached and the cluster became unavailable"
+  ]
+}

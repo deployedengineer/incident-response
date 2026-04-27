@@ -1,0 +1,147 @@
+{
+  "@timestamp": "2025-11-29T07:22:29Z",
+  "incident_id": "INC-2025-1129-031",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "application",
+  "type": "vulnerable_dependency",
+  "title": "Log4j vulnerability detected in multiple services",
+  "description": "Snyk SCA scanning detected Log4j 2.14.1 (vulnerable to CVE-2021-44228, Log4Shell, CVSS 10.0) still present in the production JAR of three backend Java services: payment-processor, invoice-service, and audit-logger. The services were deployed in November 2021 during the original Log4Shell crisis and received an emergency patch at the time, but a subsequent infrastructure migration in Q2 2023 had inadvertently reverted the payment-processor service to an older AMI that pre-dated the Log4j patch. The Snyk finding surfaced during an automated container scan triggered by the Q4 2025 security audit cycle. AWS Inspector independently confirmed CVE-2021-44228 as actively exploitable in the payment-processor container.",
+  "affected_systems": [
+    "payment-processor",
+    "invoice-service",
+    "logging-infrastructure"
+  ],
+  "assigned_to": "application-team",
+  "detection_method": "Snyk SCA container scan + AWS Inspector vulnerability assessment — CVE-2021-44228 (Log4Shell, CVSS 10.0) detected in active production JAR of payment-processor service",
+  "tags": [
+    "vulnerable-dependency",
+    "application",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-29T07:22:29Z",
+      "event": "Snyk SCA quarterly container scan detected Log4j 2.14.1 (CVE-2021-44228, Log4Shell, CVSS 10.0) in production JAR of payment-processor service (confirmed exploitable); invoice-service and audit-logger on Log4j 2.15.0 (partial fix only, still vulnerable to CVE-2021-45046); AWS Inspector independently confirmed payment-processor exploitability",
+      "actor": "snyk-sca"
+    },
+    {
+      "timestamp": "2025-11-29T07:28:19Z",
+      "event": "P0 declared by application security lead t.chen@company.com; payment-processor surrounded with WAF rules blocking JNDI lookup patterns (${jndi:ldap://, ${jndi:rmi://} as immediate mitigation; AWS Inspector findings shared with engineering team",
+      "actor": "t.chen@company.com"
+    },
+    {
+      "timestamp": "2025-11-29T08:07:12Z",
+      "event": "Root cause identified: Q2 2023 infrastructure migration to new ECS cluster used an AMI snapshot from 2021-10 (pre-Log4Shell) for payment-processor; the migration engineer did not verify the JAR's Log4j version post-migration; invoice-service and audit-logger have a different root cause — dependency lock file pinned to 2.15.0 rather than updating to 2.17.1",
+      "actor": "application-team"
+    },
+    {
+      "timestamp": "2025-11-29T18:14:12Z",
+      "event": "All 3 services upgraded to Log4j 2.17.1 (latest patched version); payment-processor JAR rebuilt from corrected base image; invoice-service and audit-logger dependency lock files updated; all services redeployed via CI/CD",
+      "actor": "application-team"
+    },
+    {
+      "timestamp": "2025-11-29T21:27:12Z",
+      "event": "Post-patch Snyk scan confirmed 0 Log4j CVEs in all 3 services; CloudTrail and WAF logs reviewed for JNDI lookup exploitation attempts in 90-day lookback — 2 JNDI lookup attempts detected (Oct 14, Nov 3) against payment-processor, both blocked by Cloudflare WAF; incident closed",
+      "actor": "t.chen@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-29T21:27:12Z",
+  "resolved_by": "t.chen@company.com",
+  "resolution_time_minutes": 844,
+  "resolution_summary": "All 3 services were upgraded to Log4j 2.17.1 within 13 hours of detection. WAF blocking of JNDI lookup patterns was deployed within 2 minutes as an immediate mitigation. A 90-day lookback of WAF logs found 2 JNDI exploitation attempts against payment-processor (Oct 14 and Nov 3) — both were blocked by the existing Cloudflare WAF ruleset. The root causes were distinct: payment-processor had regressed to a pre-patch AMI via an unvalidated 2023 migration, while invoice-service and audit-logger had a pinned dependency lock file that had never been updated past the partial Log4j 2.15.0 patch.",
+  "root_cause_analysis": "Three distinct failure modes converged. First, the Q2 2023 infrastructure migration for payment-processor used an AMI snapshot dated 2021-10-15 — before the Log4Shell disclosure on 2021-12-09 — meaning the JAR was never patched on the new infrastructure. Post-migration validation did not include a dependency scan. Second, invoice-service and audit-logger were pinned to Log4j 2.15.0 in their Maven pom.lock files — an early partial fix that was later found to still be vulnerable (CVE-2021-45046). The engineering team at the time considered 2.15.0 'fixed' and closed the remediation ticket, unaware that 2.17.1 would later be needed. Third, Snyk was not integrated into the production container image scanning pipeline at the time of the 2023 migration — scanning was only performed at build time on developer machines, missing post-deployment regressions.",
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1190 - Exploit Public-Facing Application"
+    ],
+    "prevention": [
+      "M1051 - Update Software",
+      "M1016 - Vulnerability Scanning"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1190"
+  ],
+  "mitre_prevention_ids": [
+    "M1051",
+    "M1016"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Critical payment processing system exposed to remote code execution, regulatory and PCI compliance risk",
+  "estimated_cost": 65000,
+  "sla_met": false,
+  "mttr": 844,
+  "mtta": 5,
+  "remediation_actions": [
+    "Deployed Cloudflare WAF rule blocking JNDI lookup patterns (${jndi:ldap://, ${jndi:rmi://, ${jndi:dns://) in all request fields for payment-processor, invoice-service, and audit-logger as immediate mitigation at T+2min",
+    "Confirmed AWS Inspector findings: payment-processor package scan confirmed log4j-core-2.14.1.jar in /opt/app/lib/ — fully exploitable via CVE-2021-44228 without mitigations",
+    "Rebuilt payment-processor base image from updated ECS base AMI (2025-09-15); updated pom.xml to Log4j 2.17.1; rebuilt and validated JAR: mvn clean package && snyk test --severity-threshold=critical — 0 critical findings",
+    "Updated invoice-service and audit-logger Maven pom.lock files: changed log4j-core version from 2.15.0 to 2.17.1; ran full regression test suite (2,341 tests, 0 failures)",
+    "Deployed all 3 services via ECS rolling update with health check validation; post-deployment Snyk scan confirmed 0 Log4j CVEs in all 3 container images",
+    "Reviewed WAF logs for JNDI exploitation attempts: found 2 blocked attempts against payment-processor (2025-10-14T14:23Z and 2025-11-03T09:41Z) — both returned 403 by Cloudflare WAF; no successful exploitation confirmed",
+    "Notified PCI DSS QSA of CVE-2021-44228 presence in payment-processor and remediation timeline: QSA assessment confirmed no compensating control gap requiring formal notification given WAF blocking and rapid remediation"
+  ],
+  "systems_remediated": [
+    "payment-processor",
+    "invoice-service",
+    "logging-infrastructure"
+  ],
+  "preventive_measures": [
+    "Snyk container runtime scanning deployed to all ECS production clusters: running container images now scanned daily; critical CVE findings trigger P0 ticket within 1 hour",
+    "Infrastructure migration checklist updated: all migrations must include a post-deployment Snyk scan as a required gate before production traffic cutover",
+    "Maven dependency management policy updated: all pom.lock files must use 'latest stable security patch' for common security-impacted libraries (Log4j, Spring, Jackson); version pins require security team approval",
+    "WAF JNDI lookup blocking rule retained permanently as defense-in-depth for all Java services; added to standard WAF baseline ruleset",
+    "Post-migration validation runbook created: 15-step checklist including Snyk scan, dependency version verification, and CVE check against known-patched version list"
+  ],
+  "security_controls_updated": [
+    "Snyk organizational policy updated: CVSS >= 9.0 CVEs in production containers now break deployment pipeline via Snyk CI gate; must be remediated before any new deployment",
+    "AWS Inspector continuous scanning enabled for all ECS task definitions: findings now integrated into Splunk SIEM with P-level mapping (Critical = P0 auto-ticket)",
+    "ECS deployment pipeline updated: post-deployment Snyk scan required as smoke test; pipeline fails and auto-rolls back if critical CVE detected in newly deployed container",
+    "Cloudflare WAF managed rule 'Log4j JNDI attack' added as permanent enabled rule across all production services"
+  ],
+  "documentation_updated": [
+    "Infrastructure Migration Runbook updated: dependency scan step added as mandatory post-migration gate; specific Log4j version history documented as cautionary case study",
+    "Java Security Baseline document created: approved versions for Log4j, Spring Framework, Jackson, and other commonly-vulnerable Java libraries; minimum version requirements enforced via Snyk organizational policy",
+    "Vulnerability Management Procedure updated: partial fix releases (like Log4j 2.15.0) must be tracked against subsequent CVE disclosures; remediation tickets not closed until confirmed fully patched version is deployed",
+    "SEC-5117 Jira ticket archived with full Snyk report, WAF log evidence of blocked exploitation attempts, PCI QSA notification record, and patch deployment confirmation"
+  ],
+  "lessons_learned": "A vulnerability that was 'fixed' in 2021 resurfacing in 2025 demonstrates that infrastructure migrations are a critical regression point for security controls. Every migration must include a full security baseline re-validation — treating a migrated service as 'same security posture as before' is a dangerous assumption when base AMIs, container images, and dependency versions change. The discovery of 2 blocked exploitation attempts in the WAF logs confirms that Log4Shell exploitation attempts against production services are still active market reality 4 years after disclosure — the internet-wide scanning for this vulnerability has not stopped. Runtime container scanning (not just build-time) is essential: build-time scanning would have missed the post-migration regression entirely.",
+  "follow_up_tasks": [
+    "APP-SEC-020: Deploy Snyk runtime container scanning to all 6 ECS production clusters — Owner: DevSecOps, Due: 2025-12-06",
+    "APP-SEC-021: Audit all Java services for Log4j versions and create version enforcement Snyk policy — Owner: AppSec, Due: 2025-12-06",
+    "APP-SEC-022: Update all infrastructure migration runbooks with mandatory post-migration security baseline checklist — Owner: Platform Engineering, Due: 2025-12-13",
+    "APP-SEC-023: Review all PCI-scoped services for any CVE-2021-44228 presence; provide QSA written confirmation of full remediation — Owner: Compliance, Due: 2025-12-06"
+  ],
+  "resolution": "All 3 services upgraded to Log4j 2.17.1; 2 blocked exploitation attempts confirmed in WAF logs; PCI QSA notified; runtime scanning deployed to prevent future post-migration regressions",
+  "action_taken": "Resolved by application-team within 815 minutes; critical Log4Shell exposure in payment-processor with 4-year-old vulnerability confirmed; 2 historical exploitation attempts blocked",
+  "entities": {
+    "users": [
+      "r.lin@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "payment-service-prod",
+      "order-api-prod"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "No continuous post-deployment container image scanning existed; the vulnerable log4j-core version (2.14.1) was reintroduced as a transitive dependency during a Docker base image rebuild and was not detected by the CI/CD pipeline's pre-build SBOM scan because the regression occurred in a layer rebuild that was outside the scanner's configured scope",
+  "what_went_well": [
+    "WAF rule blocking the ${jndi:ldap://} JNDI lookup string was deployed within 18 minutes of CVE identification, providing network-layer protection before the patch was ready",
+    "Container image rebuild with log4j-core 2.17.1 was completed, tested, and pushed to production within 3 hours",
+    "No exploitation attempts were observed in application logs or GuardDuty findings during the exposure window"
+  ],
+  "what_went_wrong": [
+    "Vulnerable log4j version was reintroduced as a transitive dependency during a base Docker image layer rebuild — the regression bypassed the pre-build SBOM scan scope",
+    "Post-deployment container scanning was not implemented; vulnerability management relied entirely on pre-build SBOM analysis which did not cover rebuilt base layers",
+    "The log4j2.formatMsgNoLookups=true JVM flag was not configured as a defense-in-depth measure in production — it would have blocked exploitation even with the vulnerable version present"
+  ]
+}

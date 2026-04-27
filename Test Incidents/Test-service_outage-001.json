@@ -1,0 +1,40 @@
+{
+  "@timestamp": "2025-12-27T02:10:00Z",
+  "incident_id": "Test-service_outage-001",
+  "severity": "critical",
+  "status": "unresolved",
+  "category": "infrastructure",
+  "type": "service_outage",
+  "title": "Database Primary node unreachable, Follower nodes out of sync",
+  "affected_systems": [
+    "postgres-cluster"
+  ],
+  "description": "PagerDuty triggered a high-urgency incident for the postgres-cluster due to a primary node failure and replication lag on follower nodes. Overall service availability dropped below the 99% SLA threshold for the trailing 15-minute window.",
+  "alert_source": "PagerDuty",
+  "rule_name": "Service availability below 99% SLA",
+  "entities": {
+    "users": [],
+    "ips": [],
+    "hosts": ["postgres-primary-01", "postgres-replica-01"],
+    "domains": [],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "threshold",
+  "confidence": "high",
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Datadog Postgres Integration (SLA + replication lag)",
+  "tags": [
+    "database",
+    "outage",
+    "critical"
+  ],
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": []
+}

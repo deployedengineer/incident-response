@@ -1,0 +1,2258 @@
+{
+  "name": "Incident Management V1: Final",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d0783323-d22a-4790-b7f3-265c75bbc73a",
+      "name": "When clicking Test workflow",
+      "position": [
+        4704,
+        464
+      ],
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Ingestion Workflows\n\nRun these pipelines ONCE before the first demo, and again whenever source data changes.\n\nEach pipeline is independent and can be run separately.\n\nRecommended order:\n  1) Ingest Resolved Incidents\n  2) Ingest Reference Playbooks\n  3) Ingest Test Incidents",
+        "height": 1344,
+        "width": 4160
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5184,
+        -272
+      ],
+      "id": "edc1e044-9ed5-4dac-a851-3d4b14de3cc8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 1) Ingest Resolved Incidents\n\nSource:    GitHub (Resolved Incidents/)\nTarget:    resolved_incidents_v1 (vector table)\nEmbedding: Gemini models/gemini-embedding-001\n\nRe-run after adding or updating resolved\nincident JSON files.",
+        "height": 208,
+        "width": 448,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5552,
+        80
+      ],
+      "id": "1cc772e7-62d7-4ea6-bf48-a424ccb9f117",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 2) Ingest Reference Playbooks\n\nSource:    GitHub (Reference Playbooks/)\nTarget:    reference_playbooks_v1 (vector table)\nEmbedding: Gemini models/gemini-embedding-001\n\nRe-run after adding new .md playbook files\n(e.g. ransomware, IAM credential compromise).",
+        "height": 224,
+        "width": 448,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        7056,
+        64
+      ],
+      "id": "192cc43c-4da5-4e0b-b04f-bea7f3f6871c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Prepare Markdown Document & Metadata').item.json.pageContent }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "=incident_id",
+                "value": "={{ $('Prepare Markdown Document & Metadata').item.json.metadata.incident_id }}"
+              },
+              {
+                "name": "severity",
+                "value": "={{ $('Prepare Markdown Document & Metadata').item.json.metadata.severity }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $('Prepare Markdown Document & Metadata').item.json.metadata.category }}"
+              },
+              {
+                "name": "affected_systems",
+                "value": "={{ $('Prepare Markdown Document & Metadata').item.json.metadata.affected_systems }}"
+              },
+              {
+                "name": "mitre_tactic_ids",
+                "value": "={{ $json.metadata.mitre_tactic_ids }}"
+              },
+              {
+                "name": "mitre_technique_ids",
+                "value": "={{ $json.metadata.mitre_technique_ids }}"
+              },
+              {
+                "name": "mitre_prevention_ids",
+                "value": "={{ $json.metadata.mitre_prevention_ids }}"
+              },
+              {
+                "name": "@timestamp",
+                "value": "={{ $json.metadata['@timestamp'] }}"
+              },
+              {
+                "name": "description",
+                "value": "={{ $json.metadata.description }}"
+              },
+              {
+                "name": "alert_source",
+                "value": "={{ $json.metadata.alert_source }}"
+              },
+              {
+                "name": "entities",
+                "value": "={{ $json.metadata.entities }}"
+              },
+              {
+                "name": "detection_gap",
+                "value": "={{ $json.metadata.detection_gap }}"
+              },
+              {
+                "name": "what_went_well",
+                "value": "={{ $json.metadata.what_went_well }}"
+              },
+              {
+                "name": "what_went_wrong",
+                "value": "={{ $json.metadata.what_went_wrong }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "9e28f435-1c3e-4398-b31d-967c5d4ed976",
+      "name": "Resolved Incidents Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        5792,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "={{ $('Config').item.json.model_embedding }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        6080,
+        544
+      ],
+      "id": "cb7a5c6e-bd9d-40c9-9942-eafdbf58955c",
+      "name": "Gemini Embeddings (Resolved Incidents)",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TMxXjmwGE8M5436u",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').item.json.github_baseUrl + '/' + $('Config').item.json.github_repo + '/contents/Reference%20Playbooks' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        6608,
+        368
+      ],
+      "id": "a2b39ef3-f3d0-4c90-93ba-3048008b59f5",
+      "name": "Get Reference Playbooks From GitHub",
+      "retryOnFail": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').item.json.github_baseUrl + '/' + $('Config').item.json.github_repo + '/contents/Resolved%20Incidents' }}",
+        "options": {}
+      },
+      "id": "765a28e5-40f8-47b1-8221-552e2c87c1b9",
+      "name": "Get Resolved Incidents from GitHub",
+      "position": [
+        5248,
+        352
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": false,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"download_url\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        6816,
+        368
+      ],
+      "id": "5cbc27da-42b1-4da0-b03c-2586a4cae973",
+      "name": "Download Reference Playbooks From GitHub",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"download_url\"]}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5456,
+        352
+      ],
+      "id": "1c51e501-d0f0-4c30-811c-968f5c84b791",
+      "name": "Download Resolved Incidents From GitHub",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const data = $json;\n\n// -----------------------------\n// Metadata (STRICT – Only Requested Fields)\n// -----------------------------\nconst metadata = {\n  \"@timestamp\": data[\"@timestamp\"] ?? null,\n  incident_id: data.incident_id ?? null,\n  severity: data.severity ?? null,\n  category: data.category ?? null,\n  type: data.type ?? null,\n\n  affected_systems: Array.isArray(data.affected_systems)\n    ? data.affected_systems\n    : [],\n\n  mitre_tactic_ids: Array.isArray(data.mitre_tactic_ids)\n    ? data.mitre_tactic_ids\n    : [],\n\n  mitre_technique_ids: Array.isArray(data.mitre_technique_ids)\n    ? data.mitre_technique_ids\n    : [],\n\n  mitre_prevention_ids: Array.isArray(data.mitre_prevention_ids)\n    ? data.mitre_prevention_ids\n    : [],\n\n  // ✅ New fields retained\n  description: data.description ?? null,\n  alert_source: data.alert_source ?? null,\n  rule_name: data.rule_name ?? null,\n  entities: typeof data.entities === 'object' ? data.entities : {},\n  detection_gap: data.detection_gap ?? null,\n  what_went_well: Array.isArray(data.what_went_well) ? data.what_went_well : [],\n  what_went_wrong: Array.isArray(data.what_went_wrong) ? data.what_went_wrong : []\n};\n\n// Remove null/undefined only\nObject.keys(metadata).forEach(key => {\n  if (metadata[key] === undefined || metadata[key] === null) {\n    delete metadata[key];\n  }\n});\n\n// -----------------------------\n// Markdown Content\n// -----------------------------\nconst sections = [];\n\n// Header\nsections.push(`# Incident: ${data.title ?? \"Untitled Incident\"}`);\nsections.push(`**Incident ID:** ${data.incident_id ?? \"N/A\"}`);\nsections.push(`**Severity:** ${data.severity ?? \"N/A\"}`);\nsections.push(`**Category:** ${data.category ?? \"N/A\"}`);\nsections.push(`**Type:** ${data.type ?? \"N/A\"}`);\nsections.push(`**Status:** ${data.status ?? \"N/A\"}`);\nsections.push(`**Date:** ${data[\"@timestamp\"] ?? \"N/A\"}`);\n\nif (Array.isArray(data.affected_systems) && data.affected_systems.length > 0) {\n  sections.push(`**Affected Systems:** ${data.affected_systems.join(\", \")}`);\n}\n\n// Alert Source\nif (data.alert_source) {\n  sections.push(\"\");\n  sections.push(\"## Alert Source\");\n  sections.push(`**Detection Tool:** ${data.alert_source}`);\n  if (data.rule_name) {\n    sections.push(`**Rule/Finding:** ${data.rule_name}`);\n  }\n}\n\n// Entities (clean + safe)\nconst entities = metadata.entities;\n\nif (\n  entities &&\n  typeof entities === 'object' &&\n  Object.keys(entities).length > 0\n) {\n  const entityLines = [];\n\n  if (Array.isArray(entities.users) && entities.users.length > 0)\n    entityLines.push(`**Users:** ${entities.users.join(', ')}`);\n\n  if (Array.isArray(entities.ips) && entities.ips.length > 0)\n    entityLines.push(`**IPs:** ${entities.ips.join(', ')}`);\n\n  if (Array.isArray(entities.hosts) && entities.hosts.length > 0)\n    entityLines.push(`**Hosts:** ${entities.hosts.join(', ')}`);\n\n  if (Array.isArray(entities.domains) && entities.domains.length > 0)\n    entityLines.push(`**Domains:** ${entities.domains.join(', ')}`);\n\n  if (Array.isArray(entities.hashes) && entities.hashes.length > 0)\n    entityLines.push(`**Hashes:** ${entities.hashes.join(', ')}`);\n\n  if (entityLines.length > 0) {\n    sections.push(\"\");\n    sections.push(\"## Entities\");\n    entityLines.forEach(l => sections.push(l));\n  }\n}\n\n// Description\nif (data.description) {\n  sections.push(\"\");\n  sections.push(\"## Description\");\n  sections.push(data.description);\n}\n\n// Detection Gap\nif (data.detection_gap) {\n  sections.push(\"\");\n  sections.push(\"## Detection Gap\");\n  sections.push(data.detection_gap);\n}\n\n// Timeline (safe)\nif (Array.isArray(data.timeline) && data.timeline.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## Timeline\");\n\n  data.timeline.slice(0, 50).forEach(t => {\n    if (t && t.timestamp && t.event) {\n      sections.push(`- ${t.timestamp} — ${t.event}`);\n    }\n  });\n}\n\n// Root Cause\nif (data.root_cause_analysis) {\n  sections.push(\"\");\n  sections.push(\"## Root Cause\");\n  sections.push(data.root_cause_analysis);\n}\n\n// What Went Well\nif (Array.isArray(data.what_went_well) && data.what_went_well.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## What Went Well\");\n  data.what_went_well.forEach(item => sections.push(`- ${item}`));\n}\n\n// What Went Wrong\nif (Array.isArray(data.what_went_wrong) && data.what_went_wrong.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## What Went Wrong\");\n  data.what_went_wrong.forEach(item => sections.push(`- ${item}`));\n}\n\n// Resolution Summary\nif (data.resolution_summary) {\n  sections.push(\"\");\n  sections.push(\"## Resolution Summary\");\n  sections.push(data.resolution_summary);\n}\n\n// Remediation Actions\nif (Array.isArray(data.remediation_actions) && data.remediation_actions.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## Remediation Actions\");\n  data.remediation_actions.forEach(action => {\n    sections.push(`- ${action}`);\n  });\n}\n\n// Lessons Learned\nif (data.lessons_learned) {\n  sections.push(\"\");\n  sections.push(\"## Lessons Learned\");\n  sections.push(data.lessons_learned);\n}\n\n// MITRE Mapping (safe)\nconst mitre = [];\n\nif (Array.isArray(metadata.mitre_tactic_ids) && metadata.mitre_tactic_ids.length > 0)\n  mitre.push(`Tactics: ${metadata.mitre_tactic_ids.join(\", \")}`);\n\nif (Array.isArray(metadata.mitre_technique_ids) && metadata.mitre_technique_ids.length > 0)\n  mitre.push(`Techniques: ${metadata.mitre_technique_ids.join(\", \")}`);\n\nif (Array.isArray(metadata.mitre_prevention_ids) && metadata.mitre_prevention_ids.length > 0)\n  mitre.push(`Prevention: ${metadata.mitre_prevention_ids.join(\", \")}`);\n\nif (mitre.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## MITRE Mapping\");\n  sections.push(mitre.join(\"\\n\"));\n}\n\n// Final Output\nconst pageContent = sections.join(\"\\n\");\n\nreturn {\n  json: {\n    pageContent,\n    metadata\n  }\n};"
+      },
+      "id": "82bfb9a0-819f-453d-a014-9410396dbdf6",
+      "name": "Prepare Markdown Document & Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5664,
+        352
+      ],
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "content": "## Retrieval & Response Workflow -- Active Demo Path\n\nThis is the main pipeline. It processes one test incident\nend-to-end through three parallel intelligence branches\nand produces a structured JSON response report.\n\nFull flow:\n  Step 1 --> Fetch Incident from Supabase\n  Step 2 --> Parallel Retrieval (3 branches simultaneously)\n  Step 3 --> Merge All Intelligence\n  Step 4 --> Synthesize Report\n  Step 5 --> Validate Output (If node)\n  Step 6 --> Write to Supabase (or skip if degraded)\n\nConfigure the incident to process in the Set Incident ID node.",
+        "height": 2240,
+        "width": 4432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5184,
+        1120
+      ],
+      "id": "d93b1c13-b848-406a-a891-23f5ed732a4a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 864,
+        "width": 1296,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5200,
+        48
+      ],
+      "id": "7bd7d8c3-3410-4266-8140-281b0e9d1864",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 864,
+        "width": 1520,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        6528,
+        48
+      ],
+      "id": "ff030fa3-2387-485f-b1a6-8cd96a061d03",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## 3) Ingest Test Incidents\n\nSource:    GitHub (Test Incidents/)\nTarget:    test_incidents_v1 (flat table)\n\nRe-run after updating test incident JSON files.\nClears and re-inserts all 13 rows.",
+        "height": 192,
+        "width": 416,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8368,
+        64
+      ],
+      "id": "acd390be-04b8-41a1-bf6b-629d312f29ab",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "tableId": "={{ $('Config').item.json.table_test }}",
+        "dataToSend": "autoMapInputData"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        8752,
+        384
+      ],
+      "id": "6fb7557a-6839-470e-b496-d8655d9b3476",
+      "name": "Create a Row of Test Incident on Supabase",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "={{ $('Config').item.json.model_embedding }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        7792,
+        560
+      ],
+      "id": "b190a3a7-37e0-4473-b7f1-ba3b022b697e",
+      "name": "Gemini Embeddings (Playbooks Ingestion)",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TMxXjmwGE8M5436u",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "name",
+                "value": "={{ $json.name }}"
+              },
+              {
+                "name": "full_text",
+                "value": "={{ $json.data }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "b728338c-f104-43a8-975f-20774c040fcd",
+      "name": "Reference Playbooks Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        7488,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 848,
+        "width": 896,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8112,
+        48
+      ],
+      "id": "352a6664-24ae-4ff5-8598-984b51f9e499",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        7392,
+        368
+      ],
+      "id": "65b2e35b-e64b-4950-8b78-77d74e99ce5c",
+      "name": "Merge Ingestion Branches"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a cybersecurity retrieval optimization engine.\n\nYour task is to convert an incident response playbook into a trigger-optimized semantic summary for vector similarity search.\n\nThis summary is not for human readability.\nIt is for maximizing retrieval accuracy.\n\nYour output must:\n\n1. Clearly define the PRIMARY trigger scenario:\n   - What exact incident pattern activates this playbook?\n   - What detection signals or log patterns indicate it?\n\n2. Explicitly describe distinguishing characteristics:\n   - How this scenario differs from related attack types.\n   - What makes this playbook unique compared to similar ones.\n\n3. Include:\n   - MITRE ATT&CK IDs and tactics.\n   - Common detection signals (SIEM, EDR, Cloud logs, IdP logs).\n   - Platform scope (AWS, Azure AD, VPN, S3, Email, etc.).\n   - Likely attacker behaviors.\n   - Alternative terminology and analyst search phrases.\n\n4. Include boundary conditions:\n   - When this playbook should NOT be used.\n   - Common false positives.\n\n5. Avoid:\n   - Step-by-step remediation instructions.\n   - Escalation workflow details.\n   - Version history.\n   - Ownership metadata.\n\n6. Keep output between 300–450 words.\n7. Use dense paragraphs.\n8. Do not use markdown formatting.\n9. End the summary with a compact comma-separated list of retrieval keywords."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        7024,
+        368
+      ],
+      "id": "8bd44bd5-eec4-4392-ba22-6a71b589baf0",
+      "name": "Summarize Reference Playbooks for Embeddings",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Config').item.json.github_baseUrl + '/' + $('Config').item.json.github_repo + '/contents/Test%20Incidents' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        8272,
+        384
+      ],
+      "id": "76a0719e-0424-4237-b6aa-b17af12418fd",
+      "name": "Get Test Incidents From GitHub",
+      "retryOnFail": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"download_url\"]}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        8496,
+        384
+      ],
+      "id": "ef398dff-53f9-4bca-b14a-50b349c84b9f",
+      "name": "Download Test Incidents From GitHub",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "={{ $('Config').item.json.table_test }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=incident_id",
+              "keyValue": "={{ $json.incident_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5440,
+        2112
+      ],
+      "id": "63df80ea-4edb-4c02-bbd4-9d1631180cac",
+      "name": "Fetch Test Incident from Supabase",
+      "retryOnFail": true,
+      "alwaysOutputData": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# ROLE\nYou are a Real-Time Threat Intelligence & Technical Enrichment Agent.\n\nYou augment incident analysis by performing structured, targeted research using external sources.\nYou do NOT generate the final report. You produce structured research findings for a downstream Synthesizer LLM.\n\n# OBJECTIVE\n\nGiven an incident, determine whether external research is necessary and gather:\n- Active threat intelligence and named campaigns\n- CVE information (exact IDs only — never invent)\n- Vendor advisories and patch status\n- Exploit availability and active exploitation status\n- Actionable, phase-labeled mitigation guidance\n- Concrete IOCs (hashes, IPs, registry keys, process names) where available\n\nOnly search when it adds value.\n\n# STEP 1 — CLASSIFY THE INCIDENT TYPE (DO THIS FIRST)\n\nBefore deciding whether to search, classify the incident into one of these types:\n\n| Type | Examples | Search Behavior |\n|---|---|---|\n| SECURITY_ATTACK | exfiltration, ransomware, phishing, credential leak, C2, injection, malware | ALWAYS search |\n| SECURITY_VULNERABILITY | CVE detected, Snyk finding, vulnerable dependency | ALWAYS search — CVE-first |\n| CLOUD_SECURITY | AWS/Azure/GCP alert, IAM anomaly, S3 access | ALWAYS search |\n| POLICY_VIOLATION | unauthorized software, AUP breach, T1219 | NARROW search only (tooling/uninstall scripts) |\n| AVAILABILITY | memory leak, replication failure, OOM, 500 errors with no exploit evidence | DO NOT search unless MITRE attack technique is present |\n| PERFORMANCE | CPU spike, query slowdown, timeout | DO NOT search |\n\nCRITICAL: A metric spike (HTTP 500 errors, high request rate) is NOT evidence of exploitation unless:\n- A specific CVE pattern is present in the incident data, OR\n- The MITRE technique maps to a known attack (not just error handling), OR\n- A security tool (GuardDuty, EDR, SIEM) has flagged it as malicious\n\nIf in doubt, classify as AVAILABILITY and do NOT search.\n\n# STEP 2 — SEARCH DECISION RULES\n\n## ALWAYS search when incident type is SECURITY_ATTACK or SECURITY_VULNERABILITY:\n- CVE ID explicitly mentioned in incident data or alert\n- Named threat actor or campaign referenced\n- Active exploitation signals (exfiltration volume, GuardDuty finding, EDR alert)\n- Cloud provider security alert (AWS, Azure, GCP)\n- MITRE ATT&CK technique classified as attack-type (T1059, T1190, T1486, T1530, etc.)\n\n## NARROW search when incident type is POLICY_VIOLATION:\n- Search ONLY for: tool-specific removal commands, network signatures, Group Policy config\n- Do NOT search for threat actors, CVEs, or campaigns\n- Maximum 3 searches\n\n## DO NOT search when:\n- Incident type is AVAILABILITY with no MITRE attack technique\n- Incident type is PERFORMANCE\n- Information is already definitive\n\n## Maximum searches: 10 (3 for POLICY_VIOLATION)\n\n# STEP 3 — CVE SOURCE HIERARCHY (MANDATORY)\n\nWhen including a CVE card, sources MUST be used in this priority order:\n\n1. MSRC — `msrc.microsoft.com` (for Microsoft CVEs)\n2. NVD — `nvd.nist.gov/vuln/detail/CVE-XXXX-XXXXX` (for all CVEs)\n3. Vendor security page — e.g. `postgresql.org/support/security/`, `apache.org/security/`\n4. CISA KEV — `cisa.gov/known-exploited-vulnerabilities`\n5. Security research blog — only if none of the above cover this CVE\n\nA CVE card using a blog as its ONLY source must include `\"applicability_confidence\": \"low\"`.\n\nIf a CVE is NOT explicitly referenced in the incident data:\n- Set `\"applicability_confidence\": \"medium\"` or `\"low\"` with explanation in `applicability_notes`\n- Do NOT set `exploitation_status: \"active\"` unless the CVE is directly correlated to the incident\n\n# STEP 4 — MITIGATION GUIDANCE RULES\n\n## Phase Labels (REQUIRED on every action)\nEvery action's `phase` field MUST be one of:\n\n- `IMMEDIATE` — Act within 15 minutes (block, isolate, revoke credentials)\n- `CONTAINMENT` — Stop the spread (disable shares, quarantine endpoint, network segment)\n- `DETECTION` — Identify scope (query logs, run forensic commands, check GuardDuty)\n- `INVESTIGATION` — Determine root cause (Athena queries, heap dumps, git history)\n- `HARDENING` — Prevent recurrence (policy changes, MFA, patching, WAF rules)\n- `RECOVERY` — Restore service (promote replica, restore from backup, patch and restart)\n\n## Count Cap: Maximum 6 steps. Prioritize IMMEDIATE and CONTAINMENT first.\n\n## Source Rules:\n- Every step should have a `source_url` where an authoritative source exists.\n- `source_url: null` only for generic first-responder steps with no specific authoritative source.\n- Prefer: official vendor docs > CISA advisories > authoritative security research > vendor blogs\n\n# STEP 5 — IOC EXTRACTION\n\nExtract concrete, specific IOCs from your research into the `ioc_indicators` array:\n- File hashes (MD5, SHA256)\n- Malicious IP ranges or C2 domain patterns\n- Registry keys used for persistence\n- Specific process names or command strings\n- Port numbers used for C2\n- Ransom note filenames or file extensions\n\nIf no specific IOCs found: set `ioc_indicators: []`\n\n# CRITICAL RULES\n- Zero hallucination: Never invent CVE IDs, version numbers, dates, tool names, threat actor names, or operation names.\n- Date format: Use ISO-8601 `YYYY-MM-DD` or `YYYY-MM` only. Year-only strings like `\"2025\"` are NOT allowed — use `null` if month is unknown.\n- sources_consulted: Must ONLY list URLs that appear as `source_url` in threat_intelligence or mitigation_guidance. No ghost citations.\n- Category rules:\n  - `\"CVE\"` — only for entries with a real CVE ID (CVE-YYYY-NNNNN format)\n  - `\"Active Campaign\"` — named, documented threat actor operations\n  - `\"Vendor Advisory\"` — official vendor security bulletins\n  - `\"Known Issue\"` — documented vulnerability patterns without CVE\n  - `\"Exploit Activity\"` — documented exploitation methodology\n- active_exploitation_observed: Set `true` only if at least one card has `exploitation_status: \"active\"` AND the threat is directly relevant to the incident type.\n- Source deduplication: Do not include two cards from the same source URL.\n- Keep summaries concise: Max 3 sentences per summary. No narrative paragraphs.\n- Output must be valid JSON matching the provided schema.\n- Evidence priority: Vendor documentation > CISA/NVD > security blogs > forums."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        6512,
+        2912
+      ],
+      "id": "5900a377-b1b2-4f7b-8a7f-60c9572b8b01",
+      "name": "Threat Intel Enrichment Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', ``, 'string') }}",
+        "options": {
+          "auto_parameters": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Auto_Parameters', ``, 'boolean') }}"
+        }
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavilyTool",
+      "typeVersion": 1,
+      "position": [
+        6656,
+        3120
+      ],
+      "id": "4f476291-71c0-4da2-94b1-4899ed3b8930",
+      "name": "Search in Tavily",
+      "credentials": {
+        "tavilyApi": {
+          "id": "T5vtPjYIZCZamEvs",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "={{ $('Config').item.json.model_embedding }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        6624,
+        2096
+      ],
+      "id": "afb46dda-660f-41ca-b97c-c5f86d986614",
+      "name": "Gemini Embeddings (Historical RAG)",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TMxXjmwGE8M5436u",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=test_incident: {{ JSON.stringify($json, null, 2) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Historical Incident Intelligence Agent.\n\nINPUT:\n- test_incident: the raw alert JSON from the current security incident.\n\nTOOL:\n- Use the Supabase Vector Store tool to retrieve similar past resolved incidents via semantic similarity.\n\nDATA FORMAT — Critical, read before extracting anything:\nEach retrieved result is a single text block of Markdown (pageContent). There is no separate metadata object. All fields must be extracted from the Markdown text by scanning for section headers.\n\nThe Markdown structure is:\n- Header block contains: Incident ID, Severity, Category, Type, Date, Affected Systems\n- ## Alert Source — contains Detection Tool and Rule/Finding\n- ## Description — raw alert description\n- ## Detection Gap — why the alert was not caught sooner (may be absent)\n- ## Root Cause — root cause analysis text\n- ## What Went Well — bullet list of positive response actions\n- ## What Went Wrong — bullet list of response failures\n- ## Resolution Summary — how the incident was resolved\n- ## Remediation Actions — bullet list of specific actions taken\n- ## Lessons Learned — post-incident insight\n- ## MITRE Mapping — Tactics, Techniques, Prevention IDs\n\nExtraction rules:\n- Parse the incident_id from the line \"**Incident ID:** [value]\" in the header block.\n- Parse severity from \"**Severity:** [value]\", type from \"**Type:** [value]\".\n- For mitre_techniques_used: parse the \"Techniques: [list]\" line under ## MITRE Mapping.\n- For sections that are absent: return null for string fields, [] for array fields.\n\nTASK:\n1. Use the Supabase Vector Store tool to retrieve similar past resolved incidents.\n2. Analyze the retrieved incidents and extract structured historical intelligence.\n\nDo NOT write a triage note.\nDo NOT write a final report.\nDo NOT generate narrative paragraphs.\nYour job is to extract and synthesize patterns from past incidents in structured JSON form only.\n\n---------------------------------\nANALYSIS REQUIREMENTS\n---------------------------------\n\nYou MUST output ONLY valid JSON matching the schema enforced by the output parser. Do not add any explanation text outside the JSON.\n\nIntelligence synthesis rules:\nsimilarity_search_performed: Always true.\n\nmatch_quality:\n  \"strong\"   → top result similarity >= 0.80\n  \"moderate\" → top result similarity >= 0.60\n  \"weak\"     → top result similarity < 0.60\n  \"none\"     → 0 results returned\n\nincidents_retrieved: For EACH retrieved incident, extract and return:\n  incident_id: parse from \"**Incident ID:** [value]\" in the header block\n  similarity_score: similarity float, rounded to 3 decimal places\n  incident_type: parse from \"**Type:** [value]\" in the header block\n  severity: parse from \"**Severity:** [value]\" in the header block\n  resolution_time_minutes: parse from content if mentioned (e.g., \"resolved in 45 minutes\"), else null\n  root_cause: 1–2 sentence summary from the \"## Root Cause\" section\n  resolution_summary: 1–2 sentence summary from the \"## Resolution Summary\" section\n  key_remediation_actions: top 3 most specific/actionable bullet items from \"## Remediation Actions\"\n  lessons_learned: 1 sentence from the \"## Lessons Learned\" section, or null if absent\n  mitre_techniques_used: parse the \"Techniques: [T1xxx, T1xxx]\" line under \"## MITRE Mapping\", return as array\n  detection_gap: full text from the \"## Detection Gap\" section, or null if that section is absent\n  what_went_well: array of bullet items from the \"## What Went Well\" section, or [] if absent\n  what_went_wrong: array of bullet items from the \"## What Went Wrong\" section, or [] if absent\n\nhistorical_patterns: Cross-incident synthesis across ALL retrieved incidents:\n  most_common_root_cause: the root cause pattern repeating most often (1–2 sentences)\n  avg_resolution_time_minutes: arithmetic mean of all non-null resolution_time_minutes, or null\n  proven_remediation_steps: the 3–5 remediation actions appearing most consistently across incidents\n  common_mitre_techniques: deduplicated list of all MITRE technique IDs across all retrieved incidents\n  recurring_detection_gaps: array — summarize detection failures that appeared in multiple incidents. Empty array if none found.\n  what_went_well_patterns: array — 1–2 positive response patterns that historically minimized impact. Empty array if none.\n  what_went_wrong_patterns: array — 1–2 negative response patterns that historically worsened outcomes. Empty array if none.\n\ncontextual_relevance: How well retrieved incidents match the CURRENT test incident:\n  overlap_summary: 1–2 sentences on specific overlaps (same type? same MITRE tactic? same affected system?)\n  key_differentiators: 1–2 sentences on what is DIFFERENT about the test incident vs historical cases\n  confidence: \"high\" / \"medium\" / \"low\" — overall confidence that historical patterns apply to this incident\n\nfallback_note: If 0 results returned, explain that no matches were found and suggest a broader search. If results exist, set to null."
+        }
+      },
+      "id": "f1435d8c-9150-4d7a-b896-31504dea4637",
+      "name": "Historical Incidents RAG Agent",
+      "position": [
+        6512,
+        1696
+      ],
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search for past incidents using semantic similarity.",
+        "tableName": {
+          "__rl": true,
+          "value": "={{ $('Config').item.json.table_resolved }}",
+          "mode": "id"
+        },
+        "topK": 3,
+        "includeDocumentMetadata": false,
+        "options": {
+          "queryName": "={{ $('Config').item.json.query_incidents }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        6608,
+        1904
+      ],
+      "id": "8fab29db-07e6-4f37-a4ad-8f494b5d71f8",
+      "name": "Resolved Incidents Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an Incident Response Playbook Routing Agent.\n\nYour responsibility is to determine whether any retrieved reference playbook is a valid and appropriate match for the current security incident.\n\nPROCESS:\n\nCall the \"Supabase Vector Store\" tool using the incident’s core symptoms, detection signals, affected systems, and MITRE context as your search query.\n\nReview up to 3 retrieved candidate playbooks.\n\nEvaluate whether the playbook’s trigger conditions, attack vector, and operational scope truly match the incident.\n\nMATCHING RULES:\n\nThe attack vector must align (e.g., email phishing, identity brute force, S3 data exfiltration, etc.).\n\nThe scope must align (identity layer vs storage layer vs endpoint).\n\nPrefer the most specific playbook.\n\nDo not select a playbook if the match is weak or generic.\n\nIf uncertain, return no match.\n\nOUTPUT FORMAT (STRICT JSON ONLY). No additional commentary."
+        }
+      },
+      "id": "37c85f90-98fc-4c9e-b39d-648adbc27683",
+      "name": "Playbook Routing Agent",
+      "position": [
+        6480,
+        2336
+      ],
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this tool to retrieve candidate incident response reference playbooks using semantic similarity against the current incident.\n\nPass a concise description of the incident’s core symptoms, attack vectors, detection signals, and affected systems as the search query.\n\nThe tool returns up to 3 candidate playbooks ranked by similarity. Each result includes:\n\nA semantic summary (content)\nPlaybook uuid and name inside metadata\n\nIMPORTANT: Retrieved playbooks are only candidates. You must evaluate whether their trigger conditions and scope truly match the current incident before selecting one.",
+        "tableName": {
+          "__rl": true,
+          "value": "={{ $('Config').item.json.table_playbooks }}",
+          "mode": "id"
+        },
+        "topK": 3,
+        "options": {
+          "queryName": "={{ $('Config').item.json.query_playbooks }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        6608,
+        2528
+      ],
+      "id": "824191c0-1e5d-4886-aff6-9671306847ad",
+      "name": "Reference Playbooks Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "={{ $('Config').item.json.model_embedding }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        6736,
+        2672
+      ],
+      "id": "a5852349-8369-4f32-a3c6-216e5972534b",
+      "name": "Gemini Embeddings (Playbooks)",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TMxXjmwGE8M5436u",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"match_found\": {\n      \"type\": \"boolean\",\n      \"description\": \"Indicates whether a relevant reference playbook was identified.\"\n    },\n    \"playbook_id\": {\n      \"type\": [\"string\", \"null\"],\n      \"description\": \"UUID of the selected playbook. Null if no match.\"\n    },\n    \"playbook_name\": {\n      \"type\": [\"string\", \"null\"],\n      \"description\": \"Exact name of the selected playbook. Null if no match.\"\n    },\n    \"confidence\": {\n      \"type\": \"string\",\n      \"enum\": [\"high\", \"medium\", \"low\"]\n    },\n    \"reasoning\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"match_found\",\n    \"playbook_id\",\n    \"playbook_name\",\n    \"confidence\",\n    \"reasoning\"\n  ],\n  \"additionalProperties\": false\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        6896,
+        2528
+      ],
+      "id": "a3e3c893-1213-401f-b322-1136a8be3549",
+      "name": "Structured Output Parser - Playbook Router",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "186d6db5-5244-404d-9ce4-6b51034997f5",
+              "name": "playbook_text",
+              "value": "={{ $('Playbook Routing Agent').item.json.output.match_found ? $json.metadata.full_text : `# Incident Response Playbook: Generic Enterprise Security Incident Response\n\n> **Document Version:** 1.0\n> **Date:** 2026-02-27\n> **Classification:** INTERNAL – SOC Operations\n> **Review Cycle:** Quarterly\n> **Applies When:** No technique-specific reference playbook is matched for the incident type.\n\n---\n\n## Title & Use Case ID\n\n| Field | Value |\n|---|---|\n| **Playbook Title** | Generic Enterprise Security Incident Response |\n| **Use Case ID** | GEN-UNIVERSAL-001 |\n| **Scope** | All incident categories: Security, Application, Infrastructure, Identity, Availability |\n| **Frameworks** | NIST SP 800-61r2, MITRE ATT&CK Enterprise, CIS Controls v8 |\n| **Version** | 1.0 |\n| **Last Updated** | 2026-02-27 |\n| **Owner** | SOC Manager / Incident Response Lead |\n\n---\n\n## MITRE ATT&CK Mapping\n\n> This playbook is technique-agnostic. Specific MITRE techniques will be identified during triage. Common starting points by incident category:\n\n| Incident Category | Common Tactics | Common Techniques to Investigate |\n|---|---|---|\n| **Identity / Credential** | Initial Access, Credential Access, Persistence | T1078 (Valid Accounts), T1110 (Brute Force), T1098 (Account Manipulation) |\n| **Application / Vulnerability** | Initial Access, Execution | T1190 (Exploit Public-Facing Application), T1059 (Command & Scripting Interpreter) |\n| **Data Exfiltration** | Collection, Exfiltration | T1530 (Data from Cloud Storage), T1020 (Automated Exfiltration) |\n| **Malware / Ransomware** | Execution, Impact | T1486 (Data Encrypted for Impact), T1059 (Command & Scripting Interpreter) |\n| **Insider / Policy Violation** | Collection, Exfiltration | T1039 (Data from Network Shared Drive), T1048 (Exfiltration Over Alt Protocol) |\n| **Infrastructure / Availability** | Impact | T1498 (Network DoS), T1499 (Endpoint DoS) |\n| **Phishing** | Initial Access | T1566 (Phishing), T1078 (Valid Accounts post-compromise) |\n\n> Once the specific technique is confirmed during triage, refer to a technique-specific playbook if one exists.\n\n---\n\n## Objective Statement\n\nThis generic playbook is activated when no technique-specific playbook matches the incoming alert. It provides a **universal incident response lifecycle** applicable to any security, application, infrastructure, or availability incident at an enterprise organisation. The goal is to rapidly determine whether the alert represents malicious activity or a benign anomaly; if malicious, to assess the blast radius, contain the threat, eradicate the root cause, restore systems to normal operation, and capture lessons learned — all while preserving forensic evidence and meeting SLA obligations.\n\n---\n\n## Alert Analysis\n\n### Alert Triggers (Universal)\n\n- SIEM correlation rule fires on anomalous activity pattern\n- Security tool detection (EDR, XDR, CSPM, WAF, IDS/IPS, DLP) raises alert\n- Automated monitoring detects threshold breach (error rate, authentication failures, traffic spike, data volume anomaly)\n- Threat intelligence platform matches IOC against live traffic or logs\n- User or system administrator reports suspicious behaviour\n- External notification (partner, ISP, law enforcement, bug bounty)\n- Vulnerability scanner or SCA tool identifies a critical finding in production\n\n### Detection Logic / Data Sources\n\n| Data Source | What to Query |\n|---|---|\n| SIEM | Correlated alert details: rule name, triggering events, involved assets and accounts |\n| EDR / XDR | Process trees, file system changes, network connections, lateral movement indicators |\n| Authentication Logs (AD/Entra ID/IdP) | Failed/successful logins, MFA events, account lockouts, session anomalies |\n| Network / Firewall / WAF Logs | Inbound/outbound connections, blocked requests, traffic volume anomalies |\n| Application / Web Logs | HTTP error codes, request volume spikes, API abuse patterns |\n| Cloud Platform Logs (CloudTrail/GCP Audit/Azure Activity) | API calls, configuration changes, IAM activity, resource access |\n| Vulnerability / SCA Scanner Output | CVE identifiers, affected library versions, CVSS scores |\n| DLP / CASB | Data movement alerts, sensitive data access outside normal patterns |\n| Threat Intelligence Platform | IOC lookups: IPs, domains, hashes, CVEs |\n\n---\n\n## Initial Analyst Checklist\n\n> **Note:** Steps marked with 🤖 are candidates for SOAR/workflow automation.\n\n- [ ] 🤖 **Acknowledge and log the alert** within SLA window; assign incident ticket with severity label\n- [ ] 🤖 **Identify the primary affected assets**: hosts, accounts, cloud resources, applications, services\n- [ ] 🤖 **Identify the responsible actor(s)**: source IP, user identity, service account, process, or IAM principal\n- [ ] 🤖 **Enrich identified IPs and hashes**: query threat intelligence (VirusTotal, AbuseIPDB, GreyNoise) for known malicious indicators\n- [ ] **Determine the earliest known timestamp** of anomalous activity (the \"patient zero\" event)\n- [ ] **Identify the alert type and category**: Security / Application / Infrastructure / Availability / Identity\n- [ ] **Assess initial false-positive likelihood**: Is this activity consistent with a known scheduled job, maintenance window, test activity, or misconfiguration?\n- [ ] **Determine privilege level of involved accounts**: Standard user / Privileged admin / Service account / Shared account\n- [ ] **Identify whether sensitive data is involved**: PII, PHI, financial data, credentials, intellectual property\n- [ ] **Check for lateral movement indicators**: are multiple systems or accounts involved beyond the initial alert?\n- [ ] **Assign severity** per the Severity Classification Matrix below\n- [ ] **Document all findings in the incident ticket** with timestamps, evidence sources, and reasoning\n\n---\n\n## Indicators of Compromise (IOC) Checklist\n\n| IOC Type | Value | Source | Verified? |\n|---|---|---|---|\n| Source IP Address(es) | | Logs / Alerts | ☐ |\n| Geo-location / ASN of Source IP | | GeoIP / WHOIS | ☐ |\n| User Account(s) / IAM Principals Involved | | Auth Logs / SIEM | ☐ |\n| Hostname(s) / Device(s) Affected | | EDR / SIEM | ☐ |\n| Malware Hash (MD5/SHA256) | | EDR / AV | ☐ |\n| Malicious Domain / URL | | Web / Proxy Logs | ☐ |\n| CVE Identifier(s) | | Scanner / External Feed | ☐ |\n| Anomalous Process Name or Command Line | | EDR | ☐ |\n| Suspicious File Path or Registry Key | | EDR | ☐ |\n| Attacked Service / Port / Endpoint | | Firewall / WAF / App Logs | ☐ |\n| Timeframe of Anomalous Activity | | SIEM | ☐ |\n| Data Volume Affected (if exfiltration suspected) | | DLP / Network Logs | ☐ |\n\n---\n\n## Severity Classification Matrix\n\n| Severity | Criteria | Response SLA |\n|---|---|---|\n| **Critical (P1)** | Confirmed compromise of privileged/admin accounts; confirmed data exfiltration of sensitive data; active ransomware or destructive attack; business-critical system unavailable; lateral movement confirmed; regulatory breach threshold likely met | Immediate escalation. Incident bridge within 15 min. |\n| **High (P2)** | Confirmed compromise of standard user account; exploitation of public-facing vulnerability with evidence of code execution; significant service degradation; MFA disabled or bypassed; sensitive data at risk but not confirmed exfiltrated | Escalate to Tier 2 within 15 min. Containment within 1 hour. |\n| **Medium (P3)** | Suspicious activity with no confirmed compromise; policy violation with limited data exposure; single failed exploitation attempt; anomalous access pattern that is not yet confirmed malicious | Triage within 30 min. Investigate and monitor. |\n| **Low (P4)** | Low-fidelity alert; high likelihood of false positive; known benign tool or scanner; no sensitive data involved; single user/system with no escalation indicators | Acknowledge within 1 hour. Verify and close or tune detection rule. |\n\n---\n\n## Triage Steps\n\n1. **Validate the alert is not a false positive**:\n   - Does the activity match a known, approved change, maintenance window, or scheduled job?\n   - Is the source IP or account associated with an authorised penetration test?\n   - Is this a misconfigured service or application generating noise (e.g., stale credentials, expired token)?\n   - Cross-reference with the change management system: was anything deployed or modified recently that could explain this behaviour?\n\n2. **Characterise the incident type**:\n   - **Security (Attacker-driven)**: malicious external or insider activity — prioritise containment\n   - **Application (Vulnerability/Bug)**: unpatched vulnerability, dependency, or misconfiguration being exploited — prioritise patch/fix\n   - **Infrastructure (Availability)**: system failure, resource exhaustion, or connectivity issue — prioritise restoration\n   - **Identity (Account compromise/misconfiguration)**: credential attack or over-permissive access — prioritise credential revocation\n\n3. **Determine the blast radius**:\n   - How many systems, accounts, or services are affected?\n   - Is the impact isolated or expanding?\n   - What data classifications are at risk?\n   - Is there evidence the attacker has achieved their objective, or are they still active?\n\n4. **Map the MITRE ATT&CK stages** present in the evidence:\n   - Initial Access → Execution → Persistence → Privilege Escalation → Lateral Movement → Collection → Exfiltration → Impact\n   - Determine at which stage the attacker is (or was) operating\n\n5. **Assign severity** per the matrix above and escalate accordingly\n\n---\n\n## De-escalated and Expected Benign Events\n\nThe following should be classified as **false positive / benign** and closed after verification:\n\n- **Scheduled automation or batch job**: High-volume API calls, database queries, or file transfers from a known service account during an expected time window. Action: document as baseline event; tune detection threshold.\n- **Authorised change or deployment**: Configuration change, access policy update, or software deployment performed via approved change management. Action: verify ticket reference; close with change ID documented.\n- **Known security scanner or pen test**: Source IP confirmed as authorised internal scanner (Nessus, Snyk, Qualys) or pre-approved penetration test. Action: verify authorisation; add to allowlist; close.\n- **User error / application misconfiguration**: Expired credentials, rotated API keys not yet updated in config, password manager sync issue. Action: assist with remediation; close.\n- **Benign internet scanner (GreyNoise RIOT)**: Source IP is a known harmless research scanner. Action: add to allowlist if recurring; close.\n- **Monitoring or observability tool behaviour**: Legitimate health-check probes, load balancer checks, or synthetic monitoring generating alerts. Action: tune detection to exclude known patterns; close.\n\n---\n\n## Escalation of Incident\n\n### Tier 1 → Tier 2 Escalation\n**Trigger**: Alert is confirmed as malicious (not false positive) OR severity is P1/P2 OR any of: confirmed system compromise, privileged account involved, sensitive data at risk, lateral movement evidence.\n\n**Actions**:\n- Assign to Tier 2 with full IOC checklist and initial scope assessment\n- Initiate containment steps immediately without waiting for Tier 2 acknowledgement if severity is High+\n- Document handover clearly: what is known, what is unknown, what actions have already been taken\n\n### Tier 2 → Tier 3 / IR Lead Escalation\n**Trigger**: Confirmed post-compromise activity (data access, privilege escalation, lateral movement, persistence established); business-critical system unavailable; attack is ongoing and spreading; initial containment insufficient.\n\n**Actions**:\n- Page IR Lead and CSIRT (Computer Security Incident Response Team)\n- Open incident bridge / war room\n- Begin forensic preservation of relevant logs (do not alter or delete evidence)\n- Engage relevant SMEs (IAM team, Cloud Security, Network Security, Application Security) per the contacts table below\n- Assess whether law enforcement or regulatory bodies need to be notified\n\n### Tier 3 → Executive / Legal / Regulatory Escalation\n**Trigger**: Confirmed exfiltration of PII/PHI/regulated data; ransom demand received; business-critical systems unavailable for >2 hours; confirmed state-sponsored or advanced persistent threat activity; regulatory breach notification obligation likely triggered.\n\n**Actions**:\n- Notify CISO within 1 hour\n- Engage Legal / DPO for breach assessment and notification obligations (GDPR, CCPA, HIPAA, etc.)\n- Engage Cyber Insurance carrier\n- Prepare internal and external communications if public-facing impact is possible\n- Consider engaging external forensic firm if internal capability is insufficient\n\n---\n\n## Containment Actions\n\n> **Critical**: Preserve forensic evidence BEFORE destructive containment steps. Capture memory, logs, and disk images from affected systems before isolation or remediation where possible.\n\n### Identity & Access Containment\n- **Disable or lock compromised accounts** immediately upon confirmation of compromise\n- **Revoke all active sessions** for compromised accounts (force sign-out from all devices)\n- **Rotate credentials**: Reset passwords and rotate API keys, tokens, and certificates associated with compromised identities\n- **Revoke MFA devices** for compromised accounts and require re-enrolment through a verified process\n- **Apply temporary deny-all policy** to compromised IAM roles/service principals\n\n### Network Containment\n- **Block malicious IPs/domains** at firewall, WAF, DNS resolver, and proxy levels\n- **Isolate highly affected systems** from the network (VLAN isolation or physical disconnection) if active attacker activity is ongoing\n- **Block outbound connections** on suspicious ports or protocols identified in the investigation\n\n### Application & System Containment\n- **Disable or remove exploited functionality** temporarily (e.g., disable a vulnerable API endpoint, remove a vulnerable plugin)\n- **Enable runtime protection or WAF rules** to block the specific exploit pattern while a patch is prepared\n- **Take snapshots of affected instances** before any remediation (for forensics)\n\n### Data Containment\n- **Restrict access to affected data stores** to read-only or specific approved principals only\n- **Enable additional logging and alerting** on the affected data resource immediately\n\n---\n\n## Eradication & Recovery\n\n1. **Confirm root cause**: Do not proceed to recovery until the root cause is fully understood and documented. Premature recovery without root cause analysis leads to reinfection.\n\n2. **Remove malicious artefacts**: Delete attacker-created accounts, API keys, scheduled tasks, cron jobs, startup items, registry keys, malware files, and any backdoors or persistence mechanisms discovered.\n\n3. **Patch or remediate the exploited vector**:\n   - Apply vendor security patches for identified CVEs\n   - Update vulnerable libraries or dependencies to non-vulnerable versions\n   - Fix the misconfiguration or insecure code that allowed the incident\n\n4. **Rotate all potentially exposed credentials**: Even if not confirmed compromised, rotate credentials for accounts and services that had access to the affected systems during the attack window.\n\n5. **Harden configurations**:\n   - Review and apply principle of least privilege to all accounts and services involved\n   - Remove unnecessary services, ports, and permissions\n   - Validate logging and monitoring coverage is complete before closure\n\n6. **Validate recovery**:\n   - Confirm affected systems are stable and operating normally\n   - Confirm no reoccurrence of attacker indicators in monitoring\n   - Confirm data integrity where data was at risk\n   - Obtain sign-off from data/system owner before formal closure\n\n7. **Update detection rules**: Add new IOCs (IPs, hashes, domains, signatures) to SIEM, EDR, and threat intelligence platform watchlists. Tune detection thresholds if alert was noisy.\n\n---\n\n## Automation Opportunities\n\n| Step | Automation Capability | Tool Example |\n|---|---|---|\n| Alert triage and enrichment (IP, hash, domain lookup) | Fully automatable | SOAR + TIP (VirusTotal, GreyNoise, AbuseIPDB) |\n| Asset and identity context enrichment | Fully automatable | SOAR + CMDB / IAM API |\n| IOC blocklist update (firewall, WAF, DNS) | Semi-automatable (approval for P1/P2) | SOAR + Firewall API / DNS RPZ |\n| Account lock / credential revocation | Semi-automatable (approval gate) | SOAR + IdP API |\n| Session revocation | Fully automatable | SOAR + IdP API |\n| Forensic snapshot of affected systems | Fully automatable | SOAR + Cloud Snapshot API / EDR |\n| Ticket creation, enrichment, and escalation routing | Fully automatable | SOAR + ITSM API |\n| Stakeholder notification emails | Fully automatable | SOAR email action |\n| IOC detonation in sandbox | Fully automatable | SOAR + Sandbox API (Any.run, Cuckoo) |\n| Post-patch verification scan | Fully automatable | SOAR + Scanner API (Snyk, Qualys, Nessus) |\n\n---\n\n## Lessons Learned / Post-Incident Review\n\nThe IR Lead should schedule a post-incident review within **5 business days** of closure. Address:\n\n- What was the root cause, and could it have been prevented with existing controls?\n- Were detection thresholds appropriately tuned? Was MTTD (Mean Time to Detect) within target?\n- Was MTTR (Mean Time to Respond) within SLA? If not, where were the delays?\n- Were the right people notified at the right time through the right escalation path?\n- Are there detection gaps that allowed the attacker to operate undetected for a period?\n- Did any forensic evidence get lost due to log retention gaps or destructive containment steps?\n- What automation could reduce manual effort in future similar incidents?\n- Does this incident indicate a systemic issue requiring a broader remediation programme?\n- Should this incident type now have a dedicated technique-specific playbook created?\n\nDocument all findings in the incident ticket. If this incident type is not covered by an existing reference playbook and will recur, assign a task to create one.\n\n---\n\n## Related Frameworks & References\n\n- NIST SP 800-61r2 – Computer Security Incident Handling Guide\n- NIST SP 800-137 – Information Security Continuous Monitoring\n- MITRE ATT&CK Enterprise – https://attack.mitre.org/\n- CIS Controls v8 – https://www.cisecurity.org/controls/\n- ISO/IEC 27035 – Information Security Incident Management\n- SANS Incident Handler's Handbook\n\n---\n\n## Revision History\n\n| Version | Date | Author | Changes |\n|---|---|---|---|\n| 1.0 | 2026-02-27 | [Author] | Initial release – generic fallback playbook |\n` }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7072,
+        2336
+      ],
+      "id": "9ab7f4ee-d434-46d0-8435-8e1d72d02925",
+      "name": "Playbook Text Extractor",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"incident_classification\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"SECURITY_ATTACK\",\n        \"SECURITY_VULNERABILITY\",\n        \"CLOUD_SECURITY\",\n        \"POLICY_VIOLATION\",\n        \"AVAILABILITY\",\n        \"PERFORMANCE\"\n      ],\n      \"description\": \"Incident type classification determined in Step 1. Controls search behavior.\"\n    },\n    \"external_research_used\": {\n      \"type\": \"boolean\",\n      \"description\": \"Indicates whether external research was performed.\"\n    },\n    \"threat_intelligence\": {\n      \"type\": \"array\",\n      \"maxItems\": 6,\n      \"description\": \"Structured findings from CVEs, advisories, campaigns, or known issues. Maximum 6 items.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"category\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"CVE\",\n              \"Vendor Advisory\",\n              \"Active Campaign\",\n              \"Known Issue\",\n              \"Exploit Activity\"\n            ],\n            \"description\": \"CVE only for real CVE-YYYY-NNNNN IDs. Active Campaign for named threat actors.\"\n          },\n          \"title\": { \"type\": \"string\" },\n          \"summary\": {\n            \"type\": \"string\",\n            \"description\": \"Max 3 sentences. Concise and technical. No narrative paragraphs.\"\n          },\n          \"affected_products\": { \"type\": [\"string\", \"null\"] },\n          \"affected_versions\": { \"type\": [\"string\", \"null\"] },\n          \"severity\": { \"type\": [\"string\", \"null\"] },\n          \"exploitation_status\": {\n            \"type\": [\"string\", \"null\"],\n            \"enum\": [\"active\", \"proof_of_concept\", \"theoretical\", null]\n          },\n          \"source_name\": { \"type\": \"string\" },\n          \"source_url\": { \"type\": \"string\" },\n          \"published_date\": {\n            \"type\": [\"string\", \"null\"],\n            \"description\": \"ISO-8601 YYYY-MM-DD or YYYY-MM only. Never year-only strings like '2025'. Use null if month unknown.\"\n          },\n          \"applicability_confidence\": {\n            \"type\": \"string\",\n            \"enum\": [\"high\", \"medium\", \"low\"],\n            \"description\": \"How directly this finding relates to the incident. high=exact product match or directly referenced. medium=same product family or technique class. low=general context only.\"\n          },\n          \"applicability_notes\": {\n            \"type\": [\"string\", \"null\"],\n            \"description\": \"Required when applicability_confidence is medium or low. Explain the relevance connection.\"\n          }\n        },\n        \"required\": [\n          \"category\",\n          \"title\",\n          \"summary\",\n          \"source_name\",\n          \"source_url\",\n          \"applicability_confidence\"\n        ],\n        \"additionalProperties\": false\n      }\n    },\n    \"ioc_indicators\": {\n      \"type\": \"array\",\n      \"description\": \"Concrete, specific indicators of compromise extracted from research. Empty array if none found.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"type\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"file_hash\",\n              \"ip_address\",\n              \"domain\",\n              \"registry_key\",\n              \"process_name\",\n              \"file_extension\",\n              \"port\",\n              \"command_pattern\",\n              \"filename\"\n            ]\n          },\n          \"value\": { \"type\": \"string\" },\n          \"context\": {\n            \"type\": \"string\",\n            \"description\": \"What this IOC represents (e.g., 'TamperedChef info-stealer persistence registry key')\"\n          },\n          \"source_url\": { \"type\": \"string\" }\n        },\n        \"required\": [\"type\", \"value\", \"context\", \"source_url\"],\n        \"additionalProperties\": false\n      }\n    },\n    \"mitigation_guidance\": {\n      \"type\": \"array\",\n      \"maxItems\": 6,\n      \"description\": \"Phase-labeled, actionable remediation steps. Maximum 6. Prioritize IMMEDIATE and CONTAINMENT.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"phase\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"IMMEDIATE\",\n              \"CONTAINMENT\",\n              \"DETECTION\",\n              \"INVESTIGATION\",\n              \"HARDENING\",\n              \"RECOVERY\"\n            ],\n            \"description\": \"IMMEDIATE=act within 15min. CONTAINMENT=stop spread. DETECTION=identify scope. INVESTIGATION=root cause. HARDENING=prevent recurrence. RECOVERY=restore service.\"\n          },\n          \"action\": {\n            \"type\": \"string\",\n            \"description\": \"Specific, actionable step. Include exact commands, paths, query strings, or API calls where available.\"\n          },\n          \"source_name\": { \"type\": [\"string\", \"null\"] },\n          \"source_url\": { \"type\": [\"string\", \"null\"] }\n        },\n        \"required\": [\"phase\", \"action\"],\n        \"additionalProperties\": false\n      }\n    },\n    \"emerging_risk_assessment\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"active_exploitation_observed\": {\n          \"type\": [\"boolean\", \"null\"],\n          \"description\": \"true only if exploitation_status=active AND threat is directly relevant to this specific incident type. Not true for unrelated active campaigns.\"\n        },\n        \"risk_trend\": {\n          \"type\": \"string\",\n          \"enum\": [\"increasing\", \"stable\", \"decreasing\", \"unknown\"]\n        },\n        \"confidence\": {\n          \"type\": \"string\",\n          \"enum\": [\"high\", \"medium\", \"low\"]\n        },\n        \"notes\": {\n          \"type\": \"string\",\n          \"description\": \"Max 4 sentences. Summarize threat landscape context and incident-specific risk factors.\"\n        }\n      },\n      \"required\": [\n        \"active_exploitation_observed\",\n        \"risk_trend\",\n        \"confidence\",\n        \"notes\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"sources_consulted\": {\n      \"type\": \"array\",\n      \"description\": \"MUST ONLY contain URLs that appear as source_url in threat_intelligence or mitigation_guidance. No additional URLs.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"overall_confidence\": {\n      \"type\": \"string\",\n      \"enum\": [\"high\", \"medium\", \"low\"]\n    }\n  },\n  \"required\": [\n    \"incident_classification\",\n    \"external_research_used\",\n    \"threat_intelligence\",\n    \"ioc_indicators\",\n    \"mitigation_guidance\",\n    \"emerging_risk_assessment\",\n    \"sources_consulted\",\n    \"overall_confidence\"\n  ],\n  \"additionalProperties\": false\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        6768,
+        3120
+      ],
+      "id": "ed9007c9-bbba-41f6-9ec4-d63fce387415",
+      "name": "Structured Output Parser - Threat Intel",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 4,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        7952,
+        2032
+      ],
+      "id": "89de56b1-3c65-4f23-ba43-1e0e06ad229b",
+      "name": "Merge All Intelligence"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"similarity_search_performed\": { \"type\": \"boolean\" },\n    \"match_quality\": {\n      \"type\": \"string\",\n      \"enum\": [\"strong\", \"moderate\", \"weak\", \"none\"]\n    },\n    \"incidents_retrieved\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"incident_id\":              { \"type\": \"string\" },\n          \"similarity_score\":         { \"type\": \"number\" },\n          \"incident_type\":            { \"type\": \"string\" },\n          \"severity\":                 { \"type\": \"string\" },\n          \"resolution_time_minutes\":  { \"type\": [\"number\", \"null\"] },\n          \"root_cause\":               { \"type\": \"string\" },\n          \"resolution_summary\":       { \"type\": \"string\" },\n          \"key_remediation_actions\":  { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n          \"lessons_learned\":          { \"type\": [\"string\", \"null\"] },\n          \"mitre_techniques_used\":    { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n          \"detection_gap\":            { \"type\": [\"string\", \"null\"] },\n          \"what_went_well\":           { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n          \"what_went_wrong\":          { \"type\": \"array\", \"items\": { \"type\": \"string\" } }\n        },\n        \"required\": [\n          \"incident_id\", \"similarity_score\", \"incident_type\", \"severity\",\n          \"root_cause\", \"resolution_summary\", \"key_remediation_actions\",\n          \"detection_gap\", \"what_went_well\", \"what_went_wrong\"\n        ],\n        \"additionalProperties\": false\n      }\n    },\n    \"historical_patterns\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"most_common_root_cause\":     { \"type\": \"string\" },\n        \"avg_resolution_time_minutes\":{ \"type\": [\"number\", \"null\"] },\n        \"proven_remediation_steps\":   { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n        \"common_mitre_techniques\":    { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n        \"recurring_detection_gaps\":   { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n        \"what_went_well_patterns\":    { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n        \"what_went_wrong_patterns\":   { \"type\": \"array\", \"items\": { \"type\": \"string\" } }\n      },\n      \"required\": [\n        \"most_common_root_cause\", \"proven_remediation_steps\", \"common_mitre_techniques\",\n        \"recurring_detection_gaps\", \"what_went_well_patterns\", \"what_went_wrong_patterns\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"contextual_relevance\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"overlap_summary\":      { \"type\": \"string\" },\n        \"key_differentiators\":  { \"type\": \"string\" },\n        \"confidence\":           { \"type\": \"string\", \"enum\": [\"high\", \"medium\", \"low\"] }\n      },\n      \"required\": [\"overlap_summary\", \"key_differentiators\", \"confidence\"],\n      \"additionalProperties\": false\n    },\n    \"fallback_note\": { \"type\": [\"string\", \"null\"] }\n  },\n  \"required\": [\n    \"similarity_search_performed\", \"match_quality\", \"incidents_retrieved\",\n    \"historical_patterns\", \"contextual_relevance\", \"fallback_note\"\n  ],\n  \"additionalProperties\": false\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        6912,
+        1920
+      ],
+      "id": "f46220c8-abd4-4b05-9a84-5ff2d9ead116",
+      "name": "Structured Output Parser - Historical RAG",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2641d975-d1d0-4348-ad03-b3851f44d54b",
+              "name": "external_threat_data",
+              "value": "={{ $json.output }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6848,
+        2912
+      ],
+      "id": "1ec74e56-bb98-4de4-99dc-483878efd578",
+      "name": "Threat Intel Data Formatter",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=test_incident\n{{ JSON.stringify($('Fetch Test Incident from Supabase').item.json, null, 2) }}\n\npast_incident_data\n{{ JSON.stringify($json.past_incident_data) }}\n\nreference_playbook\n{{ JSON.stringify($json.playbook_text) }}\n\nexternal_threat_data\n{{ JSON.stringify($json.external_threat_data) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an elite Senior Incident Response Analyst AI working inside an enterprise SOC.\n\nYour job is to synthesize intelligence from three sources — a reference playbook, historical incident patterns, and live external threat intelligence — and produce a single, battle-ready Incident Response Report that an on-call engineer can immediately act on.\n\n### YOUR INPUTS\n\nYou will receive four elements:\n\n— test_incident\nThe raw incident alert JSON. This is your most reliable source for: incident_id, severity, category, type, affected_systems, MITRE IDs, detection_method, description, title, and any IPs/domains/hashes/file paths mentioned in the alert text. Mine this FIRST before any other source.\n\n— past_incident_data\nA structured JSON object from a vector similarity search against resolved past incidents. Key fields include: `match_quality`, `incidents_retrieved` (each with `key_remediation_actions` extracted from the `remediation_actions` field of past incidents), `historical_patterns.proven_remediation_steps`, `contextual_relevance`.\n\n— reference_playbook\nA full markdown-formatted incident response playbook. Either a specific technique-matched playbook or the GENERIC ENTERPRISE INCIDENT RESPONSE PLAYBOOK (identified by title \"Generic Enterprise Security Incident Response\" or Use Case ID \"GEN-UNIVERSAL-001\").\n\n— **external_threat_data\nA structured JSON object from live external research. Key fields: `incident_classification`, `external_research_used`, `threat_intelligence`, `ioc_indicators`, `mitigation_guidance` (phased: IMMEDIATE / CONTAINMENT / DETECTION / HARDENING), `emerging_risk_assessment`, `overall_confidence`.\n\n### TRUST HIERARCHY — STRICTLY ENFORCE THIS\n\nWhen information from different sources conflicts or overlaps:\n\n1. Playbook (highest trust) — defines the STRUCTURE and METHODOLOGY of the response. Even generic playbook steps are authoritative for process.\n2. Historical Patterns — highest trust for WHAT ACTUALLY WORKED internally. Proven remediation steps from past incidents outweigh generic advice.\n3. External Threat Intel — provides CVE context, IOCs, and emerging threat data. Use for enrichment and evidence, not as the primary action driver.\n4. Your general knowledge — use ONLY to fill gaps where all three sources are silent. Always signal when using general knowledge by prefixing with: [General Knowledge — not sourced from inputs]\n\n### EDGE CASE RULES\n\nIf `match_quality` is \"none\" OR `incidents_retrieved` is empty:\n\n- State clearly: \"No historical incidents matched this alert. The guidance below is based on the playbook and external intelligence only.\"\n- Do NOT fabricate historical patterns. Skip the Historical Context section or mark it as \"Not available — no matching past incidents found.\"\n- Omit avg_resolution_time from SLA Guidance.\n\nIf the playbook is the GENERIC playbook (GEN-UNIVERSAL-001):\n\n- Do NOT claim a specific technique-based playbook was found.\n- Use the generic playbook structure but adapt it to the specific incident type shown in the incoming alert.\n- Flag it: \"⚠️ No specific playbook matched this incident type. A generic enterprise doctrine has been applied. A dedicated playbook should be created.\"\n\nIf `external_research_used` is false or `threat_intelligence` is empty:\n\n- Skip the Threat Intelligence Briefing section.\n- Do NOT hallucinate CVE data or threat actor names.\n\nIf `contextual_relevance.confidence` is \"low\":\n\n- In the Historical Context section, clearly caveat: \"Historical matches are weak — treat these patterns as directional, not confirmatory.\"\n\nIf any field is null or missing:\n\n- Silently skip that sub-point rather than writing \"N/A\" inline.\n- Do NOT generate placeholder text.\n\nFor SLA / resolution time guidance:\n\n- Only include time estimates when `avg_resolution_time_minutes` is a real number from the data.\n- If null, use the playbook's SLA matrix tier instead.\n\n### OUTPUT FORMAT\n\nProduce a single Markdown document. Use the EXACT section structure below. Do not add, rename, or reorder sections.\n\n# 🚨 Incident Response Report — [INCIDENT_TITLE]\n\nIncident ID: [incident_id] | Severity: [severity] | Category: [category] | Type: [type]\nDetection Method: [detection_method] | Affected Systems: [affected_systems joined with \", \"]\nIncident Status: [Active — not yet contained | Contained — systems isolated | Blocked — attack prevented pre-execution] ← derive from alert description: if attack succeeded and is ongoing = Active; if isolation/containment already applied = Contained; if threat detected before impact = Blocked; default to Active if unclear.\nSeverity Assessment: [severity from alert] [Add \"| ⚠️ Recommended Upgrade to [HIGHER_SEVERITY] — [1-line reason]\" ONLY if evidence from playbook escalation triggers, active exploitation in external intel, or historical patterns indicates underrating. Omit this field entirely if no upgrade is warranted.]\nReport Generated: AI-Generated — Validate Before Executing\n\n## 1. Executive Summary\n\n[3–5 sentences MAX. Answer: What is happening? How bad is it? Is it confirmed malicious or still unconfirmed? What is the single most important action right now?]\n\n[If generic playbook used, add:]\n\n> ⚠️ No specific playbook matched this incident type. Generic enterprise doctrine applied. Create a dedicated playbook after resolution.\n\n[If no historical matches, add:]\n\n> ℹ️ No historical incidents matched this alert. All guidance is derived from playbook and external intelligence.\n\n## 2. Alert Analysis & Affected Systems\n\nIncident Profile:\n\n- Severity: [severity with P-level: e.g., High (P2)]\n- Category: [category]\n- Type: [type]\n- Affected Systems: [list]\n- MITRE Tactics: [mitre tactic names from test incident]\n- MITRE Techniques: [mitre technique IDs and names from test incident — label each as \"[Alert-stated]\"]\n- Detection Source: [detection_method from test incident]\n\nWhat Triggered This Alert:\n[Based on playbook's Alert Triggers section: list the 3–5 most applicable trigger conditions for this specific incident type. Be specific to the systems involved.]\n\nData Sources to Query Now:\n[From playbook's Detection Logic table: list the top 3–4 most relevant log sources for this specific incident, with specific query guidance.]\n\n## 3. Root Cause Hypothesis & MITRE ATT&CK Assessment\n\nMost Likely Root Cause:\n[Synthesise from: playbook triage steps + historical_patterns.most_common_root_cause + external threat context. Write 2–4 sentences. Be specific about what likely happened, not vague.]\n\nMITRE ATT&CK Chain:\n[BEFORE mapping, cross-validate: compare each alert-stated technique ID against the actual incident behaviour described in test_incident.description and test_incident.title. If the stated technique does not match the described behaviour (e.g., alert says T1098 Account Manipulation but description says \"outbound traffic on non-standard ports to C2 infrastructure\"), surface both:\n\n- [Alert-stated]: [Technique ID] – [Technique Name] — _stated in alert metadata_\n- [Behaviour-inferred]: [Technique ID] – [Technique Name] — _better matches the described behaviour_\n  If the stated technique IS consistent with the described behaviour, label it as [Validated] and map normally.\n  Format for each technique:]\n- [Tactic]: [Technique ID] – [Technique Name] [label] — [1 sentence on how this manifests in this incident]\n\nConfidence: [use contextual_relevance.confidence — High / Medium / Low]\n[If Low, add: \"Low confidence — limited historical precedent for this exact alert profile.\"]\n\nAlternative Hypotheses to Rule Out:\n[From playbook's \"De-escalated and Expected Benign Events\" section: list 2–3 false-positive scenarios specific to this incident type that the engineer should quickly rule out before treating as malicious.]\n\n## 4. Indicators of Compromise (IOCs)\n\nHunt for These Indicators:\n\n| IOC Type | Value / Pattern | Source | Priority |\n| -------- | --------------- | ------ | -------- |\n\n[Extract IOCs in this STRICT priority order:\n\n1. Alert Payload (test_incident) — scan title, description, affected_systems, tags for: IP addresses, domain names, file hashes (MD5/SHA), file paths, CVE IDs, usernames, ports, process names. These are HIGH priority — they come directly from the live alert.\n2. External ioc_indicators array — HIGH priority if from vendor advisory / CVE DB / CISA; MEDIUM if from other sources.\n3. Playbook IOC checklist — MEDIUM priority (template reference).\n4. Historical MITRE techniques — LOW priority (inferred patterns only).\n   If no IOCs extracted from any source: \"No specific IOC values retrieved. Use the playbook's IOC checklist template below as your investigation framework.\"]\n\nHunting tip: Always search for alert-payload IOCs (step 1 above) in SIEM/EDR BEFORE querying external sources.\n\nIOC Collection Checklist:\n[From playbook's IOC Checklist table: reproduce only the rows relevant to this incident type. Keep as actionable checkboxes.]\n\n## 5. Immediate Response Checklist (Next 30 Minutes)\n\nThese actions should begin NOW, in order. Do not wait for full root cause confirmation before executing IMMEDIATE steps.\n\n### IMMEDIATE (0–15 min) — Stabilise\n\n[Source authority rule — CRITICAL: For IMMEDIATE steps, ONLY use actions sourced from: (1) the reference playbook, (2) historical proven_remediation_steps from past incidents, or (3) external sources that are vendor advisories, CVE databases (NVD), or government advisories (CISA, NCSC). Do NOT use blog posts, community write-ups, Medium/Substack articles, or forum posts as the basis for IMMEDIATE steps — these may only appear in DETECTION or HARDENING sections.]\n[From: playbook analyst checklist first 3-4 items + external mitigation_guidance where phase=\"IMMEDIATE\" (authority-filtered). Write as numbered actionable steps. Include specific commands or queries where available from the data.]\n\n### CONTAINMENT (15–60 min) — Stop the Bleeding\n\n[From: external mitigation_guidance where phase=\"CONTAINMENT\" + playbook Containment Actions. Numbered steps. Preserve forensic evidence BEFORE destructive steps.]\n\n### DETECTION & VALIDATION (0–60 min, parallel)\n\n[From: external mitigation_guidance where phase=\"DETECTION\" + playbook data sources. Numbered steps with specific queries or commands from the data where available.]\n\n## 6. Escalation Decision\n\nEscalate NOW if any of the following are true:\n[From playbook's Escalation section + the severity matrix. Write as a clear, tight checklist. Include specific trigger conditions relevant to this incident type.]\n\n- [ ] [Condition 1]\n- [ ] [Condition 2]\n- [ ] [Condition 3 — regulatory/data exposure specific]\n- [ ] [Condition 4 — lateral movement / privilege escalation]\n\nEscalation Path:\n\n- Tier 1 → Tier 2: [trigger condition from playbook] — [who to page]\n- Tier 2 → IR Lead: [trigger condition] — [action]\n- IR Lead → CISO/Legal: [trigger condition — especially data breach] — [action]\n\n## 7. Eradication & Recovery Plan\n\nComplete full root cause confirmation before eradication. Premature remediation can destroy forensic evidence.\n\n[Numbered ordered list. Synthesise from: playbook Eradication & Recovery section + historical proven_remediation_steps + external HARDENING phase mitigations. The first 2–3 steps should come from proven internal history (if available). Label the source:]\n\n1. [Action] (Source: Internal precedent from [incident_id]) or (Source: Playbook) or (Source: External — [source_name])\n2. ...\n\n## 8. Historical Context & Pattern Intelligence\n\n[SKIP THIS ENTIRE SECTION if match_quality is \"none\". Replace with:]\n\n> ℹ️ Historical Context: Not Available — No matching past incidents found in the resolved incidents database. A new historical benchmark will be created when this incident is resolved.\n\n[If incidents retrieved, include:]\nSimilarity Match Quality: [match_quality] | Historical Confidence: [contextual_relevance.confidence]\n\nWhat Happened in Similar Past Incidents:\n| Incident | Similarity | Type | Severity | Resolution Time | SLA Met |\n|---|---|---|---|---|---|\n[Row for each incident in incidents_retrieved. Use \"Unknown\" for null sla_met.]\n\nCommon Root Cause Pattern:\n\n> [historical_patterns.most_common_root_cause]\n\nWhat Worked (Proven Internal Steps):\n[List historical_patterns.proven_remediation_steps as a numbered list. These come from the `remediation_actions` field of past resolved incidents. IMPORTANT: If the steps appear generic (e.g., contain phrases like \"Isolated and secured affected systems\", \"Applied immediate patches and configuration updates\", \"Verified system integrity and restored normal operations\"), add this caveat after the list:\n\n> ⚠️ These historical steps appear generic — the source incident records may not contain detailed action-level specifics. Cross-check against the actual incident IDs listed above before relying on these as precise precedent.]\n\nHistorical Resolution Benchmark:\n[If avg_resolution_time_minutes is not null:]\n\n- Avg resolution time for this type: [avg_resolution_time_minutes] minutes ([X hours Y min])\n- SLA success rate: [sla_success_rate_pct]% (if available, else \"Not recorded in dataset\")\n- This incident is [severity] severity — target resolution within [derive from playbook severity matrix SLA for this severity level]\n\nHow This Incident Differs from Historical Cases:\n\n> [contextual_relevance.key_differentiators]\n\n[If confidence is low:]\n\n> ⚠️ Historical match confidence is LOW. Treat the above patterns as directional guidance only, not confirmed precedent.\n\n## 9. Threat Intelligence Briefing\n\n[SKIP this section if external_research_used is false or threat_intelligence is empty. Replace with:]\n\n> ℹ️ External Threat Intelligence: Not Available — External research was not performed or returned no results.\n\n[If data available:]\nRisk Status: [emerging_risk_assessment.active_exploitation_observed → \"⚠️ ACTIVE exploitation observed in the wild\" or \"No active exploitation confirmed\"] | Risk Trend: [risk_trend] | Confidence: [overall_confidence]\n\nRelevant Threat Intelligence:\n[For each item in threat_intelligence array, format as:]\n[category] — [title]\n[summary — max 2 sentences]\nApplicability: [applicability_confidence] — [applicability_notes if present]\nSource: [[source_name]]([source_url])\n\nLive IOCs from External Sources:\n[ioc_indicators formatted as a table: Type | Value | Context]\n[If empty: \"No specific IOC values retrieved from external sources.\"]\n\nAnalyst Note:\n\n> [emerging_risk_assessment.notes — max 3 sentences, trim if longer]\n\n## 10. Long-term Hardening Recommendations\n\n[From: playbook Lessons Learned + Eradication hardening items + external HARDENING phase mitigations. Write as a structured list with priority labels.]\n\nPriority 1 — Do within 48 hours:\n\n- [Hardening action directly related to the attack vector exploited]\n\nPriority 2 — Do within 2 weeks:\n\n- [Policy / access control improvements]\n\nPriority 3 — Do within next quarter:\n\n- [Detection coverage, automation, playbook creation]\n\n> [If generic playbook was used, always add:]\n> 📋 Create a dedicated response playbook for [incident type] incidents. This generic doctrine is a temporary measure.\n\n## 11. Documentation Requirements\n\nThe following must be captured in the incident ticket before closure:\n\n- [ ] Detection timestamp and alert source\n- [ ] Initial severity assessment with justification\n- [ ] Systems and accounts confirmed affected\n- [ ] Forensic evidence preserved (log snapshots, memory, screenshots)\n- [ ] Root cause confirmed or best hypothesis with evidence\n- [ ] Containment actions taken with timestamps\n- [ ] Eradication steps executed with validation results\n- [ ] Residual risk statement\n- [ ] Stakeholders notified (with timestamps)\n- [ ] Recovery validation signed off by system/data owner\n- [ ] Recommended control improvements with owners and deadlines\n\nReport generated by Incident Intelligence System. Always validate AI-generated guidance against current system state before executing. This report is a starting point, not a substitute for analyst judgment.\n\n### USING POSTMORTEM INTELLIGENCE FROM HISTORICAL DATA\n\nThe past_incident_data input now contains structured postmortem intelligence. Use the following fields when they are present:\n\nPer-incident fields (from incidents_retrieved[]):\n- detection_gap: If a past incident identified a gap in detection coverage — check if that gap is likely present in the CURRENT incident. If so, surface it in Section 3 (Root Cause Hypothesis) and Section 10 (Long-term Hardening Recommendations).\n- what_went_well: Use in Section 8 (Historical Context) under the subheading \"What Worked\". These are verified internal success patterns.\n- what_went_wrong: Use in Section 8 under the subheading \"What Failed\". Surface as cautionary context.\n\nCross-incident pattern fields (from historical_patterns):\n- recurring_detection_gaps: Synthesize all detection failure patterns across retrieved incidents. If a recurring gap exists, this is a systemic blind spot — flag it in Section 3 under \"Most Likely Root Cause\" and in Section 10 under \"Priority 1 — Do within 48 hours\".\n- what_went_well_patterns: Include in Section 8 under the subheading \"Proven Response Patterns\".\n- what_went_wrong_patterns: Include in Section 8 under the subheading \"Historical Failure Patterns — Avoid These\".\n\n### OUTPUT FORMAT\n\nYou MUST produce a valid JSON object matching the schema enforced by the output parser.\nPlace the complete 11-section Markdown document (formatted exactly as specified above) inside the `report_markdown` field.\nAll other fields are structured extractions for downstream automation and validation.\n\n### CRITICAL OUTPUT RULES\n\n1. Never hallucinate incident IDs, CVE numbers, IP addresses, commands, or tool names not present in the input data. If unsure, write \"Verify in [log source]\" instead.\n2. Never use placeholder text like \"[Insert here]\" or \"[TBD]\". If data is missing, skip the line or use the edge case rules above.\n3. Always format commands in code blocks for copy-paste readiness.\n4. Section 5 (Immediate Actions) is sacred — it must be the most specific, concrete, and immediately executable section of the entire report. Never make it vague. Only use high-authority sources (playbook, internal history, vendor/gov advisories) for the IMMEDIATE phase.\n5. Do not summarise the playbook as if it is a source — synthesise FROM it, don't cite it. The engineer should not need to read the playbook; this report replaces it.\n6. Preserve the on-call engineer's time — if something can be said in 2 sentences, do not use 5.\n7. Severity upgrade callout is mandatory when evidence warrants it — never bury a severity upgrade recommendation in prose. It must appear in the report header's Severity Assessment line.\n8. IOC extraction from the alert payload (test_incident) is always Step 1 — never skip this even if external IOCs are richer. Alert-payload IOCs have the highest evidentiary value because they come from the live system.\n9. Always validate MITRE technique IDs against incident behaviour before mapping. A stated technique ID that does not match the described behaviour must be flagged as [Alert-stated] and your validated mapping shown as [Behaviour-inferred].\n10. Always escape newlines (\\n) and double-quotes (\\\") inside report_markdown correctly. The entire Markdown document is wrapped in a JSON string."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        8336,
+        2048
+      ],
+      "id": "348067a9-1bbc-46e8-bc3f-94857fe0f6c7",
+      "name": "Report Synthesizer",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e216355c-7d36-4eff-8a2f-b890dabfeda4",
+              "name": "incident_id",
+              "value": "Test-ddos_attack-001",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5280,
+        2112
+      ],
+      "id": "b384953e-025f-41ad-afd6-2ba147267291",
+      "name": "Set Incident ID"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "={{ $('Config').item.json.table_test }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=incident_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Set Incident ID').item.json.incident_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "=output",
+              "fieldValue": "={{ $json.output }}"
+            },
+            {
+              "fieldId": "=output_markdown",
+              "fieldValue": "={{ $json.output.report_markdown }}"
+            },
+            {
+              "fieldId": "=run_status",
+              "fieldValue": "={{ \"completed\" }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        9264,
+        1872
+      ],
+      "id": "a5421ed9-74ca-49c0-9e0e-ee8eb5650c87",
+      "name": "Write Runbook to DB",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Test Cases (13 Total)\n\nTC1  -- Test-data_exfiltration-001\nTC2  -- Test-ddos_attack-001\nTC3  -- Test-error_spike-001\nTC4  -- Test-leaked_credentials-001\nTC5  -- Test-malware_detection-001\nTC6  -- Test-memory_leak-001\nTC7  -- Test-phishing_attack-001\nTC8  -- Test-policy_violation-001\nTC9  -- Test-prompt_injection-001\nTC10 -- Test-ransomware_detection-001\nTC11 -- Test-service_outage-001\nTC12 -- Test-unauthorized_access_attempt-001\nTC13 -- Test-vulnerable_dependency-001\n\nChange active incident in the Set Incident ID node.",
+        "height": 368,
+        "width": 384,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4624,
+        1120
+      ],
+      "id": "9092b935-7197-41ea-8fa2-0f19052b03a0",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "56d336e3-e23e-4045-b1e0-a13bc869f6b8",
+              "name": "past_incident_data",
+              "value": "={{ $json.output }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6816,
+        1696
+      ],
+      "id": "9c5850cf-59b9-4a1f-9258-ebb35e1279c7",
+      "name": "Historical RAG Data Formatter",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 704,
+        "width": 400,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        7792,
+        1856
+      ],
+      "id": "e6c0f871-d8ba-4ad7-bef1-4d5be718d2a2",
+      "name": "Sticky Note23"
+    },
+    {
+      "parameters": {
+        "content": "## Step 4 -- Report Synthesizer\n\nReceives merged intelligence from all 3 branches\nand produces a complete incident response report.\n\nModel: Claude - Report Synthesizer (OpenRouter)\n\nOutput (JSON validated by Structured Output Parser):\n  incident_summary\n  immediate_actions[]\n  investigation_checklist[]\n  containment_guidance[]\n  evidence_to_preserve[]\n  iocs_extracted[]\n  assumptions_and_confidence\n  output_markdown (full 11-section report)",
+        "height": 352,
+        "width": 480,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8240,
+        1472
+      ],
+      "id": "1296c4e0-4e48-42ec-8379-74ca21455418",
+      "name": "Sticky Note24"
+    },
+    {
+      "parameters": {
+        "content": "## Branch A -- Historical RAG\n\nSearches past resolved incidents for similar cases.\n\nAgent:  Historical Incidents RAG Agent\nModel:  Gemini Embeddings + Supabase pgvector\nTop-K:  3 most similar past incidents\n\nOutput fields:\n  match_quality  (strong / moderate / weak / none)\n  incidents_retrieved\n  historical_patterns\n  detection_gap_analysis",
+        "height": 304,
+        "width": 464,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5792,
+        1760
+      ],
+      "id": "2c0710c3-5f83-4c68-928c-a19c11b5475d",
+      "name": "Sticky Note26"
+    },
+    {
+      "parameters": {
+        "content": "## Branch C -- External Threat Intelligence\n\nSearches the live web for CVEs, active threat campaigns,\nIOCs and mitigation guidance relevant to the incident.\n\nAgent:  Threat Intel Enrichment Agent\nTools:  Tavily Search + Claude (OpenRouter)\n\nOutput fields:\n  incident_classification\n  threat_intelligence[]\n  ioc_indicators[]\n  mitigation_guidance[]\n  emerging_risk_assessment\n\nSmart suppression: AVAILABILITY and PERFORMANCE\nincidents skip external search entirely to avoid\nirrelevant security hallucinations.",
+        "height": 464,
+        "width": 384,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5792,
+        2864
+      ],
+      "id": "b6ff1704-f823-4765-bdec-0a103148b692",
+      "name": "Sticky Note27"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 496,
+        "width": 1984,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5760,
+        2848
+      ],
+      "id": "a59a26b4-5dc1-4454-8ea5-158ddb85e45e",
+      "name": "Sticky Note28"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 560,
+        "width": 1984,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5760,
+        1680
+      ],
+      "id": "0ece48e0-d82d-4efd-afe8-a45804273952",
+      "name": "Sticky Note29"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 528,
+        "width": 1984,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5760,
+        2288
+      ],
+      "id": "7aaa6a7b-5c1a-47db-8600-4e037575b403",
+      "name": "Sticky Note30"
+    },
+    {
+      "parameters": {
+        "content": "## Branch B -- Playbook Router\n\nMatches the incident to the best-fit response playbook.\nFalls back to GEN-UNIVERSAL-001 if no match found.\n\nAgent:  Playbook Routing Agent\nModel:  Gemini Embeddings + Supabase pgvector\n\nOutput fields:\n  match_found  (true / false)\n  playbook_id, playbook_name\n  confidence, reasoning\n\nLoaded playbooks:\n  S3 Bucket Access, Phishing,\n  Phishing Campaign, Brute Force Login",
+        "height": 368,
+        "width": 384,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5808,
+        2336
+      ],
+      "id": "4c61e910-75fc-4735-8471-fc878c953435",
+      "name": "Sticky Note31"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4730995e-a705-4d72-9f96-8e5b5f388f17",
+              "name": "github_repo",
+              "value": "Umang00/Incident-Management-V1",
+              "type": "string"
+            },
+            {
+              "id": "a9cd6345-3ec7-4be1-8e56-ff290289554d",
+              "name": "github_baseUrl",
+              "value": "https://api.github.com/repos",
+              "type": "string"
+            },
+            {
+              "id": "d724a580-8b94-4736-86ba-ba729b16c6fe",
+              "name": "model_chat",
+              "value": "google/gemini-3.1-pro-preview",
+              "type": "string"
+            },
+            {
+              "id": "a91d0c1f-44d7-44e9-b63d-2283226de411",
+              "name": "model_embedding",
+              "value": "models/gemini-embedding-001",
+              "type": "string"
+            },
+            {
+              "id": "c88da39a-8099-418e-aa87-217275acaa12",
+              "name": "model_analysis",
+              "value": "anthropic/claude-opus-4.5",
+              "type": "string"
+            },
+            {
+              "id": "134e44c4-d70f-460a-a235-542cce3b385e",
+              "name": "temperature",
+              "value": 0.3,
+              "type": "number"
+            },
+            {
+              "id": "76ff66b0-3b3b-435f-b1fd-f216f2ed7594",
+              "name": "chunk_size",
+              "value": 10000,
+              "type": "number"
+            },
+            {
+              "id": "8641c57d-7230-4769-80b4-fd2fd048f441",
+              "name": "chunk_overlap",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "68ef0470-970f-4a13-94df-e4a086c4edaf",
+              "name": "query_playbooks",
+              "value": "match_reference_playbooks_v1",
+              "type": "string"
+            },
+            {
+              "id": "fec0bfa3-147a-4b0a-bd66-239f0830534a",
+              "name": "query_incidents",
+              "value": "match_resolved_incidents_v1",
+              "type": "string"
+            },
+            {
+              "id": "82640a55-43a8-4e7d-808e-2f99712fc0ab",
+              "name": "table_resolved",
+              "value": "resolved_incidents_v1",
+              "type": "string"
+            },
+            {
+              "id": "3bb5bfcc-2fc7-4c9e-946f-90fc368cdb1e",
+              "name": "table_playbooks",
+              "value": "reference_playbooks_v1",
+              "type": "string"
+            },
+            {
+              "id": "eb1088ba-166d-4f8a-bd89-cfc18ea9c721",
+              "name": "table_test",
+              "value": "test_incidents_v1",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4928,
+        464
+      ],
+      "id": "fdcad591-557e-49dc-8abc-40e5a121f762",
+      "name": "Config"
+    },
+    {
+      "parameters": {
+        "content": "## Configuration -- Values To Change\n\nSet these before running any pipeline:\n\n  table_incidents   --> test_incidents_v1\n  table_playbooks   --> reference_playbooks_v1\n  incident_id       --> ID of the test incident to process\n  model_analysis    --> OpenRouter model for RAG + Synthesis\n  model_threat      --> OpenRouter model for Threat Intel\n\nEdit values directly in the Config node.\n\nCredentials required (Settings -> Credentials):\n  - Supabase\n  - OpenRouter\n  - Google Gemini\n  - Tavily",
+        "height": 384,
+        "width": 848
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4256,
+        368
+      ],
+      "id": "4cb76b02-5be1-4c80-b8a2-1021118d2669",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"incident_summary\": {\n      \"type\": \"string\",\n      \"description\": \"3–5 sentence summary: what happened, severity, single most important action.\"\n    },\n    \"similar_past_incidents_used\": {\n      \"type\": \"array\",\n      \"description\": \"incident_id values from past_incident_data that materially influenced this response.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"immediate_actions\": {\n      \"type\": \"array\",\n      \"description\": \"Each action from the IMMEDIATE (0–15 min) block of Section 5, as individual strings.\",\n      \"items\": { \"type\": \"string\" },\n      \"minItems\": 1\n    },\n    \"containment_guidance\": {\n      \"type\": \"array\",\n      \"description\": \"Each action from the CONTAINMENT (15–60 min) block of Section 5, as individual strings.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"iocs_extracted\": {\n      \"type\": \"array\",\n      \"description\": \"IOC values extracted from Section 4 — IPs, hashes, domains, process names. Empty array if none.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"assumptions_and_confidence\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"confidence_level\": {\n          \"type\": \"string\",\n          \"enum\": [\"high\", \"medium\", \"low\"]\n        },\n        \"generic_playbook_used\": {\n          \"type\": \"boolean\",\n          \"description\": \"true if GEN-UNIVERSAL-001 playbook was used.\"\n        },\n        \"caveat_notes\": {\n          \"type\": \"array\",\n          \"items\": { \"type\": \"string\" }\n        }\n      },\n      \"required\": [\"confidence_level\", \"generic_playbook_used\", \"caveat_notes\"],\n      \"additionalProperties\": false\n    },\n    \"report_markdown\": {\n      \"type\": \"string\",\n      \"description\": \"The complete, fully formatted 11-section Markdown IR report. Must not be empty or truncated.\"\n    }\n  },\n  \"required\": [\n    \"incident_summary\",\n    \"immediate_actions\",\n    \"containment_guidance\",\n    \"iocs_extracted\",\n    \"assumptions_and_confidence\",\n    \"report_markdown\"\n  ],\n  \"additionalProperties\": false\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        8448,
+        2208
+      ],
+      "id": "754e5552-c024-47a3-97e8-316a7a58a413",
+      "name": "Structured Output Parser - Synthesizer",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a7b1dcb2-dfa6-4717-b69a-b6b9a19863bd",
+              "leftValue": "={{ $json.output.incident_summary }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "8526c2e3-9a0c-4884-8479-1c490d558e21",
+              "leftValue": "={{ $json.output.immediate_actions.length }}",
+              "rightValue": "={{ 0 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "76cacd44-d21c-48f0-a247-0cf00c25923e",
+              "leftValue": "={{ $json.output.report_markdown }}",
+              "rightValue": "## 1. Executive Summary",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        8912,
+        2048
+      ],
+      "id": "0a4dea6e-b852-4de0-9457-825aa79b4868",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        9264,
+        2336
+      ],
+      "id": "dc094fef-85a8-4dd1-9ab9-56161b94b0b5",
+      "name": "Replace With Error Notification Workflow"
+    },
+    {
+      "parameters": {
+        "content": "## Degraded Output\n\nThe Structured Output Parser did not produce\nall required fields (incident_summary,\nimmediate_actions, output_markdown).\n\nAction: DO NOT write to Supabase.\nCheck the LLM response in execution log\nand re-run the workflow.\n\nThis path should never trigger in normal\noperation. If it does, check model rate\nlimits or context window size.",
+        "height": 304,
+        "width": 256,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        9184,
+        2576
+      ],
+      "id": "46f52e20-53e1-4dca-bf0f-cbd5640bcaee",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "={{ $('Config').item.json.table_playbooks }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=id",
+              "keyValue": "={{ $('Playbook Routing Agent').item.json.output.playbook_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        6864,
+        2336
+      ],
+      "id": "3682764a-78c4-4376-ae8f-187a90f4dc1c",
+      "name": "Fetch Full Playbook from Supabase",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Incident Management\n\nWhat this workflow does:\nTakes a raw security or operational incident and produces\na structured, battle-ready incident response report.\n\nThree intelligence branches run in parallel:\n\n  Branch A -- Historical RAG\n  Searches past incidents for similar cases and proven\n  remediation patterns.\n\n  Branch B -- Playbook Router\n  Matches the incident to the best-fit response playbook.\n  Falls back to a generic playbook if no match exists.\n\n  Branch C -- Threat Intelligence\n  Searches the live web for CVEs, active threat campaigns,\n  IOCs and mitigation guidance.\n\nFinal output:\n  - Structured JSON written to test_incidents_v1.output\n  - 11-section Markdown in test_incidents_v1.output_markdown\n\nStack: n8n, Supabase (pgvector), Gemini Embeddings,\n       Claude via OpenRouter, Tavily Search",
+        "height": 560,
+        "width": 464,
+        "color": 5
+      },
+      "id": "57bf6a1b-59a7-471b-846b-18d0a87061c8",
+      "name": "Sticky Note - Pipeline Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4624,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 3 -- Merge All Intelligence\n\nCombines outputs from all 3 branches into one item\nusing combineByPosition.\n\nFields passed to the synthesizer:\n  past_incident_data   (from Branch A)\n  playbook_text        (from Branch B)\n  external_threat_data (from Branch C)",
+        "height": 344,
+        "width": 388,
+        "color": 5
+      },
+      "id": "9fabfcf8-4f33-4f72-aea0-00153a80b58e",
+      "name": "Sticky Note - Merge Step",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        7808,
+        1472
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 1 -- Fetch Incident\n\nReads the active test incident row from Supabase\nby incident_id configured in Set Incident ID.\n\nOutput: full incident JSON passed to all 3 branches.",
+        "height": 192,
+        "width": 320,
+        "color": 5
+      },
+      "id": "5c913115-b6da-4ad4-b9f3-6abd67b25d4c",
+      "name": "Sticky Note - Fetch Step",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5280,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 2 -- Parallel Retrieval\n3 branches run simultaneously. See labels below.",
+        "height": 128,
+        "width": 300,
+        "color": 5
+      },
+      "id": "1e44cc5d-df61-49b8-8fbc-29b64df6ef03",
+      "name": "Sticky Note - Step 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5776,
+        1536
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 5 -- Validate Output\n\nChecks that the synthesizer produced all required fields:\nincident_summary, immediate_actions, output_markdown.\n\nTRUE --> Step 6 (write to Supabase)\nFALSE --> Degraded Output (no write)",
+        "height": 232,
+        "width": 320,
+        "color": 5
+      },
+      "id": "c6bb32ef-cf30-4859-9b40-fafcf71108ca",
+      "name": "Sticky Note - Step 5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8800,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 6 -- Write to Supabase\n\nUpdates test_incidents_v1 row:\n  output          --> structured JSON\n  output_markdown --> 11-section report\n  run_status      --> completed",
+        "height": 212,
+        "width": 280,
+        "color": 5
+      },
+      "id": "4a1bf1ca-5f01-4b47-9b59-d653f22dde09",
+      "name": "Sticky Note - Step 6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        9200,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 704,
+        "width": 496,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8240,
+        1856
+      ],
+      "id": "cf6a6c9a-044d-4d8e-86c5-a5db0c0a526e",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 688,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        8832,
+        1856
+      ],
+      "id": "151d8941-9437-4aef-8482-bff992ac9406",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 288,
+        "width": 304,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        9168,
+        2256
+      ],
+      "id": "d13e74de-3d2c-47d6-804d-f4d692b0fa94",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 224,
+        "width": 304,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        9168,
+        1840
+      ],
+      "id": "9dd4070c-c2fd-443e-af02-9c26575b4cd3",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        6464,
+        2544
+      ],
+      "id": "7a9dbb28-b7a6-436e-b0db-e67a206e0c3e",
+      "name": "Playbook Router",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "9r5tndCAyKCnqvfG",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        6512,
+        3120
+      ],
+      "id": "8be21867-d87a-4b19-9319-4599af5c0a28",
+      "name": "Historical RAG Agent",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "9r5tndCAyKCnqvfG",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        6512,
+        1936
+      ],
+      "id": "296254bb-b960-43e0-9443-795e0496892a",
+      "name": "Threat Intel Agent",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "9r5tndCAyKCnqvfG",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        5856,
+        352
+      ],
+      "id": "67de9d1e-8a11-412d-9bf4-dbb31253fc8d",
+      "name": "Loop Over Documents",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "chunkSize": "={{ $('Config').item.json.chunk_size }}",
+        "chunkOverlap": "={{ $('Config').item.json.chunk_overlap }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        5792,
+        752
+      ],
+      "id": "01905489-3331-4a37-a12a-5635323cdec3",
+      "name": "Recursive Character Text Splitter (Resolved Incidents)",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "={{ $('Config').item.json.table_resolved }}",
+          "mode": "id"
+        },
+        "queryName": "={{ $('Config').item.json.query_incidents }}"
+      },
+      "id": "dd7178ee-46ce-445b-83fd-38e5953bf657",
+      "name": "Supabase Vector Insert (Resolved Incidents)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabaseInsert",
+      "typeVersion": 1,
+      "position": [
+        6064,
+        352
+      ],
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        6352,
+        352
+      ],
+      "id": "d65e2cd4-7568-491a-a055-e1c35e32ad40",
+      "name": "Wait (To Avoid Hitting API Limits)",
+      "webhookId": "1061be21-f173-4ab6-9160-a146552d4f53"
+    },
+    {
+      "parameters": {
+        "chunkSize": "={{ $('Config').item.json.chunk_size }}",
+        "chunkOverlap": "={{ $('Config').item.json.chunk_overlap }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        7488,
+        736
+      ],
+      "id": "2930abbf-0d61-4adf-b8b1-273eae615db3",
+      "name": "Recursive Character Text Splitter (Playbooks Ingestion)",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_chat }}",
+        "options": {
+          "temperature": "={{ $('Config').item.json.temperature }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        7024,
+        576
+      ],
+      "id": "65e3b88b-3d80-4a86-b6f0-370e6d331f3f",
+      "name": "Summarizer Agent",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "9r5tndCAyKCnqvfG",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "={{ $('Config').item.json.table_playbooks }}",
+          "mode": "id"
+        },
+        "queryName": "={{ $('Config').item.json.query_playbooks }}"
+      },
+      "id": "ce116d68-9e05-4d4a-9cf5-9c8d1f161c0c",
+      "name": "Supabase Vector Insert (Playbooks Ingestion)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabaseInsert",
+      "typeVersion": 1,
+      "position": [
+        7568,
+        384
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Tfi1jU337qJ96pPq",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        8336,
+        2272
+      ],
+      "id": "23f82001-8e06-4aa0-b805-e150256f8980",
+      "name": "Report Synthesizer Agent",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "9r5tndCAyKCnqvfG",
+          "name": "OpenRouter account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking Test workflow": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolved Incidents Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Insert (Resolved Incidents)",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Embeddings (Resolved Incidents)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Insert (Resolved Incidents)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reference Playbooks From GitHub": {
+      "main": [
+        [
+          {
+            "node": "Download Reference Playbooks From GitHub",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge Ingestion Branches",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Get Resolved Incidents from GitHub": {
+      "main": [
+        [
+          {
+            "node": "Download Resolved Incidents From GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Reference Playbooks From GitHub": {
+      "main": [
+        [
+          {
+            "node": "Merge Ingestion Branches",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Summarize Reference Playbooks for Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Resolved Incidents From GitHub": {
+      "main": [
+        [
+          {
+            "node": "Prepare Markdown Document & Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Markdown Document & Metadata": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Embeddings (Playbooks Ingestion)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Insert (Playbooks Ingestion)",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reference Playbooks Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Insert (Playbooks Ingestion)",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Ingestion Branches": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Insert (Playbooks Ingestion)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Reference Playbooks for Embeddings": {
+      "main": [
+        [
+          {
+            "node": "Merge Ingestion Branches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Test Incidents From GitHub": {
+      "main": [
+        [
+          {
+            "node": "Download Test Incidents From GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Test Incidents From GitHub": {
+      "main": [
+        [
+          {
+            "node": "Create a Row of Test Incident on Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Test Incident from Supabase": {
+      "main": [
+        [
+          {
+            "node": "Playbook Routing Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge All Intelligence",
+            "type": "main",
+            "index": 3
+          },
+          {
+            "node": "Historical Incidents RAG Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Threat Intel Enrichment Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threat Intel Enrichment Agent": {
+      "main": [
+        [
+          {
+            "node": "Threat Intel Data Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search in Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "Threat Intel Enrichment Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Embeddings (Historical RAG)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Resolved Incidents Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Historical Incidents RAG Agent": {
+      "main": [
+        [
+          {
+            "node": "Historical RAG Data Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolved Incidents Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Historical Incidents RAG Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Playbook Routing Agent": {
+      "main": [
+        [
+          {
+            "node": "Fetch Full Playbook from Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reference Playbooks Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Playbook Routing Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Embeddings (Playbooks)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Reference Playbooks Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser - Playbook Router": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Playbook Routing Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Playbook Text Extractor": {
+      "main": [
+        [
+          {
+            "node": "Merge All Intelligence",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser - Threat Intel": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Threat Intel Enrichment Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Report Synthesizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser - Historical RAG": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Historical Incidents RAG Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threat Intel Data Formatter": {
+      "main": [
+        [
+          {
+            "node": "Merge All Intelligence",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Set Incident ID": {
+      "main": [
+        [
+          {
+            "node": "Fetch Test Incident from Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Synthesizer": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Historical RAG Data Formatter": {
+      "main": [
+        [
+          {
+            "node": "Merge All Intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Get Resolved Incidents from GitHub",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Incident ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser - Synthesizer": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Report Synthesizer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Write Runbook to DB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace With Error Notification Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Full Playbook from Supabase": {
+      "main": [
+        [
+          {
+            "node": "Playbook Text Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Playbook Router": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Playbook Routing Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser - Playbook Router",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Historical RAG Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser - Threat Intel",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Threat Intel Enrichment Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threat Intel Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser - Historical RAG",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Historical Incidents RAG Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Documents": {
+      "main": [
+        [
+          {
+            "node": "Get Reference Playbooks From GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase Vector Insert (Resolved Incidents)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter (Resolved Incidents)": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Resolved Incidents Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Insert (Resolved Incidents)": {
+      "main": [
+        [
+          {
+            "node": "Wait (To Avoid Hitting API Limits)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait (To Avoid Hitting API Limits)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter (Playbooks Ingestion)": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Reference Playbooks Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarizer Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarize Reference Playbooks for Embeddings",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Insert (Playbooks Ingestion)": {
+      "main": [
+        [
+          {
+            "node": "Get Test Incidents From GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Synthesizer Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Report Synthesizer",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser - Synthesizer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "23f0b8bf-dd1f-47f6-8964-8770aeced5be",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3cd7d9dbf66c7997e1074b2709f070109fda700187bd69d165833c1582642e54"
+  },
+  "id": "AonXK7NwKSYm267K",
+  "tags": []
+}

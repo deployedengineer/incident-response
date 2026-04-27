@@ -1,0 +1,156 @@
+{
+  "@timestamp": "2025-12-02T14:28:10Z",
+  "incident_id": "INC-2025-1202-009",
+  "severity": "high",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "malware_detection",
+  "title": "Malware detected on employee workstation",
+  "description": "CrowdStrike Falcon EDR flagged a behavioral IOA on WS-ENG-341 (user: r.jackson@company.com, senior software engineer) at 14:18 UTC. The alert identified a process chain: cmd.exe → powershell.exe -enc [base64] → mshta.exe → outbound connection to 185.186.27.141:443. The encoded PowerShell decoded to an AMSI-bypass script followed by a Cobalt Strike Beacon download. CrowdStrike's Fusion SOAR platform automatically killed the process chain and placed the endpoint in network isolation within 1.2 seconds. A Splunk threat hunt for the C2 IP across all endpoints found 2 additional workstations had established connections to the same IP in the prior 6 hours, indicating active lateral movement prior to detection.",
+  "affected_systems": [
+    "endpoint-341",
+    "corporate-network"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "CrowdStrike Falcon EDR — Behavioral IOA: AMSI-bypass PowerShell + Cobalt Strike Beacon download pattern; Fusion SOAR automatic network isolation",
+  "tags": [
+    "malware-detection",
+    "endpoint",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-02T14:28:10Z",
+      "event": "CrowdStrike Falcon Fusion fired: cmd.exe → powershell.exe -enc [AMSI bypass+Cobalt Strike] → mshta.exe → 185.186.27.141:443 on WS-ENG-341; process chain killed and endpoint isolated in 1.2 seconds; PagerDuty P1 fired",
+      "actor": "crowdstrike-falcon"
+    },
+    {
+      "timestamp": "2025-12-02T14:33:43Z",
+      "event": "Incident Commander m.okafor@company.com opened war room #inc-2025-1202-009; Splunk threat hunt immediately run for C2 IP 185.186.27.141 across all endpoints — 2 additional endpoints (WS-ENG-112, WS-SALES-205) found with prior connections to same IP; both isolated",
+      "actor": "m.okafor@company.com"
+    },
+    {
+      "timestamp": "2025-12-02T15:12:05Z",
+      "event": "Initial access vector identified: r.jackson opened a trojanized VS Code extension downloaded from a typosquatting package repository (vscode-copilot-enhanced v1.2.3 from a fake marketplace); extension executed the malicious PowerShell via post-install hook",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-12-02T17:52:05Z",
+      "event": "Lateral movement scope confirmed: WS-ENG-112 and WS-SALES-205 received Cobalt Strike Beacon callbacks before isolation; Beacon performed network reconnaissance (nmap-style ARP scan) but no credential theft or file access confirmed on those endpoints",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-12-02T19:13:05Z",
+      "event": "All 3 endpoints reimaged; 6-hour threat hunt across all 89 corporate endpoints found no additional Beacon callbacks; C2 IPs and Cobalt Strike watermark 5329a8 added to threat intelligence blocklists; incident closed",
+      "actor": "m.okafor@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-02T19:13:05Z",
+  "resolved_by": "m.okafor@company.com",
+  "resolution_time_minutes": 284,
+  "resolution_summary": "CrowdStrike Falcon killed the Cobalt Strike Beacon process chain on WS-ENG-341 within 1.2 seconds and automatically isolated the endpoint. Splunk threat hunting identified lateral spread to 2 additional endpoints that were isolated within 2 minutes. All 3 endpoints were reimaged. Forensic analysis confirmed the Beacon on the 2 secondary endpoints had performed network reconnaissance but had not exfiltrated credentials, accessed file shares, or reached any production systems — the workstation-tier network segmentation prevented lateral movement into the server tier. The attack was attributed to a software supply chain attack via a malicious VS Code extension on a third-party marketplace.",
+  "root_cause_analysis": "The threat actor published a malicious VS Code extension 'vscode-copilot-enhanced' to a third-party extension marketplace (not the official VS Code Marketplace) with a name designed to mimic a popular legitimate extension. The extension had 47 fake reviews and appeared credible. R. Jackson installed it outside of approved software sources, which violated the software procurement policy. The extension's package.json included a post-install script that executed obfuscated PowerShell using base64 encoding to evade script-based detection. The AMSI bypass technique used (Reflection.Assembly load with patched AmsiScanBuffer) was a variant not yet in Microsoft's AMSI signature database. Code-signed Cobalt Strike tooling and Malleable C2 profiles were used to evade network detection. The Beacon successfully beaconed out from 2 additional endpoints before detection because the C2 communication used port 443 with a valid TLS certificate, mimicking normal web traffic.",
+  "mitre": {
+    "tactic": [
+      "Execution",
+      "Persistence"
+    ],
+    "technique": [
+      "T1204 - User Execution",
+      "T1543 - Create or Modify System Process"
+    ],
+    "prevention": [
+      "M1049 - Antivirus/Antimalware",
+      "M1017 - User Training",
+      "M1038 - Execution Prevention"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0002",
+    "TA0003"
+  ],
+  "mitre_technique_ids": [
+    "T1204",
+    "T1543"
+  ],
+  "mitre_prevention_ids": [
+    "M1049",
+    "M1017",
+    "M1038"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Multiple endpoints compromised, active lateral movement, potential network-wide exposure",
+  "estimated_cost": 65000,
+  "sla_met": true,
+  "mttr": 284,
+  "mtta": 5,
+  "remediation_actions": [
+    "CrowdStrike Falcon Fusion SOAR killed the Cobalt Strike Beacon process chain on WS-ENG-341 and placed endpoint in network isolation in 1.2 seconds from behavioral trigger",
+    "Immediately ran Splunk threat hunt: index=crowdstrike_events destination_ip=185.186.27.141 — identified WS-ENG-112 and WS-SALES-205 with prior Beacon callbacks; both isolated within 2 minutes",
+    "Decoded and analyzed the malicious PowerShell payload using CyberChef: confirmed AMSI bypass technique (AmsiScanBuffer patch via Reflection.Assembly), Cobalt Strike watermark 5329a8, and Malleable C2 profile mimicking Slack traffic",
+    "Ran CrowdStrike RTR on all 3 isolated endpoints: confirmed Beacon persistence via scheduled task 'MicrosoftUpdate_5329a8'; removed from all 3 endpoints before reimaging",
+    "Reviewed WS-ENG-112 and WS-SALES-205 activity during 6-hour Beacon activity window: ARP scan of local /24 subnet detected on each, no credential theft (Credential Guard blocked LSASS access), no file access beyond user home directories",
+    "Reimaged all 3 endpoints from clean baseline; users' credentials reset; GitHub access tokens for r.jackson revoked — reviewed recent commits to confirm no malicious code injected into repositories",
+    "Submitted full IOC package (C2 IP, Beacon watermark, extension name, PowerShell hash) to CrowdStrike Intelligence and FS-ISAC for industry-wide sharing"
+  ],
+  "systems_remediated": [
+    "endpoint-341",
+    "corporate-network"
+  ],
+  "preventive_measures": [
+    "VS Code extension installation restricted to official Microsoft VS Code Marketplace only; unofficial extension sources blocked via AppLocker policy on all engineering workstations",
+    "Script-based AMSI bypass techniques added to CrowdStrike Falcon custom IOA rule set; any Reflection.Assembly-based AMSI patching attempt now triggers immediate process kill",
+    "Network segmentation verified: workstation VLAN confirmed unable to directly reach server tier; lateral movement to production servers from compromised workstations requires jump-host authentication",
+    "Software procurement policy updated: all development tools and extensions must be pre-approved via software catalog; installation from unofficial repositories requires security exception",
+    "Engineering team security awareness session delivered: supply chain attacks via IDE extensions, identifying fake marketplace packages, and the danger of post-install scripts"
+  ],
+  "security_controls_updated": [
+    "CrowdStrike Falcon IOA rules updated with Cobalt Strike Beacon watermark 5329a8 and AMSI-bypass PowerShell reflection patterns for future campaign detection",
+    "AppLocker policy updated: VS Code extension installation blocked from any source outside official Microsoft VS Code Marketplace URI pattern",
+    "DNS filtering updated: Cobalt Strike C2 domain patterns (Malleable C2 profile indicators) added to Zscaler category for automated blocking",
+    "CrowdStrike Network Containment policy updated: any Cobalt Strike Beacon watermark detection (from CrowdStrike Intel threat feed) triggers automatic network isolation without analyst approval"
+  ],
+  "documentation_updated": [
+    "Endpoint Incident Response Runbook updated with Cobalt Strike Beacon response procedure: watermark extraction, C2 IOC collection, lateral movement scope assessment",
+    "Software Procurement Policy updated: developer tools now require Security team approval before installation; IDE plugins subject to same scrutiny as SaaS applications",
+    "Supply Chain Attack Threat Intelligence Brief published internally: typosquatting in package repositories, fake IDE extensions, and build system integrity verification",
+    "SEC-5317 Jira ticket archived with full attack chain, IOC package, and CrowdStrike threat intelligence submission confirmation"
+  ],
+  "lessons_learned": "The employee installing an unofficial VS Code extension as a convenience shortcut is a representative example of how software supply chain attacks succeed — the attacker invested in creating a credible-looking tool (47 reviews, professional README) that required minimal security bypass because the user themselves ran it. Defender-in-depth at the endpoint layer (Falcon behavioral IOA, AMSI) was extremely effective at containing the blast radius; the 1.2-second kill time prevented any meaningful Beacon operations. However, the Beacon had 6 hours of activity on 2 other endpoints before the hunt identified them — real-time Beacon beacon-out detection via DNS/network layer monitoring needs to be added as a parallel detection control.",
+  "follow_up_tasks": [
+    "EP-2441: Deploy AppLocker VS Code Marketplace-only policy to all 87 engineering workstations via GPO — Owner: Endpoint, Due: 2025-12-09",
+    "EP-2442: Implement DNS-based Cobalt Strike Malleable C2 profile detection in Zscaler: block all known Malleable C2 domain patterns — Owner: Network Security, Due: 2025-12-16",
+    "EP-2443: Create approved software catalog for all development tools; require quarterly re-approval — Owner: Security Architecture, Due: 2026-01-15",
+    "EP-2444: Deliver supply chain attack awareness training to all 87 engineers; include simulated fake extension scenario — Owner: Security Awareness, Due: 2025-12-19"
+  ],
+  "resolution": "Cobalt Strike Beacon killed in 1.2 seconds on primary endpoint; 2 lateral movement targets isolated; all 3 endpoints reimaged; no production systems reached; C2 IOCs distributed to industry",
+  "action_taken": "Resolved by endpoint-team within 256 minutes; 3 endpoints remediated; supply chain attack via malicious VS Code extension confirmed as initial access vector",
+  "entities": {
+    "users": [
+      "k.mehta@company.com"
+    ],
+    "ips": [
+      "185.220.101.45"
+    ],
+    "hosts": [
+      "ws-dev-km-001"
+    ],
+    "domains": [
+      "cobalt-strike-c2.ru"
+    ],
+    "hashes": [
+      "d4f8e2a1b3c09876543210fedcba987654"
+    ]
+  },
+  "detection_gap": "No allowlist policy or installation restriction existed for VS Code extensions from third-party marketplaces; the malicious extension used a typosquatted name mimicking a popular legitimate extension and was not on any blocklist at time of installation; no pre-execution validation of VS Code extension payloads was performed",
+  "what_went_well": [
+    "CrowdStrike Falcon behavioral IOA for Cobalt Strike beacon patterns triggered within 340ms of the first execution attempt — before any C2 channel was established",
+    "Host isolation prevented lateral movement from the compromised workstation; no evidence of credential access, pivot attempts, or data staging was observed in forensic investigation",
+    "No confirmed credential theft, data exfiltration, or lateral movement was identified across the entire environment during the investigation window"
+  ],
+  "what_went_wrong": [
+    "VS Code extension marketplace was not restricted to an approved publisher allowlist; developers could install extensions from unverified third-party publishers",
+    "The malicious extension name ('prettier-code-fmt') was a deliberate typosquatting variant of a widely trusted extension — the naming similarity was not flagged by any control",
+    "No developer education existed on VS Code extension supply chain risks despite multiple publicly-disclosed incidents targeting this attack surface"
+  ]
+}

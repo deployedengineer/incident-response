@@ -1,0 +1,131 @@
+{
+  "@timestamp": "2025-11-04T09:27:38Z",
+  "incident_id": "INC-2025-1104-018",
+  "severity": "high",
+  "status": "resolved",
+  "category": "api",
+  "type": "service_outage",
+  "title": "Authentication service intermittent failures",
+  "description": "Datadog APM detected intermittent P99 latency spikes and HTTP 503 responses on auth-api (the company's Okta-backed JWT authentication service) beginning at 09:41 UTC. The failures were non-continuous: approximately 12-18% of authentication requests were timing out with a 30-second gateway timeout, while the remainder succeeded normally. Investigation revealed the auth-api's upstream Okta API rate limit (3,000 requests/minute on the company's Okta Enterprise plan) was being exceeded during peak login periods (09:00-10:00 UTC post-standup). The auth-api had no client-side rate limit management, retry circuit breaker, or token caching layer — every login request triggered a synchronous Okta API call even if the same user had authenticated within the last 5 minutes.",
+  "affected_systems": [
+    "auth-api",
+    "oauth-provider"
+  ],
+  "assigned_to": "api-team",
+  "detection_method": "Datadog APM — 'auth-api P99 latency > 5s' threshold alert + Datadog Synthetics 'POST /v1/auth/token' failure rate > 10% over 5 minutes",
+  "tags": [
+    "service-outage",
+    "api",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-04T09:27:38Z",
+      "event": "Datadog APM fired: auth-api P99 latency 31.2 seconds (normal: 180ms); error rate 14.7% on POST /v1/auth/token; synthetic monitor 'auth API smoke test' returning HTTP 503; Okta system logs showing HTTP 429 (Too Many Requests) responses from Okta API",
+      "actor": "datadog-apm"
+    },
+    {
+      "timestamp": "2025-11-04T09:32:04Z",
+      "event": "On-call engineer s.nakamura@company.com acknowledged; confirmed Okta API 429s in auth-api logs; implemented immediate mitigation: scaled auth-api ECS service from 4 to 8 tasks to reduce per-task request rate; added a 60-second JWT validation cache as an emergency hotfix",
+      "actor": "s.nakamura@company.com"
+    },
+    {
+      "timestamp": "2025-11-04T09:51:55Z",
+      "event": "Root cause confirmed: auth-api was making a synchronous Okta /oauth2/default/v1/token API call for every incoming auth request including previously-validated tokens with >5 minutes of remaining validity; no caching, no circuit breaker, no request batching; peak usage period exceeded 3,000 req/min Okta rate limit",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-04T12:01:55Z",
+      "event": "Redis-based JWT validation cache deployed to staging and tested; Okta token introspection replaced with local JWT signature verification (public key cached from Okta JWKS endpoint); circuit breaker deployed around remaining Okta API calls",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-04T13:04:55Z",
+      "event": "Redis JWT cache deployed to production; auth-api P99 latency returned to 145ms; Okta API request rate dropped from 2,800/min to 340/min (88% reduction); error rate 0%; monitoring confirmed stable; incident closed",
+      "actor": "s.nakamura@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-04T13:04:55Z",
+  "resolved_by": "s.nakamura@company.com",
+  "resolution_time_minutes": 217,
+  "resolution_summary": "An emergency JWT cache deployed within 2 minutes reduced the Okta API call rate by 88%, stopping the 429 rate limiting within 5 minutes. The permanent fix replaced synchronous Okta token introspection with local JWT signature verification using Okta's public JWKS keys — the only remaining Okta API calls are for token revocation checks (a small fraction of traffic). Auth-api P99 latency returned to normal (145ms) with Okta API rate dropping from 2,800/min to 340/min, leaving substantial headroom within the 3,000/min limit.",
+  "root_cause_analysis": "The auth-api was architected to call Okta's /oauth2/default/v1/introspect endpoint synchronously for every incoming request to validate bearer tokens. This design is correct for token revocation checking but unnecessary for signature and expiry validation — these can be performed locally using Okta's cached JWKS public keys. The auth-api was deployed with this pattern in November 2023 when the company had 200 employees. By November 2025 with 1,200 employees and 5,000 customers, peak auth request rates had grown 6x beyond what the architecture was tested against. No rate limit headroom monitoring was configured, so the team was unaware that peak loads were approaching the Okta plan limit. No circuit breaker was implemented to degrade gracefully when Okta returned 429s — the service simply propagated the timeout to callers.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 1200,
+  "business_impact": "14.7% authentication failure rate for 208 minutes; users unable to log in or access authenticated services; customer escalations",
+  "estimated_cost": 50000,
+  "sla_met": true,
+  "mttr": 217,
+  "mtta": 4,
+  "remediation_actions": [
+    "Deployed emergency hotfix: auth-api ECS task count scaled from 4 to 8; 60-second in-memory JWT validation cache added to reduce repeated Okta calls for same-user rapid re-authentication; Okta call rate reduced from 2,800/min to 1,100/min within 3 minutes",
+    "Implemented Redis-based JWT validation cache: tokens validated locally via Okta JWKS public key (RS256 signature verification); cached negative results for 5 minutes; only revocation events require live Okta API call",
+    "Deployed circuit breaker (Resilience4j pattern in Node.js) around Okta introspect API calls: after 5 consecutive 429 responses, auth-api enters 30-second 'degraded mode' — validates tokens locally and defers revocation checks to background queue",
+    "Added Okta API rate limit Datadog monitor: alert when auth-api Okta API calls exceed 2,400/min (80% of plan limit); PagerDuty P2 warning before reaching the 3,000/min hard limit",
+    "validated fix: ran auth load test at 4,000 req/min; Okta API calls peaked at 420/min (local JWKS verification for 90% of traffic); auth-api P99 latency 163ms; 0 503 errors"
+  ],
+  "systems_remediated": [
+    "auth-api",
+    "oauth-provider"
+  ],
+  "preventive_measures": [
+    "Local JWT validation via JWKS is now the standard pattern for all future authentication services — Okta API calls reserved for explicit revocation checks only",
+    "Okta rate limit usage dashboard added to Datadog: real-time Okta token endpoint API call rate tracked with 80% and 95% threshold alerting",
+    "Auth service capacity planning review added to quarterly engineering roadmap: authentication request growth projections reviewed against Okta plan limits annually",
+    "Circuit breaker pattern made mandatory for all external API integrations in the Platform Engineering standards: any third-party API call must have a circuit breaker with graceful degradation mode defined"
+  ],
+  "security_controls_updated": [
+    "Auth-api JWKS endpoint caching policy: Okta public keys refreshed every 60 minutes; keys are validated against Okta's JWKS endpoint before use in production",
+    "Okta Enterprise plan reviewed: rate limit increased from 3,000 to 10,000 requests/min as part of Q4 plan negotiation — provides headroom for 3x growth before next constraint",
+    "Redis JWT cache: cache TTL set to 4 minutes (1 minute less than JWT token expiry minimum); cache invalidation webhook from Okta configured for revoked tokens",
+    "Datadog SLO updated: auth-api authentication success rate target set to 99.9% with 5-minute alerting window; currently only had 99.0% SLO"
+  ],
+  "documentation_updated": [
+    "Auth Service Architecture Document updated: JWT validation flow diagram showing JWKS local verification, Redis cache layer, and circuit breaker around Okta introspect API",
+    "Platform Engineering Standards updated: 'External API Integration' section with mandatory circuit breaker pattern, rate limit monitoring requirements, and caching guidelines for auth tokens",
+    "Okta Integration Runbook updated: rate limit investigation procedure, emergency cache deployment procedure, circuit breaker tuning parameters",
+    "API-2025-1104 Jira postmortem published with Okta API usage metrics, fix validation load test results, and architectural recommendation for new services"
+  ],
+  "lessons_learned": "Synchronous, uncached external API calls in the hot path of an authentication service are a reliability anti-pattern — as traffic grows, the upstream provider's rate limits become a hard service ceiling rather than a safety boundary. JWT signature verification using JWKS public keys is a cryptographically sound and computationally cheap alternative to live token introspection for >90% of auth requests. Circuit breakers in external API integrations are not optional: they define how a service degrades gracefully rather than failing catastrophically when the dependency limits are reached.",
+  "follow_up_tasks": [
+    "AUTH-1104-01: Deploy Redis JWT cache to all 3 auth-api regional endpoints (us-east-1, eu-west-1, ap-southeast-1) — Owner: Auth Team, Due: 2025-11-11",
+    "AUTH-1104-02: Implement Okta rate limit dashboard in Datadog with 80% and 95% threshold alerting for all Okta API endpoint categories — Owner: SRE, Due: 2025-11-11",
+    "AUTH-1104-03: Review all Platform services that make Okta API calls; implement local JWKS validation pattern where applicable — Owner: Platform, Due: 2025-11-25",
+    "AUTH-1104-04: Renew Okta Enterprise plan with increased rate limits (10,000 req/min) for Q4 — Owner: IT Procurement, Due: 2025-11-15"
+  ],
+  "resolution": "Redis JWT cache reduced Okta API calls by 88%; auth-api P99 returned to 145ms; circuit breaker deployed; Okta rate limit headroom restored to 89%",
+  "action_taken": "Resolved by api-team within 208 minutes; authentication failure rate eliminated; architectural fix replaces synchronous Okta calls with local JWKS validation",
+  "entities": {
+    "users": [
+      "s.nakamura@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "auth-api",
+      "oauth-provider"
+    ],
+    "domains": [
+      "okta.com"
+    ],
+    "hashes": []
+  },
+  "alert_source": "Datadog APM",
+  "detection_gap": "No monitoring or alerting existed on Okta API rate limit utilization prior to saturation; auth-api was architected to call Okta token introspect synchronously for every incoming request — including tokens with valid remaining TTL — creating a direct dependency on a third-party rate-limited endpoint that scaled poorly with user growth",
+  "what_went_well": [
+    "Emergency 60-second in-memory JWT validation cache was deployed within 2 minutes of root cause identification, reducing Okta API call rate from 2,800/min to 1,100/min",
+    "Redis-based JWT cache with local JWKS verification reduced Okta API dependency by 88%, restoring auth-api P99 to 145ms",
+    "Circuit breaker was correctly designed and validated against a 4x normal load test before production deployment"
+  ],
+  "what_went_wrong": [
+    "Auth-api was architected with synchronous Okta introspection on every request — a pattern designed for 200 employees that failed to scale to 1,200 employees and 5,000 customers",
+    "No rate limit utilization monitoring existed; the team was unaware that peak loads were approaching the Okta Enterprise plan's 3,000 req/min limit",
+    "No circuit breaker or degraded mode was implemented for Okta API unavailability — the service propagated timeouts directly to callers"
+  ]
+}

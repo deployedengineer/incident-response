@@ -1,0 +1,52 @@
+{
+  "@timestamp": "2026-01-12T09:15:00Z",
+  "incident_id": "Test-vulnerable_dependency-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "application",
+  "type": "vulnerable_dependency",
+  "title": "Critical Log4j-style vulnerability detected in core microservice",
+  "affected_systems": [
+    "java-services"
+  ],
+  "description": "Snyk Open Source scanning flagged CVE-2024-38819 (CVSS 9.8 - Critical) in the `spring-core` dependency pulled into the java-services repository via a transitive update. The vulnerable version was introduced in a recently merged PR and is present in the production container image.",
+  "alert_source": "Snyk",
+  "rule_name": "CVE detected in production dependency",
+  "entities": {
+    "users": [],
+    "ips": [],
+    "hosts": [],
+    "domains": ["github.com/company/java-services"],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "vulnerability_exposure",
+  "confidence": "high",
+  "assigned_to": "application-security",
+  "detection_method": "Snyk Open Source SCA",
+  "tags": [
+    "appsec",
+    "high",
+    "cve"
+  ],
+  "mitre": {
+    "tactic": [
+      "Initial Access"
+    ],
+    "technique": [
+      "T1190 - Exploit Public-Facing Application"
+    ],
+    "prevention": [
+      "M1050 - Exploit Protection"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1190"
+  ],
+  "mitre_prevention_ids": [
+    "M1050"
+  ]
+}

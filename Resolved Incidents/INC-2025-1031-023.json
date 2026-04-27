@@ -1,0 +1,156 @@
+{
+  "@timestamp": "2025-10-31T09:10:24Z",
+  "incident_id": "INC-2025-1031-023",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "malware_detection",
+  "title": "Trojan detected in email attachment",
+  "description": "Microsoft Defender Antivirus on endpoint WS-HR-089 detected and quarantined a file classified as 'Trojan:Win32/Wacatac.B!ml' during a retrospective scan triggered after a file was extracted from an email attachment. The source email (subject: 'Q4 Payroll Review — Updated.xlsx.exe') was delivered to hr.manager@company.com from an external sender (hr-updates@payroll-notify.net) at 07:23 UTC. The user double-clicked the attachment thinking it was an Excel file due to the double extension disguise. Defender's real-time protection caught the execution attempt and quarantined the binary before process launch completed. SIEM lateral movement queries returned no post-infection activity.",
+  "affected_systems": [
+    "endpoint-089",
+    "email-system"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "Microsoft Defender Antivirus — Real-time protection, Trojan:Win32/Wacatac.B!ml behavioral signature on execution attempt",
+  "tags": [
+    "malware-detection",
+    "endpoint",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-31T09:10:24Z",
+      "event": "Microsoft Defender Antivirus quarantined Trojan:Win32/Wacatac.B!ml on WS-HR-089 (hr.manager@company.com) during execution attempt of 'Q4_Payroll_Review.xlsx.exe' extracted from email; process kill completed in 220ms before any network callback",
+      "actor": "microsoft-defender-av"
+    },
+    {
+      "timestamp": "2025-10-31T09:17:40Z",
+      "event": "CrowdStrike Falcon alert surfaced simultaneously: 'Suspicious process creation blocked' on WS-HR-089; on-call endpoint analyst v.krishna@company.com placed WS-HR-089 in network isolation via CrowdStrike RTR as precaution",
+      "actor": "v.krishna@company.com"
+    },
+    {
+      "timestamp": "2025-10-31T09:50:02Z",
+      "event": "Malware sample analyzed via Defender sandbox: Wacatac.B!ml is an infostealer dropper targeting browsers and credential stores; confirmed no C2 callback made (Netflow logs show 0 outbound connections from WS-HR-089 post-execution); email retroactively quarantined from all mailboxes",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-31T10:17:02Z",
+      "event": "Forensic review of WS-HR-089 browser credential stores, keychain, and clipboard completed — no exfiltration indicators; endpoint re-imaged from clean baseline as precautionary measure; hr.manager credentials reset across all systems",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-31T10:44:02Z",
+      "event": "Network isolation lifted after clean reimaged endpoint rejoined domain; SIEM threat hunt run against all 47 endpoints that received the same sender domain email within 7 days — 3 additional recipients found, all emails purged; incident closed",
+      "actor": "v.krishna@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-31T10:44:02Z",
+  "resolved_by": "v.krishna@company.com",
+  "resolution_time_minutes": 93,
+  "resolution_summary": "Microsoft Defender Antivirus quarantined the Wacatac.B!ml trojan within 220ms of execution, preventing C2 callback or credential exfiltration. Network flow analysis confirmed zero outbound connections from WS-HR-089 after the execution attempt. The endpoint was reimaged as a precaution, user credentials reset, and the phishing email retroactively purged from all 4 mailboxes that received it. A 7-day SIEM threat hunt for the sender domain 'payroll-notify.net' found no additional successful executions across the organization.",
+  "root_cause_analysis": "The malicious email successfully bypassed Proofpoint email gateway scanning because the attachment 'Q4_Payroll_Review.xlsx.exe' used a double-extension technique and the binary had a valid digital certificate (stolen code-signing cert). Proofpoint's sandbox analysis gave it a 0.31 threat score (below the quarantine threshold of 0.75) due to the certificate validity check weighting. The email subject and sender name were crafted with high social engineering fidelity, targeting the HR department during payroll period. The user exhibited the classic double-extension confusion — '.xlsx.exe' appearing as '.xlsx' in Windows Explorer due to 'Hide file extensions for known file types' being enabled. Defender's ML behavioral model caught the execution pattern at runtime based on process injection characteristics, even though the file had not been seen before.",
+  "mitre": {
+    "tactic": [
+      "Execution",
+      "Persistence"
+    ],
+    "technique": [
+      "T1204 - User Execution",
+      "T1543 - Create or Modify System Process"
+    ],
+    "prevention": [
+      "M1049 - Antivirus/Antimalware",
+      "M1017 - User Training",
+      "M1038 - Execution Prevention"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0002",
+    "TA0003"
+  ],
+  "mitre_technique_ids": [
+    "T1204",
+    "T1543"
+  ],
+  "mitre_prevention_ids": [
+    "M1049",
+    "M1017",
+    "M1038"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Endpoint malware infection, potential data exposure, possible lateral movement risk",
+  "estimated_cost": 5000,
+  "sla_met": true,
+  "mttr": 93,
+  "mtta": 7,
+  "remediation_actions": [
+    "Microsoft Defender quarantined Q4_Payroll_Review.xlsx.exe (SHA256: 9c4f2a1e7b3d8f5c...) in 220ms; CrowdStrike Falcon placed WS-HR-089 in network isolation via RTR as precautionary measure",
+    "Confirmed 0 C2 callbacks: queried CrowdStrike Network Containment logs and Netflow for any outbound connection from 10.12.8.89 (WS-HR-089) during and after execution attempt — 0 external connections made",
+    "Submitted malware sample to VirusTotal (65/72 engines detected) and Microsoft MSSA for threat intelligence cross-reference; confirmed Wacatac.B!ml credential-stealing payload with Raccoon Stealer C2 IPs (blocked at perimeter via threat intel feed)",
+    "Ran forensic credential audit on WS-HR-089: Chrome saved passwords exported via Defender offline scan, Keychain dump — no evidence of exfiltration; credential stores confirmed intact",
+    "Reimaged WS-HR-089 from company baseline 2025-10-15; rejoined domain; hr.manager@company.com credentials reset across Okta, Active Directory, and all application accounts",
+    "Retroactively quarantined all 4 emails from payroll-notify.net sender domain using Microsoft Defender admin portal; blocked payroll-notify.net at email gateway and DNS",
+    "Ran SIEM threat hunt for payroll-notify.net across all 47 endpoints in the 7-day lookback period: 3 additional email recipients found, all emails purged before any interaction"
+  ],
+  "systems_remediated": [
+    "endpoint-089",
+    "email-system"
+  ],
+  "preventive_measures": [
+    "Group Policy updated org-wide: 'Hide file extensions for known file types' disabled on all Windows endpoints — users will now see full '.xlsx.exe' extension in Explorer",
+    "Proofpoint email gateway updated: executable file types (.exe, .bat, .com, .scr) blocked regardless of outer extension disguise; digital certificate validity no longer increases threat score weighting",
+    "AppLocker policy deployed: prevents execution of any unsigned binary from user-writable paths (%APPDATA%, %TEMP%, Downloads folder) — Wacatac.B!ml would be blocked at this layer even if AV missed it",
+    "HR department phishing simulation scheduled specifically targeting payroll-themed social engineering; targeted training module deployed to all HR staff",
+    "Microsoft Defender Attack Surface Reduction (ASR) rules enabled: 'Block executable files from running unless they meet a prevalence, age, or trusted list criterion'"
+  ],
+  "security_controls_updated": [
+    "Proofpoint email gateway: .exe attachments with misleading double extensions now detected by MIME type analysis regardless of file extension; threat score threshold for HR department lowered to 0.50",
+    "Microsoft Defender ASR rules deployed: 6 high-impact rules enabled including 'Block credential stealing from Windows LSASS' and 'Block untrusted and unsigned processes from USB'",
+    "AppLocker execution prevention policy deployed to all non-admin endpoints: whitelist-only execution from user-writable paths",
+    "CrowdStrike Falcon sensor policy updated: automatic network isolation triggered immediately on any active malware quarantine event (not just behavioral IOAs)"
+  ],
+  "documentation_updated": [
+    "Endpoint Malware Response Runbook updated: Wacatac/infostealer-specific response added including credential store forensic commands and C2 IP blocklist sources",
+    "Email Security Awareness guide updated: 'Double Extension Attacks' section with screenshot comparison of Explorer showing vs hiding file extensions",
+    "AppLocker Execution Prevention policy documentation created: whitelist management procedure, exception request process, and quarterly review cadence",
+    "SEC-4289 Jira ticket archived with malware sample hash, Proofpoint IOC submission, and forensic timeline for threat intelligence reference"
+  ],
+  "lessons_learned": "Certificate-signed malware is an increasingly common evasion technique against email gateways that weight certificate validity highly in their threat scoring — the behavioral detection at execution time (by Defender and CrowdStrike simultaneously) was more effective than the pre-delivery gateway scan. The 220ms kill time from Defender's real-time protection is excellent, but the user should never have reached the execution stage: AppLocker blocking execution from the Downloads folder is a simpler and more reliable control than relying on AV alone. The 'file extension hiding' Windows default is a 25-year-old usability feature that has become a significant security liability in a world of double-extension attacks.",
+  "follow_up_tasks": [
+    "EP-2401: Deploy Group Policy to disable 'Hide file extensions' across all 340 Windows endpoints via GPO — Owner: Endpoint, Due: 2025-11-07",
+    "EP-2402: Enable Microsoft Defender ASR rule set (6 rules) in audit mode for 2 weeks, then enforcement mode — Owner: Endpoint, Due: 2025-11-14",
+    "EP-2403: Update Proofpoint gateway MIME-type blocking rules for executable disguise detection — Owner: Email Security, Due: 2025-11-07",
+    "EP-2404: Run payroll-themed phishing simulation for all 47 HR department employees; track click rate — Owner: Security Awareness, Due: 2025-11-21"
+  ],
+  "resolution": "Trojan quarantined in 220ms; zero C2 callback or credential exfiltration; endpoint reimaged; HR credentials reset; 4 phishing emails purged from all mailboxes",
+  "action_taken": "Resolved by endpoint-team within 69 minutes of Microsoft Defender detection",
+  "entities": {
+    "users": [
+      "h.osei@company.com"
+    ],
+    "ips": [
+      "45.150.67.89"
+    ],
+    "hosts": [
+      "ws-hr-112"
+    ],
+    "domains": [
+      "secure-invoice-portal.net"
+    ],
+    "hashes": [
+      "a3f2d9c8b1e045678f90abc12345d6e7"
+    ]
+  },
+  "detection_gap": "Email gateway ML model underweighted the risk of macro-enabled documents with valid code-signing certificates from external senders; Microsoft Defender Safe Attachments sandbox was triggered but the payload's anti-sandbox evasion techniques (delayed execution, user interaction requirement) prevented malware detonation during the 2-minute sandbox window",
+  "what_went_well": [
+    "CrowdStrike Falcon prevented Trojan execution and blocked the C2 communication attempt before any persistent access was established",
+    "No lateral movement, credential access, or data exfiltration was observed during the 47-minute window between email delivery and EDR containment",
+    "ws-hr-112 was restored from a verified clean backup within 4 hours with no data loss"
+  ],
+  "what_went_wrong": [
+    "Email gateway allowed a macro-enabled document with a valid code-signing certificate to bypass initial inspection — code signing was treated as a trust signal despite the external sender",
+    "Safe Attachments sandbox did not successfully detonate the payload due to anti-analysis evasion; the tool's 2-minute detonation window was insufficient for delayed-execution malware",
+    "User enabled macros on an external-sender document despite the macro security warning dialog — no policy blocked macro execution on documents from external senders"
+  ]
+}

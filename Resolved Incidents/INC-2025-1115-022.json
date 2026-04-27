@@ -1,0 +1,150 @@
+{
+  "@timestamp": "2025-11-15T14:40:18Z",
+  "incident_id": "INC-2025-1115-022",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "security",
+  "type": "leaked_credentials",
+  "title": "Database credentials found in Slack channel",
+  "description": "Nightfall DLP detected a PostgreSQL connection string containing plaintext credentials for the production database postgres-prod posted in the Slack channel #engineering-debug. The message content included the full DSN: postgresql://dbadmin:Pr0d$ecret2025@postgres-prod.company.internal:5432/customers. The message had been visible to all 340 members of the channel for approximately 23 minutes before the automated detection fired. An immediate check of postgres-prod audit logs showed 3 login events from a previously unseen service account within the exposure window.",
+  "affected_systems": [
+    "postgres-prod",
+    "slack-workspace"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Nightfall DLP — Slack integration with real-time credential pattern detection (PostgreSQL DSN regex)",
+  "tags": [
+    "leaked-credentials",
+    "security",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-15T14:40:18Z",
+      "event": "Nightfall DLP detected PostgreSQL connection string with plaintext password in #engineering-debug Slack channel message posted by d.patel@company.com; PagerDuty P1 alert fired",
+      "actor": "nightfall-dlp"
+    },
+    {
+      "timestamp": "2025-11-15T14:49:08Z",
+      "event": "On-call security engineer m.santos@company.com acknowledged alert; original Slack message immediately deleted by admin and channel temporarily locked",
+      "actor": "m.santos@company.com"
+    },
+    {
+      "timestamp": "2025-11-15T15:32:47Z",
+      "event": "Root cause confirmed: developer d.patel@company.com pasted DSN from local .env file during a debugging session; postgres-prod audit log shows 3 login attempts from svc-analytics-staging (not matching normal patterns) within exposure window",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-11-15T19:25:47Z",
+      "event": "postgres-prod dbadmin password rotated; all active sessions terminated; svc-analytics-staging account suspended and investigated; Slack audit log exported for evidence",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-11-15T21:12:47Z",
+      "event": "Investigation confirmed svc-analytics-staging logins were from an internal misconfigured connection pool using stale cached credentials, not an external actor; all systems verified clean; incident closed",
+      "actor": "m.santos@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-15T21:12:47Z",
+  "resolved_by": "m.santos@company.com",
+  "resolution_time_minutes": 392,
+  "resolution_summary": "The postgres-prod database password was immediately deleted from Slack and rotated within 4 hours of detection. All active database sessions using the compromised credentials were forcibly terminated. The 3 anomalous login events from svc-analytics-staging during the exposure window were confirmed as an internal misconfigured connection pool attempting reconnection after a previous session drop — no data access or exfiltration occurred. The Slack workspace audit log confirmed the message was not forwarded, shared, or accessed via API by any external integration during the 23-minute exposure window.",
+  "root_cause_analysis": "A senior developer, during an urgent debugging session for a customer data pipeline failure, copied the production database DSN from their local .env file and pasted it directly into the #engineering-debug Slack channel to share connection details with two colleagues. The team had no established protocol for sharing sensitive debugging information, and the developer was unaware that #engineering-debug had 340 members including contractors. Nightfall DLP's detection took 23 minutes because the real-time scan queue was backed up due to high Slack message volume during a concurrent incident. The organization lacked a secrets manager integration for developer tooling, making direct DSN usage common. The exposed dbadmin account had broad read-write access to all tables in the customers database.",
+  "mitre": {
+    "tactic": [
+      "Credential Access",
+      "Initial Access"
+    ],
+    "technique": [
+      "T1552 - Unsecured Credentials",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1027 - Password Policies",
+      "M1047 - Audit",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0006",
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1552",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1027",
+    "M1047",
+    "M1041"
+  ],
+  "affected_users_count": 5000,
+  "business_impact": "Critical data breach risk, regulatory exposure, customer trust severely impacted",
+  "estimated_cost": 295000,
+  "sla_met": false,
+  "mttr": 392,
+  "mtta": 8,
+  "remediation_actions": [
+    "Immediately deleted the Slack message containing postgres-prod DSN via Slack admin API and locked #engineering-debug channel to prevent further sharing",
+    "Exported Slack audit logs (token: xoxb-...) for SEC-5208 evidence record — confirmed message was not forwarded or accessed via any Slack app integration",
+    "Rotated postgres-prod dbadmin password using: ALTER USER dbadmin PASSWORD 'NewRandomPassword$2025!'; and updated all application connection pools",
+    "Terminated all 47 active postgres-prod sessions: SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename = 'dbadmin'",
+    "Suspended svc-analytics-staging database account pending investigation of the 3 anomalous login events; investigation confirmed it was an internal misconfigured connection pool (stale cached credentials from 5 days prior)",
+    "Audited postgres-prod access logs for the full 23-minute exposure window — no SELECT, INSERT, UPDATE, or DELETE from unexpected source IPs detected",
+    "Notified Data Protection Officer per GDPR breach assessment protocol; concluded no personal data was accessed, formal notification not required"
+  ],
+  "systems_remediated": [
+    "postgres-prod",
+    "slack-workspace"
+  ],
+  "preventive_measures": [
+    "Nightfall DLP Slack scanning latency reduced: dedicated worker pool provisioned for real-time credential detection (target: <60s detection)",
+    "All production database credentials migrated to HashiCorp Vault dynamic secrets — developers access time-limited credentials via Vault CLI, never static DSNs",
+    "Required Slack channel classification: #engineering-debug now marked 'Sensitive — No PII/Credentials' with automated DLP enforcement and channel size limit of 50 members",
+    "dbadmin account privilege scoped to required tables only; read-only replica credentials provided for debugging purposes going forward",
+    "Developer security training 'Handling Production Credentials' added as mandatory module in onboarding and annual recertification"
+  ],
+  "security_controls_updated": [
+    "Nightfall DLP policy updated to include PostgreSQL, MySQL, MongoDB, and Redis connection string patterns with automatic Slack message deletion on detection",
+    "HashiCorp Vault dynamic database secrets engine deployed for postgres-prod: developers receive auto-expiring 1-hour TTL credentials",
+    "Slack Enterprise Grid DLP integration upgraded to real-time blocking mode for production credential patterns",
+    "postgres-prod audit logging enhanced: pg_audit extension enabled, all DDL and connection events now streamed to SIEM"
+  ],
+  "documentation_updated": [
+    "Engineering Wiki updated: new page 'Secure Debugging Practices' covering Vault CLI credential access, secure channel naming, and DLP policies",
+    "Incident Response Runbook §4.3 (Database Credential Exposure) created with Slack admin API deletion procedure and connection pool rotation checklist",
+    "Data Breach Assessment Procedure updated with Nightfall DLP trigger escalation path and 72-hour GDPR assessment SLA",
+    "SEC-5208 Jira ticket archived with full Slack audit log export for compliance review"
+  ],
+  "lessons_learned": "Production credentials being shared in team communication channels is a 'last resort debugging behavior' that will persist unless developers have a faster, secure alternative — the Vault dynamic secrets deployment directly eliminates the motivation for this pattern. The 23-minute DLP detection lag was unacceptable for a critical channel like #engineering-debug; the dedicated scanner worker pool should have been provisioned at initial DLP deployment. The broadness of the dbadmin account's permissions (full read-write to all tables) was a significant risk amplifier; the principle of least privilege requires per-service database accounts with only the tables each service needs.",
+  "follow_up_tasks": [
+    "SEC-5210: Migrate all 14 application services from shared dbadmin credentials to per-service Vault dynamic database roles — Owner: Platform, Due: 2025-12-15",
+    "SEC-5211: Deploy pg_audit extension to postgres-prod and configure SIEM stream for all connection and DDL events — Owner: DBA Team, Due: 2025-11-22",
+    "SEC-5212: Enforce Slack channel DLP policy across all 89 engineering channels; archive unused channels — Owner: IT Security, Due: 2025-11-30",
+    "SEC-5213: Deliver mandatory 'Secure Credential Handling' training to all 47 engineering team members — Owner: Security Training, Due: 2025-12-05"
+  ],
+  "resolution": "postgres-prod dbadmin credentials rotated; exposure window forensically confirmed as zero-exploitation; Vault dynamic secrets deployed to eliminate static credential usage",
+  "action_taken": "Resolved by security-team within 355 minutes of Nightfall DLP detection; GDPR assessment completed with no notification required",
+  "entities": {
+    "users": [
+      "j.okonkwo@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "customer-db-prod"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "Netskope CASB DLP processing backlog created a ~23-minute delay between the credential post and the alert, allowing prolonged exposure in a public Slack channel; no Slack-native DLP pre-send inspection existed — detection was retroactive only; no automated Slack message retention policy existed to limit the exposure window for messages containing credential patterns",
+  "what_went_well": [
+    "Netskope CASB retroactively deleted the credential message from Slack, limiting the exposure window to the DLP processing backlog period",
+    "AWS CloudTrail confirmed zero unauthorized API calls against the exposed production-db-access IAM user during the full 23-minute exposure window",
+    "Database credential rotation was completed within 2 hours of detection with zero service interruption to production workloads"
+  ],
+  "what_went_wrong": [
+    "Developer shared production database credentials in a public Slack channel — no pre-send DLP inspection existed to block or warn before posting",
+    "DLP processing backlog created a 23-minute detection delay that was not monitored; the team was unaware that the processing queue was backed up",
+    "No Slack channel DLP pre-send interception was configured — Netskope CASB operated in detection-and-delete mode only"
+  ]
+}

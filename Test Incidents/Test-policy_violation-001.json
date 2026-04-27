@@ -1,0 +1,52 @@
+{
+  "@timestamp": "2026-01-14T11:45:00Z",
+  "incident_id": "Test-policy_violation-001",
+  "severity": "low",
+  "status": "unresolved",
+  "category": "endpoint",
+  "type": "policy_violation",
+  "title": "User attempted to install unapproved remote desktop software",
+  "affected_systems": [
+    "endpoint-203"
+  ],
+  "description": "Wazuh triggered an alert for an unapproved remote access tool (AnyDesk) execution on endpoint-203. The endpoint belongs to an employee in the finance department who does not have administrative privileges to install such software.",
+  "alert_source": "Wazuh",
+  "rule_name": "AUP violation: unauthorized remote access tool detected",
+  "entities": {
+    "users": ["asim_finance"],
+    "ips": [],
+    "hosts": ["endpoint-203"],
+    "domains": [],
+    "hashes": []
+  },
+  "assigned_to": "it-support-team",
+  "detection_method": "Host-based IDS (HIDS)",
+  "tags": [
+    "endpoint",
+    "policy-violation",
+    "low"
+  ],
+  "files": [],
+  "signal_type": "signature",
+  "confidence": "high",
+  "mitre": {
+    "tactic": [
+      "Command and Control"
+    ],
+    "technique": [
+      "T1219 - Remote Access Software"
+    ],
+    "prevention": [
+      "M1026 - Privileged Account Management"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0011"
+  ],
+  "mitre_technique_ids": [
+    "T1219"
+  ],
+  "mitre_prevention_ids": [
+    "M1026"
+  ]
+}

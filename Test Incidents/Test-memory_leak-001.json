@@ -1,0 +1,41 @@
+{
+  "@timestamp": "2026-01-10T14:30:00Z",
+  "incident_id": "Test-memory_leak-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "application",
+  "type": "memory_leak",
+  "title": "Gradual memory consumption increase causing OutOfMemory errors",
+  "affected_systems": [
+    "payment-gateway",
+    "billing-api"
+  ],
+  "description": "Datadog triggered a critical alert showing sustained memory utilization above 95% for over 30 minutes on payment gateway nodes. The nodes subsequently began throwing OutOfMemoryException errors and restarting repeatedly.",
+  "alert_source": "Datadog / CloudWatch",
+  "rule_name": "Memory utilization > 95% sustained",
+  "entities": {
+    "users": [],
+    "ips": [],
+    "hosts": ["payment-gateway-node-1", "payment-gateway-node-2"],
+    "domains": [],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "threshold",
+  "confidence": "high",
+  "assigned_to": "backend-engineering",
+  "detection_method": "Datadog APM",
+  "tags": [
+    "memory-leak",
+    "performance",
+    "high"
+  ],
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": []
+}

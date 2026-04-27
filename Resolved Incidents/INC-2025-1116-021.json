@@ -1,0 +1,144 @@
+{
+  "@timestamp": "2025-11-16T11:28:36Z",
+  "incident_id": "INC-2025-1116-021",
+  "severity": "high",
+  "status": "resolved",
+  "category": "infrastructure",
+  "type": "ddos_attack",
+  "title": "Layer 7 DDoS attack on checkout service",
+  "description": "Cloudflare WAF and Datadog APM detected a coordinated Layer 7 HTTP flood targeting the checkout-api endpoint POST /v1/checkout/begin at 11:42 UTC. The attack generated 47,800 requests per second from 8,400 distinct IP addresses across 71 countries, all sending syntactically valid HTTP/2 POST requests with a realistic Content-Type: application/json header and randomized User-Agent strings — bypassing simple IP-based and header-based filtering. The checkout-api and payment-gateway backend processed 34,000 legitimate requests per second under normal peak load; the 47,800 RPS attack volume caused backend worker pool exhaustion within 6 minutes, pushing error rates to 62% and increasing P95 checkout latency to 28 seconds. Cloudflare's L7 DDoS mitigation identified the traffic pattern as bot-driven based on browser fingerprinting anomalies.",
+  "affected_systems": [
+    "checkout-api",
+    "payment-gateway"
+  ],
+  "assigned_to": "infrastructure-team",
+  "detection_method": "Cloudflare L7 DDoS mitigation (browser fingerprinting anomaly on POST /v1/checkout/begin) + Datadog APM checkout-api error rate > 50% alert",
+  "tags": [
+    "ddos-attack",
+    "infrastructure",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-16T11:28:36Z",
+      "event": "Cloudflare L7 DDoS mitigation fired: 47,800 RPS against POST /v1/checkout/begin from 8,400 IPs, browser fingerprinting anomaly detected; Datadog APM checkout-api error rate 62%, P95 latency 28 seconds; PagerDuty P1 generated",
+      "actor": "cloudflare-waf"
+    },
+    {
+      "timestamp": "2025-11-16T11:32:58Z",
+      "event": "On-call infrastructure lead m.ibrahim@company.com acknowledged; escalated Cloudflare Under Attack mode for checkout-api zone; added JavaScript challenge on POST /v1/checkout/begin to require browser verification before reaching origin",
+      "actor": "m.ibrahim@company.com"
+    },
+    {
+      "timestamp": "2025-11-16T11:51:43Z",
+      "event": "JavaScript challenge effective: attack traffic volume dropped from 47,800 to 1,200 RPS (97.5% reduction); bots could not execute JS; backend worker pools recovered; checkout-api error rate dropped from 62% to 2.1%; legitimate JavaScript-enabled browsers unaffected",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-16T13:51:43Z",
+      "event": "Cloudflare L7 DDoS managed rule set tuned: custom rule targeting the specific User-Agent rotation pattern deployed; JS challenge replaced with invisible browser fingerprint check for returning IPs with clean reputation score",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-16T14:49:43Z",
+      "event": "Attack subsided completely; checkout-api serving normal traffic at 33,200 RPS with 0.3% error rate and P95 125ms; Cloudflare managed rules validated; incident closed",
+      "actor": "m.ibrahim@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-16T14:49:43Z",
+  "resolved_by": "m.ibrahim@company.com",
+  "resolution_time_minutes": 201,
+  "resolution_summary": "Cloudflare's JavaScript challenge on the targeted endpoint reduced attack traffic from 47,800 to 1,200 RPS within 13 minutes, recovering the checkout-api backend from exhaustion. The JS challenge was subsequently replaced with an invisible browser fingerprint validation that does not add friction for legitimate users. A custom Cloudflare WAF rule was deployed targeting the specific User-Agent rotation pattern and request timing characteristics of the attacking botnet. Total checkout outage was 13 minutes (11:42-11:55 UTC) before mitigation took effect; the remaining 180 minutes were used to harden the rule set and monitor for re-escalation.",
+  "root_cause_analysis": "The Layer 7 HTTP flood targeted the checkout initiation endpoint specifically because it is a computationally expensive operation (creates a session, locks inventory, pre-authorizes payment) — each request causes significant backend load even if the transaction is not completed. The attack botnet used HTTP/2 multiplexing and a large pool of residential IP proxies (8,400 IPs) to appear as distributed legitimate traffic. The checkout-api had no per-IP rate limiting on the /checkout/begin endpoint (rate limiting existed only for authentication endpoints), and the API gateway's global concurrency limit (2,000 concurrent requests) was reached before any rate limiting triggered. The backend worker pool was not sized with a DDoS headroom buffer — at 34,000 RPS normal peak, the pool was at 85% utilization, leaving only 15% headroom before exhaustion.",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1498 - Network Denial of Service"
+    ],
+    "prevention": [
+      "M1037 - Filter Network Traffic",
+      "M1031 - Network Intrusion Prevention"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1498"
+  ],
+  "mitre_prevention_ids": [
+    "M1037",
+    "M1031"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "62% checkout error rate for 13 minutes; significant revenue loss during peak business hours; customer experience severely degraded",
+  "estimated_cost": 47500,
+  "sla_met": true,
+  "mttr": 201,
+  "mtta": 4,
+  "remediation_actions": [
+    "Enabled Cloudflare 'I'm Under Attack' mode for checkout-api Cloudflare zone: all requests presented with 5-second JavaScript challenge before reaching origin; attack bots unable to execute JavaScript; backend load reduced from 47,800 to 1,200 RPS within 13 minutes",
+    "Analyzed attack traffic characteristics in Cloudflare Security Analytics: User-Agent string rotated from a pool of 47 specific browser version strings in a predictable round-robin pattern; request timing intervals were uniform 20ms (non-human); HTTP/2 stream IDs showed non-browser multiplexing patterns",
+    "Deployed custom Cloudflare WAF rule 'Checkout L7 DDoS Signature': blocks requests matching User-Agent pool + 20ms timing pattern + /v1/checkout/begin + non-browser TLS fingerprint (JA3 hash)",
+    "Replaced I'm Under Attack mode with Cloudflare Bot Management invisible browser fingerprinting for checkout-api zone: provides JS validation without user-visible challenge page; legitimate browsers pass transparently",
+    "Deployed per-endpoint rate limiting on POST /v1/checkout/begin: 20 req/min per IP; 100 req/min per authenticated user; global endpoint limit of 40,000 RPS at Cloudflare edge",
+    "Reviewed payment-gateway for orphaned checkout sessions created by attack traffic: identified 127,000 pending checkout sessions from the attack window; all expired and cleaned up by session TTL (30 minutes)"
+  ],
+  "systems_remediated": [
+    "checkout-api",
+    "payment-gateway"
+  ],
+  "preventive_measures": [
+    "Cloudflare Bot Management deployed permanently for checkout-api and payment endpoints: invisible browser fingerprinting validates all POST requests before origin reach",
+    "Checkout-api worker pool scaled 30% above normal peak capacity: new minimum pool size provides DDoS headroom without requiring auto-scaling to respond first",
+    "Rate limiting deployed on all high-value API endpoints (checkout, payment, refund): per-IP, per-user, and global endpoint rate limits enforced at Cloudflare edge before origin",
+    "DDoS response runbook published with specific Cloudflare escalation steps for L7 HTTP floods: JS challenge → Bot Management → custom WAF rule escalation ladder"
+  ],
+  "security_controls_updated": [
+    "Cloudflare Bot Management enabled with Score threshold 30: requests scoring <30 (bot-like) challenged; requests scoring <10 blocked; checkout endpoint has more aggressive thresholds (block < 30)",
+    "Cloudflare custom WAF rule 'Checkout-L7-DoS-Signature' deployed: JA3 fingerprint blocklist updated with attack botnet TLS fingerprints",
+    "API gateway global concurrency limit increased from 2,000 to 5,000 concurrent requests; checkout-api has a dedicated concurrency pool of 1,500 isolated from other service contention",
+    "Datadog checkout-api SLO alerts updated: error rate > 10% for 3 minutes triggers PagerDuty P1 (previously > 50% for 5 minutes); earlier detection for future attacks"
+  ],
+  "documentation_updated": [
+    "DDoS Response Runbook created: L7 HTTP flood escalation procedure, Cloudflare zone security mode options, Bot Management configuration, and custom WAF rule deployment guide",
+    "Checkout API Security Architecture document updated: rate limiting topology, Bot Management integration, per-endpoint DDoS headroom requirements",
+    "API Endpoint Security Standards updated: all payment-critical endpoints must have per-IP, per-user, and global rate limits configured before deployment",
+    "NET-2025-1116 Jira ticket archived with Cloudflare Analytics export, attack fingerprint data, and Bot Management configuration baseline"
+  ],
+  "lessons_learned": "Layer 7 HTTP floods using residential proxy pools require bot behavior detection rather than IP-based blocking — 8,400 IPs from residential ranges used once and discarded means IP blocklists provide near-zero effectiveness. Cloudflare's browser fingerprinting (JA3 TLS fingerprint + JavaScript execution capability + behavioral timing) is much harder to spoof at scale. Designing high-value API endpoints (checkout, payment) with dedicated worker pools and per-endpoint rate limits is as important as attack mitigation — the attack amplified because the checkout endpoint was sharing resources with other services and had no dedicated capacity ceiling.",
+  "follow_up_tasks": [
+    "NET-1116-01: Cloudflare Bot Management enabled with checkout-aggressive thresholds for all payment-critical API zones — Owner: Network, Due: 2025-11-23",
+    "NET-1116-02: Checkout-api worker pool sizing review: validate 30% headroom above peak capacity with load test — Owner: Platform, Due: 2025-11-23",
+    "NET-1116-03: Rate limiting deployed on all payment-critical endpoints (checkout, refund, subscription create) with per-IP and global limits — Owner: API Team, Due: 2025-11-23",
+    "NET-1116-04: DDoS runbook tabletop exercise with infrastructure and API teams — Owner: SRE, Due: 2025-12-05"
+  ],
+  "resolution": "L7 DDoS mitigated in 13 minutes via Cloudflare JS challenge; Bot Management deployed as permanent defense; 13-minute checkout outage during attack peak",
+  "action_taken": "Resolved by infrastructure-team within 193 minutes; Cloudflare Bot Management and custom WAF rule provide permanent L7 DDoS hardening",
+  "entities": {
+    "users": [
+      "m.ibrahim@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "checkout-api",
+      "payment-gateway"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Cloudflare WAF + Datadog APM",
+  "detection_gap": "No per-endpoint rate limiting existed on the checkout initiation endpoint despite it being computationally expensive (session creation, inventory lock, payment pre-authorization); the API gateway's global concurrency limit of 2,000 was reached before any endpoint-level rate limiting could engage; checkout backend was at 85% worker pool utilization at normal peak load, leaving only 15% headroom",
+  "what_went_well": [
+    "Cloudflare JavaScript challenge reduced attack traffic from 47,800 to 1,200 RPS within 13 minutes of deployment — legitimate browser-based customers were unaffected",
+    "Custom WAF rule targeting the attacker's User-Agent rotation and 20ms timing pattern blocked subsequent attack adaptations without additional manual tuning",
+    "Checkout backend recovered naturally once attack traffic was filtered; no data inconsistency or orphaned checkout sessions required manual intervention"
+  ],
+  "what_went_wrong": [
+    "Checkout initiation endpoint had no per-endpoint rate limiting despite being the most expensive operation in the entire API surface",
+    "Backend worker pool was sized for normal peak load with minimal DDoS headroom — a 40% traffic increase above normal peak caused complete worker exhaustion",
+    "No Bot Management baseline was deployed for API endpoints; the team had no prior bot fingerprinting capability and had to build detection rules reactively during the attack"
+  ]
+}

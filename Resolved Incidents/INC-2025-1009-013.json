@@ -1,0 +1,152 @@
+{
+  "@timestamp": "2025-10-09T02:22:15Z",
+  "incident_id": "INC-2025-1009-013",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "unauthorized_access_attempt",
+  "title": "Multiple failed login attempts detected",
+  "description": "Splunk SIEM fired a correlation rule after detecting 847 failed authentication events against auth-service within a 12-minute window, all targeting distinct user accounts from a single IP range (45.142.212.0/24 — known Tor exit nodes). The pattern matched a credential-stuffing signature: sequential account enumeration with a 1.4-second inter-request delay consistent with automated tooling. No successful authentications from the attacking IP range were detected. The attack targeted the /api/v2/auth/login endpoint without triggering rate limiting, as the gateway's per-IP rate limit (200 req/min) was being evaded by distributing requests across 6 source IPs within the same subnet.",
+  "affected_systems": [
+    "auth-service",
+    "user-accounts"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Splunk SIEM — correlation rule 'AUTH-002: Distributed credential stuffing pattern' (>500 failed logins across >100 accounts in 10 min from <10 source IPs)",
+  "tags": [
+    "unauthorized-access-attempt",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-09T02:22:15Z",
+      "event": "Splunk SIEM rule AUTH-002 fired: 847 failed logins targeting 312 unique accounts from 6 Tor exit node IPs (45.142.212.x) in 12 minutes against /api/v2/auth/login; no successful logins detected",
+      "actor": "splunk-siem"
+    },
+    {
+      "timestamp": "2025-10-09T02:31:39Z",
+      "event": "On-call security analyst k.tremblay@company.com acknowledged alert; confirmed attacking IP range 45.142.212.0/24 listed in Tor Project exit node list; immediate block applied at AWS WAF level",
+      "actor": "k.tremblay@company.com"
+    },
+    {
+      "timestamp": "2025-10-09T03:06:47Z",
+      "event": "Root cause confirmed: auth-service rate limiting was per-IP (200 req/min) with no global endpoint rate limit; attacker distributed requests across 6 IPs to stay below per-IP threshold; 0 successful authentications confirmed in CloudWatch logs",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-10-09T06:27:47Z",
+      "event": "Auth-service rate limiting updated: global endpoint rate limit of 500 req/min added; CAPTCHA challenge injected after 5 consecutive failed logins per account regardless of source IP; 312 targeted accounts sent password reset advisories",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-09T08:00:47Z",
+      "event": "Tor exit node blocklist added to AWS WAF managed rule set; attack traffic fully mitigated; monitoring confirmed no further credential stuffing attempts; incident closed",
+      "actor": "k.tremblay@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-09T08:00:47Z",
+  "resolved_by": "k.tremblay@company.com",
+  "resolution_time_minutes": 338,
+  "resolution_summary": "AWS WAF blocked the 45.142.212.0/24 IP range within 2 minutes of detection, stopping the active attack. Authentication logs confirmed 0 successful logins from the attacking infrastructure across all 847 attempts. The root rate limiting gap (per-IP only, no global endpoint limit) was patched: a global 500 req/min limit and per-account CAPTCHA challenge after 5 failures were implemented. All 312 targeted accounts received a proactive password reset advisory. The Tor exit node blocklist was added as a permanent AWS WAF managed rule.",
+  "root_cause_analysis": "The auth-service API gateway enforced rate limiting at 200 requests/minute per source IP — an effective control against single-source attacks but trivially bypassed by distributed credential stuffing. The attacker used 6 Tor exit nodes from the 45.142.212.0/24 range, each sending 140-160 requests per minute, keeping each IP below the per-IP threshold while collectively generating 847 requests. No global endpoint rate limit existed on /api/v2/auth/login. The credential list used appears to be a publicly available combo list — no company-specific credentials were in the list, as only 0.4% of the 312 targeted accounts had ever used passwords from the list-derived patterns based on Splunk analysis of the endpoint error codes (all returned 401, none returned 403, indicating no lockouts were triggered either).",
+  "mitre": {
+    "tactic": [
+      "Credential Access",
+      "Initial Access"
+    ],
+    "technique": [
+      "T1110 - Brute Force",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1036 - Account Use Policies",
+      "M1032 - Multi-factor Authentication",
+      "M1027 - Password Policies"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0006",
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1110",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1036",
+    "M1032",
+    "M1027"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate security risk, limited exposure, potential for escalation if not addressed",
+  "estimated_cost": 25000,
+  "sla_met": true,
+  "mttr": 338,
+  "mtta": 9,
+  "remediation_actions": [
+    "Immediately blocked IP range 45.142.212.0/24 via AWS WAF custom rule: aws wafv2 update-ip-set --id <tor-blocklist-id> — attack stopped within 90 seconds of block application",
+    "Confirmed 0 successful authentications: SELECT * FROM cloudwatch_auth_logs WHERE source_ip IN ('45.142.212.*') AND result = 'SUCCESS' — returned 0 rows across all 847 attempts",
+    "Applied AWS WAF managed rule 'AWSManagedRulesBotControlRuleSet' to /api/v2/auth/login endpoint to enable automatic bot traffic detection and blocking",
+    "Updated auth-service API gateway config: added global endpoint rate limit of 500 req/min on /api/v2/auth/login regardless of per-IP distribution; deployed in 2 hours",
+    "Implemented per-account progressive CAPTCHA: 5 consecutive failed logins (any source IPs) triggers Google reCAPTCHA v3 challenge on next attempt",
+    "Sent proactive advisory to all 312 targeted accounts recommending password change; included HaveIBeenPwned check link; 89% completed password reset within 24 hours",
+    "Added 45.142.212.0/24 and full Tor exit node list (updated daily via Tor Project feed) to permanent AWS WAF IP blocklist"
+  ],
+  "systems_remediated": [
+    "auth-service",
+    "user-accounts"
+  ],
+  "preventive_measures": [
+    "Global endpoint rate limiting deployed on all /auth/ endpoints: 500 req/min aggregate cap with 429 response and Retry-After header",
+    "AWS WAF Bot Control managed rule set enabled for all authentication endpoints — requests from known bots and automation frameworks now blocked pre-authentication",
+    "Okta customer accounts migrated: all users now required to enroll in Okta MFA (TOTP minimum) — credential stuffing against MFA-enrolled accounts cannot succeed without OTP",
+    "Splunk rule AUTH-002 sensitivity tuned: now fires at 200 failed logins from <10 IPs in 5 minutes (from previous 500 in 10 min), enabling 2x faster detection",
+    "Breach password check integrated into auth-service: passwords matching HaveIBeenPwned database (k-anonymity API) are rejected at login with forced reset prompt"
+  ],
+  "security_controls_updated": [
+    "AWS WAF updated: Tor exit node list managed rule enabled for all public API endpoints; updated daily from Tor Project exit node feed",
+    "Auth-service rate limiting redesigned: per-IP limit (200/min) supplemented with global endpoint limit (500/min) and per-account ban-on-5-failures policy",
+    "Okta MFA enforcement policy updated: mandatory MFA for all new and existing user accounts; grace period for enrollment ends 2025-10-23",
+    "SIEM correlation rule AUTH-002 sensitivity doubled: alert threshold lowered from 500 to 200 failed logins across 50+ accounts in 5 minutes"
+  ],
+  "documentation_updated": [
+    "Authentication Security Runbook updated with credential stuffing detection procedure, AWS WAF IP block command, and account notification template",
+    "Rate Limiting Architecture Document updated with global endpoint limiting design and bot control managed rule configuration",
+    "Credential Stuffing Incident Response Playbook created as standalone document covering detection, blocking, account notification, and post-incident analysis steps",
+    "Incident logged as SEC-4311 Jira ticket; attack IP range and credential list patterns archived in threat intelligence database"
+  ],
+  "lessons_learned": "Per-IP rate limiting alone is not a sufficient defense against distributed credential stuffing — any attacker with access to a few IPs (trivially available via Tor, residential proxies, or cloud VMs) can stay below per-IP thresholds indefinitely. Global endpoint rate limiting and per-account failed-login tracking are the correct primitives. The most durable control is MFA enforcement: even if the attacker had succeeded in finding a valid username/password pair, MFA would have prevented any actual account takeover. The Splunk rule's original threshold of 500 failed logins was too high — the attack would have been at 847 attempts before detection; a 200-login threshold with 5-minute window would have caught it at the 200th attempt.",
+  "follow_up_tasks": [
+    "AUTH-1009-01: Complete mandatory MFA enrollment for all 6,800 customer accounts — enforce hard cutoff 2025-10-23 — Owner: Product Security, Due: 2025-10-23",
+    "AUTH-1009-02: Integrate HaveIBeenPwned k-anonymity API for breach password checking at login and registration — Owner: Platform, Due: 2025-10-30",
+    "AUTH-1009-03: Implement Tor exit node feed auto-update in AWS WAF (daily refresh via Lambda) — Owner: Cloud Security, Due: 2025-10-16",
+    "AUTH-1009-04: Tune Splunk AUTH-002 rule and backtest against 6-month historical data to validate sensitivity — Owner: Detection Engineering, Due: 2025-10-20"
+  ],
+  "resolution": "Zero accounts compromised; attack blocked at AWS WAF; 312 targeted accounts sent password reset advisories; global rate limiting and bot control deployed",
+  "action_taken": "Resolved by security-team within 309 minutes of Splunk SIEM detection",
+  "entities": {
+    "users": [],
+    "ips": [
+      "185.220.101.45",
+      "185.220.101.47",
+      "23.129.64.190"
+    ],
+    "hosts": [
+      "auth-api-prod"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "No per-IP rate limiting existed on the authentication endpoint; Tor exit node IP addresses were not pre-blocked at the WAF layer; no velocity alerting was configured for failed authentication attempts below individual account lockout thresholds — approximately 850 attempts from a single IP range were needed before the SIEM rule threshold was breached",
+  "what_went_well": [
+    "Okta ThreatInsight automatically began blocking authentication requests from Tor exit nodes within minutes of policy activation",
+    "Cross-reference with the Breach Compilation credential database identified all 23 at-risk accounts within 45 minutes, enabling targeted MFA enforcement",
+    "MFA enforcement on all 23 targeted accounts prevented any successful authentication despite the attacker possessing valid password matches for 4 accounts"
+  ],
+  "what_went_wrong": [
+    "Authentication endpoint lacked per-IP rate limiting — approximately 850 attempts from a single IP range proceeded unchallenged until the SIEM velocity threshold was crossed",
+    "Tor exit node IPs were not pre-blocked at the WAF layer despite Tor exit node traffic being a known high-risk signal for credential stuffing",
+    "Account lockout policy was configured per-account rather than per-IP, allowing the attacker to distribute attempts across accounts without triggering individual lockouts"
+  ]
+}

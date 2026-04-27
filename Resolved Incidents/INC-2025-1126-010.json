@@ -1,0 +1,151 @@
+{
+  "@timestamp": "2025-11-26T08:19:55Z",
+  "incident_id": "INC-2025-1126-010",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "phishing_attack",
+  "title": "Phishing campaign targeting employees",
+  "description": "Microsoft Defender for Office 365 detected a high-confidence phishing campaign delivered to 47 employee mailboxes over a 20-minute window. The emails impersonated the company's IT helpdesk (sender: it-helpdesk@company-support.net) with subject line 'Urgent: Your VPN access expires in 24 hours — verify now'. The embedded link redirected through two URL shorteners to a credential harvesting page mimicking the company Okta login portal. Defender's Zero-hour Auto Purge (ZAP) automatically quarantined 39 of the 47 delivery attempts before user interaction. Eight emails were read before ZAP acted; two users clicked the link but neither entered credentials, as confirmed by Okta authentication logs showing no new sessions from unusual IPs.",
+  "affected_systems": [
+    "email-gateway",
+    "user-accounts"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Microsoft Defender for Office 365 — ZAP (Zero-hour Auto Purge) with high-confidence phishing verdict; manual user report via PhishAlarm",
+  "tags": [
+    "phishing-attack",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-26T08:19:55Z",
+      "event": "Microsoft Defender for O365 ZAP fired on phishing campaign: 39/47 emails auto-quarantined with verdict 'High Confidence Phishing'; 8 emails already delivered to read inboxes; user a.griffin@company.com submitted PhishAlarm report simultaneously",
+      "actor": "microsoft-defender-o365"
+    },
+    {
+      "timestamp": "2025-11-26T08:28:11Z",
+      "event": "On-call security analyst b.osei@company.com acknowledged alert; reviewed Defender Threat Explorer; identified campaign sender domain company-support.net (registered 3 days prior); remaining 8 delivered emails manually purged via admin portal",
+      "actor": "b.osei@company.com"
+    },
+    {
+      "timestamp": "2025-11-26T09:03:35Z",
+      "event": "Okta authentication logs confirmed: 2 users clicked link (c.huang@company.com, d.reyes@company.com) but neither submitted credentials; no new Okta sessions from external IPs matching the harvesting domain; credential compromise ruled out",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-11-26T09:12:35Z",
+      "event": "Harvesting domain company-support.net and all associated URLs blocked at email gateway, proxy, and DNS layer; IOCs (sender domain, IP, URL patterns) submitted to Microsoft Defender TI for blocklist propagation",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-26T09:23:35Z",
+      "event": "All-staff advisory sent via Slack #security-alerts; individual follow-up sent to c.huang and d.reyes for credential verification; incident closed with zero credential compromise confirmed",
+      "actor": "b.osei@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-26T09:23:35Z",
+  "resolved_by": "b.osei@company.com",
+  "resolution_time_minutes": 63,
+  "resolution_summary": "Microsoft Defender for O365 ZAP auto-quarantined 39 of 47 phishing emails before user interaction. The remaining 8 were manually purged within 2 minutes of acknowledgment. Two employees clicked the credential harvesting link but neither submitted their credentials; Okta logs confirmed no unauthorized authentication sessions from external IPs. The phishing campaign sender domain (company-support.net, 3 days old) and all associated infrastructure were blocked at email gateway, web proxy, and corporate DNS. No credentials were compromised.",
+  "root_cause_analysis": "The phishing campaign was a credential harvesting operation targeting company employees using a lookalike domain (company-support.net) registered 3 days before the attack. The emails passed initial SPF and DKIM checks because the sender domain was newly registered with valid records — Defender's ML model assigned a high-confidence phishing verdict based on content analysis (urgency language, URL shortener chains, lookalike brand elements) rather than domain reputation alone. Eight emails reached user inboxes during the 3-minute window between first delivery and ZAP quarantine action, a known gap in ZAP's retroactive purge timing. The harvesting page used a pixel-perfect clone of the company Okta portal with a valid Let's Encrypt certificate, adding false legitimacy.",
+  "mitre": {
+    "tactic": [
+      "Initial Access",
+      "Credential Access"
+    ],
+    "technique": [
+      "T1566 - Phishing",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1017 - User Training",
+      "M1032 - Multi-factor Authentication",
+      "M1021 - Restrict Web-Based Content"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001",
+    "TA0006"
+  ],
+  "mitre_technique_ids": [
+    "T1566",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1017",
+    "M1032",
+    "M1021"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Moderate security risk, limited exposure, potential for escalation if not addressed",
+  "estimated_cost": 3000,
+  "sla_met": true,
+  "mttr": 63,
+  "mtta": 8,
+  "remediation_actions": [
+    "Manually purged all 8 remaining delivered phishing emails using Microsoft Defender admin portal Search & Purge: New-ComplianceSearchAction -SearchName 'Phishing-1126' -Purge -PurgeType SoftDelete",
+    "Verified Okta auth logs for c.huang@company.com and d.reyes@company.com: confirmed 0 external login attempts from IPs associated with harvesting domain; no session tokens issued",
+    "Blocked sender domain company-support.net and 3 associated sending IPs at email gateway (Proofpoint); added to corporate DNS RPZ blocklist and Zscaler URL category 'Phishing'",
+    "Extracted full phishing IOCs (sender domain, URL shortener chains, harvesting page IP 185.220.101.x, SHA256 of HTML clone) and submitted to Microsoft Defender Threat Intelligence for global blocklist propagation",
+    "Sent targeted security advisory to c.huang and d.reyes: confirmed no credential entry, recommended Okta session audit, offered MFA reset if desired — both declined, sessions confirmed clean",
+    "Broadcast all-staff Slack message to #security-alerts with phishing screenshot, indicators, and 'how to report' instructions within 35 minutes of detection"
+  ],
+  "systems_remediated": [
+    "email-gateway",
+    "user-accounts"
+  ],
+  "preventive_measures": [
+    "Microsoft Defender for O365 'First Contact Safety Tip' enabled: banner now displayed on all emails from senders not previously contacted, increasing user suspicion of impersonation emails",
+    "Proofpoint email gateway updated to enforce DMARC reject policy for all inbound mail — the phishing sender passed SPF/DKIM but would be blocked under strict DMARC",
+    "Zscaler SSL inspection enabled for credential submission events: any form POST to a domain registered within 30 days is blocked and logged",
+    "Phishing simulation frequency increased to bi-weekly for all employees; click-rate reporting shared with department managers to drive awareness accountability",
+    "IT helpdesk communications policy updated: all IT-initiated email actions now require a parallel in-app banner in the company Okta portal to prevent lookalike domain impersonation"
+  ],
+  "security_controls_updated": [
+    "Microsoft Defender for O365 Safe Links policy updated: URL shortener services now always unwrapped and scanned before delivery; detonation sandbox timeout extended to 60 seconds",
+    "Proofpoint DMARC quarantine policy set to reject for all external senders impersonating company.com domain",
+    "Corporate DNS RPZ (Response Policy Zone) updated with company-support.net and 47 lookalike domain variants pre-registered as blocked",
+    "Okta Adaptive MFA policy updated: any login from a new device/IP now requires push notification approval regardless of previous session history"
+  ],
+  "documentation_updated": [
+    "Phishing Incident Response Runbook updated with ZAP purge procedure, Okta session validation query, and proxy blocklist update steps",
+    "Employee Security Awareness Guide updated: new section 'IT will never ask for your Okta password via email' with screenshot examples of legitimate vs phishing IT communications",
+    "Email Gateway Runbook updated with DMARC reject policy enforcement procedure and lookalike domain detection playbook",
+    "PhishAlarm usage statistics for Q4 2025 compiled: 6 campaigns detected, employee report rate 34% — highest quarterly rate to date"
+  ],
+  "lessons_learned": "The 3-minute window between ZAP detection and retroactive purge action is an inherent architectural gap in Defender for O365's deferred scanning model — pre-delivery sandboxing (Safe Attachments detonation) needs to be extended to URL content at delivery time, not retroactively. The PhishAlarm user report from a.griffin@company.com arrived simultaneously with the automated ZAP detection, validating the effectiveness of user reporting training. The fastest path to zero compromise in phishing scenarios remains Okta FIDO2/WebAuthn — phishing-resistant MFA would make credential harvesting page submissions useless even if users completed the form.",
+  "follow_up_tasks": [
+    "PH-1126-01: Enable Defender for O365 pre-delivery URL detonation for all emails from first-time senders — Owner: Email Security, Due: 2025-12-05",
+    "PH-1126-02: Pilot Okta FIDO2 (hardware key) MFA for executive and finance teams (highest phishing risk) — Owner: IAM, Due: 2026-01-15",
+    "PH-1126-03: Pre-register 200 common typosquat/lookalike domains as DNS blocklist entries using dnstwist analysis — Owner: Threat Intel, Due: 2025-12-10",
+    "PH-1126-04: Increase phishing simulation frequency to bi-weekly; share department-level click rate report with VP of Engineering — Owner: Security Awareness, Due: 2025-12-01"
+  ],
+  "resolution": "Zero credentials compromised; all 47 phishing emails quarantined or purged; sender infrastructure fully blocked at email, proxy, and DNS layers",
+  "action_taken": "Resolved by security-team within 35 minutes of Microsoft Defender ZAP detection",
+  "entities": {
+    "users": [
+      "d.walsh@company.com"
+    ],
+    "ips": [
+      "185.220.101.13"
+    ],
+    "hosts": [],
+    "domains": [
+      "secure-docushare.com"
+    ],
+    "hashes": []
+  },
+  "detection_gap": "Microsoft Defender ZAP (Zero-hour Auto Purge) operates retroactively after initial delivery — phishing emails are accessible to recipients for several minutes before ZAP quarantine executes; the phishing URL was not yet blocklisted during initial SMTP delivery, bypassing URL reputation filters at send time",
+  "what_went_well": [
+    "Defender ZAP retroactively quarantined the phishing email and removed the credential harvesting URL from all recipient mailboxes before any user clicked the embedded link",
+    "No credential compromise was observed — the recipient who opened the email did not interact with the embedded link",
+    "Company-wide notification was issued within 2 hours of detection, enabling proactive awareness across all employees before any follow-up phishing wave"
+  ],
+  "what_went_wrong": [
+    "ZAP's retroactive quarantine model created a delivery window where the phishing email was accessible to recipients — synchronous pre-delivery blocking was not available for this campaign",
+    "Email gateway did not flag the phishing attempt at initial SMTP delivery because the malicious URL domain had no negative reputation at send time",
+    "No company-wide phishing template awareness training had been conducted in the prior 6 months, reducing employee recognition of this campaign style"
+  ]
+}

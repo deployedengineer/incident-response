@@ -1,0 +1,130 @@
+{
+  "@timestamp": "2025-12-23T19:22:04Z",
+  "incident_id": "INC-2025-1223-017",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "api",
+  "type": "error_spike",
+  "title": "Search API elevated error rates",
+  "description": "Datadog APM detected a sustained error rate spike on search-api beginning at 19:14 UTC. The search-api's upstream dependency, an Elasticsearch cluster (elasticsearch-cluster, 5-node, 300 GB index, us-east-1), began returning HTTP 429 'Circuit breaker triggered' responses when the search-api attempted bulk query execution. Investigation revealed the Elasticsearch cluster's JVM heap circuit breaker had been tripped by a field data cache overflow: a new search feature deployed that afternoon (faceted search with dynamic aggregation on the product_tags field, which had 4.2 million distinct values) was loading all field data values into heap for aggregation, exhausting the 30 GB heap allocation on all 5 data nodes simultaneously.",
+  "affected_systems": [
+    "search-api",
+    "elasticsearch-cluster"
+  ],
+  "assigned_to": "api-team",
+  "detection_method": "Datadog APM — 'search-api error rate > 20% for 5 consecutive minutes' threshold alert; Elasticsearch cluster health API returning 'yellow' status with circuit breaker exception count > 1000",
+  "tags": [
+    "error-spike",
+    "api",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-23T19:22:04Z",
+      "event": "Datadog APM alert: search-api error rate 41.3% (normal <1%); Elasticsearch cluster health 'yellow'; elasticsearch logs showing 'CircuitBreakerException: Data too large, data for field [product_tags] would be larger than limit of [28.4gb/26.4%]'; PagerDuty P2 generated",
+      "actor": "datadog-apm"
+    },
+    {
+      "timestamp": "2025-12-23T19:29:27Z",
+      "event": "On-call search engineer p.varga@company.com acknowledged; disabled the new faceted aggregation feature flag for product_tags field immediately (feature flag rollback in LaunchDarkly); Elasticsearch circuit breaker cleared; search-api error rate dropped from 41.3% to 1.8% within 3 minutes",
+      "actor": "p.varga@company.com"
+    },
+    {
+      "timestamp": "2025-12-23T19:49:03Z",
+      "event": "Root cause confirmed: product_tags field had doc_values and fielddata enabled simultaneously; the faceted aggregation query loaded all 4.2M distinct tag values into JVM heap across all 5 data nodes (28.4 GB per node); this exceeded the 26.4% fielddata circuit breaker threshold; the aggregation should have used a keyword field with doc_values (not heap-based fielddata)",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-23T23:07:03Z",
+      "event": "Index mapping updated: product_tags field migrated from text with fielddata=true to keyword with doc_values=true; aggregation redesigned to use doc-values-based aggregation (BKD-tree, disk-based, not heap-based); Elasticsearch cluster reindex initiated for 300 GB index",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-24T00:39:03Z",
+      "event": "Reindex completed; faceted aggregation feature re-enabled with new index mapping; search-api tested: 0% error rate; Elasticsearch heap usage stable at 42% (12.6 GB / 30 GB); faceted search results confirmed correct; incident closed",
+      "actor": "p.varga@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-24T00:39:03Z",
+  "resolved_by": "p.varga@company.com",
+  "resolution_time_minutes": 316,
+  "resolution_summary": "Disabling the faceted search feature flag via LaunchDarkly cleared the Elasticsearch circuit breaker within 3 minutes of acknowledgment, restoring the search-api to normal error rates. The root cause (fielddata-based aggregation loading 4.2M distinct values per data node into JVM heap) was addressed by migrating the product_tags field mapping to keyword + doc_values and redesigning the aggregation to use doc-values-based computation (disk-based BKD tree, not heap-resident). The Elasticsearch index was reindexed over 3.5 hours. The feature was re-enabled post-reindex with 0% error rate and stable heap usage at 42%.",
+  "root_cause_analysis": "The new faceted search feature used a terms aggregation on the product_tags field with a size parameter of 1000 (requesting the top 1,000 most common tags). Terms aggregation on a text field with fielddata=true loads all field values (not just the top N) into JVM heap's fielddata cache to perform the aggregation — this is an Elasticsearch design characteristic. The product_tags field had 4.2 million distinct values; loading all 4.2M values into fielddata cache across 5 data nodes required 28.4 GB per node, triggering the 26.4% heap circuit breaker (Elasticsearch's safety limit for fielddata cache relative to total JVM heap). The correct mapping pattern for aggregation on high-cardinality string fields is keyword + doc_values (introduced in Elasticsearch 5.x), which performs aggregation from on-disk BKD structures without heap consumption. The field mapping was reviewed in the PR but the reviewer was not aware of the heap behavior of fielddata on high-cardinality fields.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 350,
+  "business_impact": "41% search error rate for 5 minutes; faceted search unavailable for 3.5 hours while re-indexing",
+  "estimated_cost": 25000,
+  "sla_met": true,
+  "mttr": 316,
+  "mtta": 7,
+  "remediation_actions": [
+    "Disabled 'faceted-search-v1' LaunchDarkly feature flag for all environments; Elasticsearch circuit breaker cleared within 90 seconds of feature disable; JVM heap fielddata cache evicted; error rate dropped from 41.3% to 1.8%",
+    "Analyzed Elasticsearch cluster metrics in Datadog: fielddata cache size peaked at 28.4 GB / 30 GB per data node (94.7% of heap); circuit breaker trips: 4,312 in 5 minutes; confirmed fielddata was the sole cause",
+    "Updated product_tags index mapping: removed fielddata=true; added keyword sub-field with doc_values=true; verified mapping change does not require full reindex of existing document fields (doc_values reindex required for the new keyword sub-field)",
+    "Reindexed 300 GB Elasticsearch index using _reindex API with 5 parallel slices (one per data node); monitored reindex progress per Elasticsearch cat API; completed in 3.4 hours with zero downtime to existing search queries",
+    "Redesigned faceted aggregation query: terms aggregation now targets product_tags.keyword sub-field (doc_values-based); validated aggregation results match expected facet counts against 50 sampled product categories",
+    "Re-enabled 'faceted-search-v1' feature flag post-reindex; monitored Elasticsearch JVM heap for 30 minutes — stable at 12.6 GB / 30 GB (42%); no circuit breaker trips; 0% search error rate"
+  ],
+  "systems_remediated": [
+    "search-api",
+    "elasticsearch-cluster"
+  ],
+  "preventive_measures": [
+    "Elasticsearch index mapping review checklist added to PR template: any text field used in aggregations must use keyword + doc_values; fielddata=true requires security architect approval and heap impact analysis",
+    "Elasticsearch cluster fielddata cache alarm deployed: fielddata cache size > 20% of JVM heap triggers PagerDuty P2 warning; > 25% triggers P1 before circuit breaker fires",
+    "Search feature deployment process updated: new aggregation queries must be load tested against a production-sized Elasticsearch cluster clone before deployment; heap profiling during load test is mandatory",
+    "Elasticsearch best practices guide distributed to all engineers: high-cardinality aggregation patterns, doc_values vs fielddata trade-offs, circuit breaker behavior documentation"
+  ],
+  "security_controls_updated": [
+    "Datadog Elasticsearch integration alarms added: fielddata cache size, circuit breaker exception count, and JVM heap pressure metrics now monitored with threshold alerting",
+    "LaunchDarkly feature flag policy updated: any Elasticsearch aggregation feature must have a kill switch feature flag with the on-call team authorized to disable without approval",
+    "Elasticsearch cluster JVM heap increased from 30 GB to 40 GB per data node to increase circuit breaker headroom; fielddata circuit breaker threshold tuned to 20% (8 GB) to provide earlier warning",
+    "CI pipeline updated: Elasticsearch query linting runs on all search PR branches; any query using terms aggregation on a text field with fielddata=true fails the build"
+  ],
+  "documentation_updated": [
+    "Elasticsearch Engineering Guide updated: high-cardinality aggregation architectures, doc_values vs fielddata comparison, mapping design for faceted search use cases",
+    "Search API Runbook updated: Elasticsearch circuit breaker response procedure, feature flag disable steps, fielddata cache eviction commands",
+    "PR Review Checklist updated: Elasticsearch aggregation fields must be tagged in PR for search team SME review; fielddata=true requires performance review sign-off",
+    "API-2025-1223 Jira postmortem published with fielddata heap usage data, reindex timeline, and mapping migration documentation"
+  ],
+  "lessons_learned": "Elasticsearch fielddata on high-cardinality text fields is a JVM heap landmine — it behaves correctly at small index scale and fails catastrophically when the number of distinct field values grows. The terms aggregation did not produce any warning or slower response before the circuit breaker physically stopped the cluster; the failure mode was binary. doc_values is the correct pattern for aggregation on string fields and has been the recommended approach since Elasticsearch 5.x — treating fielddata=true as a default-off configuration requiring explicit justification prevents this class of incident. Feature flags with authorized rollback are essential for search feature deployments that interact with shared Elasticsearch cluster resources.",
+  "follow_up_tasks": [
+    "SEARCH-1223-01: Elasticsearch query linter deployed to CI pipeline — flag any text field with fielddata=true in aggregation queries — Owner: Search Team, Due: 2025-12-30",
+    "SEARCH-1223-02: Fielddata cache and circuit breaker Datadog alarms deployed to all Elasticsearch clusters — Owner: SRE, Due: 2025-12-27",
+    "SEARCH-1223-03: JVM heap upgrade from 30 GB to 40 GB per data node on elasticsearch-cluster — Owner: Platform, Due: 2025-12-27",
+    "SEARCH-1223-04: Elasticsearch Engineering Guide published and reviewed with all backend engineers handling search queries — Owner: Search Team, Due: 2026-01-09"
+  ],
+  "resolution": "Feature flag disabled; Elasticsearch circuit breaker cleared; field mapping migrated from fielddata to keyword+doc_values; 300 GB reindex completed; faceted search restored",
+  "action_taken": "Resolved by api-team within 305 minutes; 5-minute error spike resolved by feature rollback; 3.5-hour reindex to apply permanent fix",
+  "entities": {
+    "users": [
+      "p.varga@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "search-api",
+      "elasticsearch-cluster"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog APM",
+  "detection_gap": "No pre-deployment heap impact validation existed for Elasticsearch aggregation queries against a production-sized index; the terms aggregation on a high-cardinality text field with fielddata=true was reviewed and approved without the reviewer being aware that all 4.2M distinct field values would be loaded into JVM heap per data node regardless of the aggregation size parameter",
+  "what_went_well": [
+    "LaunchDarkly feature flag rollback for 'faceted-search-v1' cleared the Elasticsearch JVM heap circuit breaker within 90 seconds of acknowledgment",
+    "Chrome DevTools V8 heap snapshot analysis definitively identified 68,000 Map entries under GQL_SUBSCRIPTION_CONTEXTS as the sole cause of OOM pressure",
+    "The 300 GB Elasticsearch reindex completed in 3.4 hours with zero downtime to existing search queries — concurrent read operations were unaffected throughout"
+  ],
+  "what_went_wrong": [
+    "High-cardinality aggregation feature was deployed without load testing on a production-equivalent Elasticsearch cluster — staging used a smaller index with fewer distinct product_tags values",
+    "Code reviewer approved fielddata=true on a text field with 4.2M distinct values without flagging the JVM heap impact of terms aggregation on high-cardinality fields",
+    "No Elasticsearch JVM heap or circuit breaker alerting existed before this incident; the circuit breaker had never been triggered in production"
+  ]
+}

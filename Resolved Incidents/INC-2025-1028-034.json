@@ -1,0 +1,150 @@
+{
+  "@timestamp": "2025-10-28T16:05:48Z",
+  "incident_id": "INC-2025-1028-034",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "security",
+  "type": "data_exfiltration",
+  "title": "Large file transfer to personal cloud storage",
+  "description": "Netskope CASB detected a 4.3 GB HTTPS upload from corporate laptop WS-FIN-088 (user: g.harrison@company.com, finance analyst) to a personal Dropbox account (user email: g.harrison.personal@gmail.com) outside of authorized cloud storage services. The transfer occurred in four sequential multi-part upload sessions over 47 minutes at 09:14–10:01 UTC. The files were uploaded from a local directory C:\\Finance\\Q3-Revenue-Reports\\ containing 217 files including quarterly revenue projections, EBITDA models, customer contract values, and internal pricing data classified as CONFIDENTIAL. The upload destination was confirmed to be a personal account, not a corporate-sanctioned Dropbox Business endpoint.",
+  "affected_systems": [
+    "endpoint-fin-088",
+    "data-loss-prevention"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Netskope CASB — DLP policy 'Financial Data Exfiltration to Personal Cloud' triggered by >1 GB upload to non-corporate cloud storage from devices with sensitive data classification",
+  "tags": [
+    "data-exfiltration",
+    "security",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-28T16:05:48Z",
+      "event": "Netskope CASB DLP policy 'FIN-CLOUD-001' fired: 4.3 GB upload of CONFIDENTIAL-classified financial files from WS-FIN-088 (g.harrison@company.com) to personal Dropbox (g.harrison.personal@gmail.com) detected; upload still in progress at time of alert",
+      "actor": "netskope-casb"
+    },
+    {
+      "timestamp": "2025-10-28T16:13:08Z",
+      "event": "On-call security analyst p.wright@company.com blocked Dropbox API access for WS-FIN-088 via Netskope policy update, terminating the in-progress upload at 3.1 GB (72% complete); g.harrison@company.com's manager notified",
+      "actor": "p.wright@company.com"
+    },
+    {
+      "timestamp": "2025-10-28T16:58:52Z",
+      "event": "Root cause under investigation: g.harrison interviewed by phone — stated he was working over the weekend and wanted access to Q3 files on his personal laptop; confirmed no intent to share externally; treating as insider data handling violation regardless of intent",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-10-28T19:42:52Z",
+      "event": "g.harrison.personal@gmail.com Dropbox account forensics completed: 3.1 GB transferred (217 files partially uploaded, 156 complete); g.harrison asked to delete transferred files from personal Dropbox and provide deletion confirmation screenshot; DLP policy and corporate cloud storage guidance reviewed with user",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-10-28T21:04:52Z",
+      "event": "Deletion confirmation received; IT Security reviewed g.harrison's WS-FIN-088 for signs of additional prior exfiltration — Netskope 90-day log shows no prior large uploads to personal cloud; incident closed with formal data handling policy violation written warning",
+      "actor": "p.wright@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-28T21:04:52Z",
+  "resolved_by": "p.wright@company.com",
+  "resolution_time_minutes": 299,
+  "resolution_summary": "Netskope blocked the active Dropbox upload at 3.1 GB (72% completion), preventing the remaining 1.2 GB from being transferred. G. Harrison confirmed this was a data handling policy violation for personal convenience rather than malicious exfiltration — the files were deleted from the personal Dropbox account with screenshot confirmation. A 90-day Netskope log review showed no prior large cloud uploads from this user. The incident was closed as a confirmed data handling policy violation with a formal written warning. Corporate cloud storage access policy and the approved remote access solution (company-managed laptop + Citrix remote desktop) were communicated to the user.",
+  "root_cause_analysis": "The employee sought to access Q3 financial data over the weekend from their personal laptop and chose an unauthorized path (personal Dropbox) instead of the approved remote access solution (Citrix Workspace). The root cause has two components: first, the corporate remote access solution (Citrix) was reportedly slow and unreliable, making the personal cloud shortcut attractive; second, the Netskope CASB policy allowed Dropbox uploads from corporate devices but did not differentiate between corporate Dropbox Business accounts and personal Dropbox free accounts, allowing the upload to proceed until the DLP file-content policy threshold was hit. The 4.3 GB directory contained files classified CONFIDENTIAL but stored without encryption on the endpoint filesystem, increasing the blast radius if the personal Dropbox had been breached.",
+  "mitre": {
+    "tactic": [
+      "Exfiltration",
+      "Collection"
+    ],
+    "technique": [
+      "T1048 - Exfiltration Over Alternative Protocol",
+      "T1213 - Data from Information Repositories"
+    ],
+    "prevention": [
+      "M1057 - Data Loss Prevention",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0010",
+    "TA0009"
+  ],
+  "mitre_technique_ids": [
+    "T1048",
+    "T1213"
+  ],
+  "mitre_prevention_ids": [
+    "M1057",
+    "M1041"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Potential regulatory breach, sensitive financial data exposure, compliance risk",
+  "estimated_cost": 7500,
+  "sla_met": true,
+  "mttr": 299,
+  "mtta": 7,
+  "remediation_actions": [
+    "Blocked active Dropbox upload session via Netskope inline policy update for WS-FIN-088 at T+2min; upload terminated at 3.1 GB (72%)",
+    "Confirmed via Netskope CASB metadata: 156 of 217 files transferred completely; 61 files transferred partially or not at all; destination: personal Dropbox free account (g.harrison.personal@gmail.com)",
+    "User interview completed: g.harrison confirmed weekend work motivation; no external sharing disclosed; user instructed to immediately delete all transferred files from personal Dropbox",
+    "Received and verified deletion confirmation: g.harrison provided screenshot of empty Dropbox folder and permanently deleted files; no sharing links created prior to deletion (confirmed via Dropbox account audit log)",
+    "Reviewed Netskope 90-day cloud activity log for g.harrison@company.com: 0 prior large uploads to personal cloud services; no prior policy violations",
+    "Reviewed all Q3 financial files transferred for applicable regulatory exposure: confirmed no PII/PCI scope data; files contain internal financial projections classified CONFIDENTIAL — material non-public information risk assessed by Legal",
+    "Issued formal written warning to g.harrison per data handling policy; HR notified for personnel file update; user re-enrolled in mandatory data handling security training"
+  ],
+  "systems_remediated": [
+    "endpoint-fin-088",
+    "data-loss-prevention"
+  ],
+  "preventive_measures": [
+    "Netskope CASB policy updated: personal cloud storage (personal Gmail-linked Dropbox, Google Drive, OneDrive consumer) now blocked by default from all corporate endpoints; only corporate-sanctioned accounts permitted",
+    "Citrix Workspace performance improvement project escalated: IT operations tasked with reducing latency and improving reliability for after-hours remote access to eliminate the convenience gap driving shadow IT",
+    "Financial data (CONFIDENTIAL classification) now requires Microsoft Information Protection encryption before storage on endpoint filesystem; files are readable only on corporate-managed devices",
+    "Netskope DLP policy updated: any upload of >100 MB to any personal cloud service triggers immediate block (not just alert) without requiring content scan to exceed threshold",
+    "Data Handling Policy updated and communicated: approved remote access methods for weekend/off-site work explicitly listed; personal cloud storage use of corporate data listed as terminable offense"
+  ],
+  "security_controls_updated": [
+    "Netskope CASB updated: block (not monitor) mode for all personal cloud storage destinations effective immediately; corporate cloud accounts (O365 OneDrive Business, corporate Dropbox Business) permitted with DLP scanning",
+    "Microsoft Information Protection (MIP) automatic labeling deployed for Finance team: any file in Q*-Revenue or Budget directories auto-labeled CONFIDENTIAL with Right Management Services encryption",
+    "Netskope policy updated: block any cloud upload from devices accessing corporate resources via split-tunnel VPN to personal cloud accounts",
+    "SIEM alert created: any corporate device with Netskope cloud access to personal cloud services generates a P3 investigation ticket within 5 minutes"
+  ],
+  "documentation_updated": [
+    "Data Handling and Classification Policy updated: personal cloud storage prohibition made explicit with specific examples; approved remote access methods for after-hours work documented",
+    "Netskope CASB Configuration Guide updated: personal vs corporate cloud account differentiation policy, DLP threshold settings, and incident response procedure",
+    "Employee Data Handling Training module updated to include personal cloud storage section; mandatory annual recertification added",
+    "Legal review of incident completed: CONFIDENT non-public financial data transferred to personal account assessed; no regulatory notification required (no external sharing confirmed)"
+  ],
+  "lessons_learned": "Employees creating shadow IT workarounds are almost always solving a real operational problem (in this case, poor remote access performance) — addressing the root usability gap is as important as the DLP policy enforcement. If the corporate remote access solution had been reliable, the employee would have had no motivation to use personal Dropbox. The Netskope policy gap (distinguishing personal vs corporate cloud accounts of the same provider) is a common misconfiguration: blocking the Dropbox domain entirely would have prevented the issue, while the attempt to allow corporate but block personal accounts requires more granular tenant-based routing configurations.",
+  "follow_up_tasks": [
+    "DLP-1028-01: Citrix Workspace performance audit for after-hours remote access; target <2 second application launch time — Owner: IT Operations, Due: 2025-11-15",
+    "DLP-1028-02: Deploy MIP auto-labeling for Finance team (Q*-Revenue, Budget, Projections directories); validate against 500 files — Owner: Information Security, Due: 2025-11-07",
+    "DLP-1028-03: Netskope CASB personal vs corporate cloud account routing configuration for Dropbox, OneDrive, Google Drive — Owner: Cloud Security, Due: 2025-11-07",
+    "DLP-1028-04: Mandatory data handling policy retraining for all Finance department employees — Owner: Security Awareness, Due: 2025-11-14"
+  ],
+  "resolution": "Upload terminated at 72% completion; 156 files deleted from personal Dropbox with verification; no external sharing confirmed; formal written warning issued",
+  "action_taken": "Resolved by security-team within 261 minutes; insider data handling violation confirmed with no malicious intent; preventive DLP controls hardened",
+  "entities": {
+    "users": [
+      "p.morrison@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "laptop-pm-001"
+    ],
+    "domains": [
+      "onedrive.live.com"
+    ],
+    "hashes": []
+  },
+  "detection_gap": "No egress DLP blocking policy existed for personal cloud storage destinations from corporate endpoints; Netskope CASB was deployed but configured in alert-only mode for personal OneDrive uploads rather than block mode; file size threshold alerts were not tuned to detect bulk transfers of the volume observed (3.2 GB)",
+  "what_went_well": [
+    "Netskope CASB captured a complete transfer manifest with file names, sizes, and SHA-256 hashes for all 847 transferred files",
+    "Legal hold was applied to the employee's corporate devices before the discovery interview, preserving forensic integrity",
+    "Transferred files were confirmed as internal-use documents with no customer PII, payment data, or IP marked as trade secret"
+  ],
+  "what_went_wrong": [
+    "Netskope CASB was deployed in alert-only mode for personal cloud storage destinations — blocking mode was not enabled, allowing the transfer to complete before detection",
+    "No SEAR (Security Education, Awareness, and Responsibility) training had been delivered covering data handling obligations for employees approaching departure",
+    "DLP file size threshold alert was set too high (5 GB) to catch the 3.2 GB transfer — threshold was not calibrated for realistic insider risk scenarios"
+  ]
+}

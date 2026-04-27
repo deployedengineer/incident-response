@@ -1,0 +1,155 @@
+{
+  "@timestamp": "2025-11-17T16:09:02Z",
+  "incident_id": "INC-2025-1117-004",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "security",
+  "type": "data_exfiltration",
+  "title": "Suspected data exfiltration attempt detected",
+  "description": "AWS GuardDuty fired a high-severity finding 'UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom' for API calls originating from 194.165.16.73 (known threat actor IP, flagged in CrowdStrike Intel) authenticated with IAM credentials belonging to the 'svc-report-generator' service account. The affected service account was used to run 14 consecutive DescribeInstances, ListBuckets, and GetObject API calls across production resources within a 7-minute window, including 11 GetObject calls against the customer-db-prod S3 bucket containing encrypted customer PII exports. The service account credentials had not been rotated in 312 days. CloudTrail showed the account was being accessed simultaneously from its legitimate EC2 role (us-east-1) and from the threat actor IP (Netherlands).",
+  "affected_systems": [
+    "customer-db-prod",
+    "api-backend",
+    "cdn-origin"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "AWS GuardDuty — 'UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom' (service account used from known threat actor IP concurrently with legitimate use)",
+  "tags": [
+    "data-exfiltration",
+    "security",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-17T16:09:02Z",
+      "event": "AWS GuardDuty high-severity finding: svc-report-generator credentials used from 194.165.16.73 (known malicious IP, CrowdStrike Intel TLP:WHITE IOC) — 14 enumeration + 11 GetObject calls on customer-db-prod S3 bucket within 7 minutes; simultaneous legitimate use from EC2 confirms credential theft",
+      "actor": "aws-guardduty"
+    },
+    {
+      "timestamp": "2025-11-17T16:14:54Z",
+      "event": "On-call Cloud Security engineer a.santos@company.com immediately deactivated svc-report-generator IAM key in console; applied AWS IAM policy Deny:* to the account as additional lockout; all S3 bucket policies temporarily set to deny non-VPC access",
+      "actor": "a.santos@company.com"
+    },
+    {
+      "timestamp": "2025-11-17T16:53:08Z",
+      "event": "CloudTrail forensic review in progress: 11 GetObject calls against customer-db-prod returned HTTP 200 — objects downloaded before lockout; 3 objects confirmed as encrypted PII export files (customers_2025Q3.csv.gpg, customers_segment_A.csv.gpg, customers_segment_B.csv.gpg); files encrypted with company GPG key, attacker would need private key to decrypt",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-11-17T19:08:08Z",
+      "event": "Root cause established: svc-report-generator long-lived IAM access key exposed via a CI/CD pipeline environment variable visible in a GitHub Actions workflow log (public fork); confirmed via GitHub API search returning the key in a fork's archived log",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-11-17T22:00:08Z",
+      "event": "New IAM credential provisioned via OIDC; customer-db-prod S3 bucket GPG encryption verified as protecting all exfiltrated objects (attacker cannot decrypt without company private key); regulatory assessment completed; incident closed",
+      "actor": "a.santos@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-17T22:00:08Z",
+  "resolved_by": "a.santos@company.com",
+  "resolution_time_minutes": 351,
+  "resolution_summary": "The compromised IAM key was deactivated within 2 minutes of GuardDuty detection. CloudTrail confirmed 11 S3 GetObject calls successfully returned data before the lockout. All 3 exfiltrated objects were GPG-encrypted PII exports — the attacker downloaded encrypted files but would need the company's private GPG key (stored in AWS KMS, not accessible via S3 API) to decrypt them. A GDPR breach assessment determined that while data was technically transferred, the encryption provides adequate protection against unauthorized access to personal data. The credential exposure source was identified as a CI/CD pipeline log in a GitHub public fork containing the environment variable with the IAM key.",
+  "root_cause_analysis": "The IAM access key for svc-report-generator was configured as an environment variable in a GitHub Actions workflow 10 months prior (before the OIDC migration policy was adopted). When a developer forked the repository for external contribution review, the forked repository inherited the workflow configuration and the environment variable was printed to the Actions log by an accidental debug echo statement. GitHub's secret scanning did not catch this because the key appeared in a log file rather than in source code. The forked repository's Actions logs were publicly accessible for 8 days before the attacker extracted the key. The key had not been rotated in 312 days (policy requires 90-day rotation) due to a gap in the AWS Config compliance rule that didn't cover service accounts created before 2024.",
+  "mitre": {
+    "tactic": [
+      "Exfiltration",
+      "Collection"
+    ],
+    "technique": [
+      "T1530 - Data from Cloud Storage Object",
+      "T1552 - Unsecured Credentials"
+    ],
+    "prevention": [
+      "M1057 - Data Loss Prevention",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0010",
+    "TA0009"
+  ],
+  "mitre_technique_ids": [
+    "T1530",
+    "T1552"
+  ],
+  "mitre_prevention_ids": [
+    "M1057",
+    "M1041"
+  ],
+  "affected_users_count": 5000,
+  "business_impact": "Critical data breach risk, regulatory exposure, potential GDPR notification requirement",
+  "estimated_cost": 240000,
+  "sla_met": false,
+  "mttr": 351,
+  "mtta": 5,
+  "remediation_actions": [
+    "Deactivated svc-report-generator IAM access key AKIA[REDACTED] in AWS IAM console at T+2min; applied explicit Deny:* policy as belt-and-suspenders lockout before deletion",
+    "Applied temporary S3 bucket policy to deny all GetObject/GetObject requests from any IP outside company VPC while investigation was in progress",
+    "Ran CloudTrail Lake forensic query: SELECT * FROM cloudtrail_logs WHERE userIdentity.accessKeyId='AKIA[REDACTED]' AND eventSource='s3.amazonaws.com' — confirmed 11 GetObject 200-response events targeting customer-db-prod between 23:53-00:00 UTC Nov 16-17",
+    "Verified GPG encryption on all 3 exfiltrated objects: aws s3 cp s3://customer-db-prod/customers_2025Q3.csv.gpg /tmp/; confirmed file is GPG-encrypted with company public key; private key stored in AWS KMS (unavailable to attacker via S3 API)",
+    "Located credential exposure source: GitHub API search found IAM key pattern in public fork's Actions workflow log from Oct 30; reported repo to GitHub for Actions log purge; GitHub complied within 2 hours",
+    "Rotated all svc-report-generator infrastructure: deleted old IAM key, provisioned OIDC-based role assumption for the CI/CD pipeline; verified new pipeline execution succeeded",
+    "Engaged DPO for GDPR breach assessment: encrypted data transferred without decryption capability assessed as low risk; formal notification to DPA not required; documented in breach register"
+  ],
+  "systems_remediated": [
+    "customer-db-prod",
+    "api-backend",
+    "cdn-origin"
+  ],
+  "preventive_measures": [
+    "All remaining CI/CD service accounts with long-lived IAM keys migrated to OIDC role assumption — no more static keys in environment variables across any pipeline",
+    "GitHub Actions log scrubbing policy deployed: any workflow print/echo statements now run through a secrets filter; known IAM key patterns are masked before log storage",
+    "AWS KMS CMK rotation enabled for all customer-db-prod encryption keys: annual auto-rotation on all S3 SSE-KMS keys",
+    "AWS Config rule expanded to cover all IAM users created before 2024 for 90-day key rotation compliance; 14 non-compliant keys found and rotated",
+    "GuardDuty finding auto-remediation Lambda deployed: 'MaliciousIPCaller' finding now triggers automatic IAM key deactivation within 60 seconds without analyst intervention"
+  ],
+  "security_controls_updated": [
+    "AWS GuardDuty auto-remediation Lambda deployed: IAMUser/MaliciousIPCaller findings now trigger automatic key deactivation in <60 seconds via EventBridge rule",
+    "GitHub Advanced Security enabled on all forked repositories: Actions logs now scanned for IAM key patterns and automatically redacted",
+    "S3 bucket policy for customer-db-prod updated: GetObject requires requests to originate from VPC endpoint (vpce-xxx) — external API calls rejected",
+    "AWS Config managed rule 'access-keys-rotated' now covers all IAM users including pre-2024 accounts; non-compliance generates P2 security ticket automatically"
+  ],
+  "documentation_updated": [
+    "Cloud Security Incident Response Runbook updated: GuardDuty IAM compromise procedure with CloudTrail Lake query templates and S3 forensic scope assessment",
+    "CI/CD Security Standards updated: long-lived IAM keys in environment variables prohibited; OIDC pattern required as standard; existing violations escalated to Security Architecture review",
+    "GDPR Breach Register updated: INC-2025-1117-004 documented with breach timeline, encryption mitigating factor, and DPA notification assessment",
+    "SEC-5031 Jira ticket archived with full CloudTrail evidence, GitHub fork log location, and OIDC migration completion confirmation"
+  ],
+  "lessons_learned": "CI/CD pipeline logs are an often-overlooked credential exposure vector — environment variables set in GitHub Actions are accessible to any step in the workflow and can be inadvertently printed to publicly viewable logs. The encryption of all PII exports in customer-db-prod was the critical mitigating control that prevented this from being a full GDPR notification event; without GPG encryption, 11 GetObject responses would have constituted an unambiguous personal data breach. The 312-day IAM key age represents a complete failure of the rotation policy — the AWS Config compliance rule gap (pre-2024 accounts) must be treated as a systemic finding requiring immediate remediation across all accounts.",
+  "follow_up_tasks": [
+    "CLOUD-1117-01: Complete OIDC migration for all remaining CI/CD IAM keys across 4 AWS accounts — Owner: Platform, Due: 2025-12-01",
+    "CLOUD-1117-02: Deploy GuardDuty auto-remediation Lambda for MaliciousIPCaller and InstanceCredentialExfiltration findings — Owner: Cloud Security, Due: 2025-11-24",
+    "CLOUD-1117-03: Enable S3 VPC endpoint policy for all production buckets containing PII or financial data — Owner: Cloud Architecture, Due: 2025-12-01",
+    "CLOUD-1117-04: Remediate all 14 non-compliant IAM keys found in Config rule audit — Owner: Cloud, Due: 2025-11-21"
+  ],
+  "resolution": "Compromised IAM key deactivated; 3 GPG-encrypted S3 objects confirmed transferred but unreadable without company private key; OIDC replacement deployed; GDPR notification not required",
+  "action_taken": "Resolved by security-team within 322 minutes; credential exposure via GitHub Actions log identified as root cause; auto-remediation Lambda deployed",
+  "entities": {
+    "users": [
+      "svc-report-generator@company-ci.com"
+    ],
+    "ips": [
+      "194.165.16.73"
+    ],
+    "hosts": [
+      "customer-analytics-s3",
+      "ci-pipeline-runner"
+    ],
+    "domains": [],
+    "hashes": [
+      "AKIAIOSFODNN7REDACTED"
+    ]
+  },
+  "detection_gap": "IAM access key was exposed in CI/CD build logs for 4 days without detection by secret scanning tools configured for the CI pipeline; no automated IAM key rotation or maximum key age policy was enforced; IMDSv1 was enabled without restriction on the CI runner instances, compounding the exposure surface",
+  "what_went_well": [
+    "AWS GuardDuty UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS finding fired within minutes of the first anomalous S3 API call",
+    "IAM key was revoked within 8 minutes of the GuardDuty alert, limiting the exfiltration window to the initial detection period",
+    "CloudTrail confirmed exfiltration was limited to the customer-analytics prefix — no PII, payment data, or sensitive configuration files were in scope"
+  ],
+  "what_went_wrong": [
+    "IAM access key was printed in CI/CD build logs for 4 days without the existing secret scanning configuration detecting it — the log format bypassed the regex patterns",
+    "No automated key rotation or maximum key age enforcement existed; the svc-report-generator key had been static for 14 months",
+    "S3 bucket serving as the exfiltration source had no server-side encryption, allowing extracted objects to be directly readable without additional decryption"
+  ]
+}

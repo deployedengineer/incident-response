@@ -1,0 +1,152 @@
+{
+  "@timestamp": "2025-10-17T14:07:01Z",
+  "incident_id": "INC-2025-1017-012",
+  "severity": "low",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "policy_violation",
+  "title": "Unauthorized software installation detected",
+  "description": "CrowdStrike Falcon Device Control detected the installation of 'TeamViewer Host 15.47' on endpoint WS-MKT-076 (user: b.reeves@company.com, marketing associate), which is not on the company's approved software catalog and was installed without IT approval. TeamViewer Host was installed from a downloaded installer (SHA256: 4f9e3a7c...) that initiated an outbound connection to TeamViewer's relay servers (teamviewer.com:443) and set up a persistent remote access service (TeamViewer_Service.exe) running as SYSTEM. The activity was flagged because TeamViewer creates a permanent remote access backdoor — even if installed with good intent, it bypasses corporate VPN and IT visibility, creating an unmanaged remote access vector.",
+  "affected_systems": [
+    "endpoint-mkt-076",
+    "software-compliance"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "CrowdStrike Falcon Device Control — unauthorized software installation policy violation (TeamViewer Host, not in approved catalog, runs as SYSTEM service)",
+  "tags": [
+    "policy-violation",
+    "endpoint",
+    "low"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-17T14:07:01Z",
+      "event": "CrowdStrike Falcon Device Control policy alert: TeamViewer Host 15.47 installed on WS-MKT-076 (b.reeves@company.com); TeamViewer_Service.exe running as SYSTEM; outbound connection to teamviewer.com:443 established; not in approved software catalog",
+      "actor": "crowdstrike-falcon"
+    },
+    {
+      "timestamp": "2025-10-17T14:16:16Z",
+      "event": "On-call endpoint analyst n.garcia@company.com acknowledged; TeamViewer_Service.exe process terminated via CrowdStrike RTR; b.reeves contacted directly",
+      "actor": "n.garcia@company.com"
+    },
+    {
+      "timestamp": "2025-10-17T15:01:29Z",
+      "event": "Root cause confirmed: b.reeves installed TeamViewer to allow a personal IT support contact (external, not company IT) to remotely help with a non-work-related personal project on the corporate laptop; stated they did not know this violated policy; TeamViewer session history reviewed — 0 inbound connections made before detection",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-17T18:09:29Z",
+      "event": "TeamViewer fully uninstalled via CrowdStrike RTR; Windows registry cleaned of TeamViewer startup entries; outbound firewall rule blocking teamviewer.com applied for WS-MKT-076; b.reeves received formal policy warning and mandatory security training enrollment",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-17T20:27:29Z",
+      "event": "Confirmed TeamViewer uninstalled and no inbound sessions had occurred; AppLocker policy blocking TeamViewer.exe applied to all non-IT-admin endpoints; incident closed",
+      "actor": "n.garcia@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-17T20:27:29Z",
+  "resolved_by": "n.garcia@company.com",
+  "resolution_time_minutes": 380,
+  "resolution_summary": "TeamViewer_Service.exe was terminated via CrowdStrike RTR within 2 minutes of detection. TeamViewer session history confirmed 0 inbound remote connections were made before detection. The software was fully uninstalled and registry cleaned. The user confirmed the installation was for personal (non-work) purposes and had not yet been used by any external party. An AppLocker policy blocking TeamViewer and other unauthorized remote access tools was deployed to all non-admin endpoints as a preventive measure.",
+  "root_cause_analysis": "The user installed TeamViewer Host on a corporate laptop to allow a personal contact to assist with a non-work project, unaware that installing unapproved remote access software on a corporate device is explicitly prohibited by the Acceptable Use Policy. The CrowdStrike Device Control policy was configured to alert but not block software installations (block mode was planned but not yet deployed due to compatibility testing backlog). This allowed the installation to complete and the TeamViewer service to start before detection. The approved software catalog and request process were not prominently communicated to employees during onboarding — only the IT helpdesk URL was provided, not the specific prohibition on remote access software.",
+  "mitre": {
+    "tactic": [
+      "Execution",
+      "Defense Evasion"
+    ],
+    "technique": [
+      "T1219 - Remote Access Software",
+      "T1204 - User Execution"
+    ],
+    "prevention": [
+      "M1038 - Execution Prevention",
+      "M1054 - Software Configuration",
+      "M1017 - User Training"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0002",
+    "TA0005"
+  ],
+  "mitre_technique_ids": [
+    "T1219",
+    "T1204"
+  ],
+  "mitre_prevention_ids": [
+    "M1038",
+    "M1054",
+    "M1017"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Unmanaged remote access vector created, policy violation, potential for future unauthorized access",
+  "estimated_cost": 4000,
+  "sla_met": true,
+  "mttr": 380,
+  "mtta": 9,
+  "remediation_actions": [
+    "Terminated TeamViewer_Service.exe (PID 4892) and TeamViewer.exe via CrowdStrike RTR kill-process command on WS-MKT-076",
+    "Reviewed TeamViewer session log (C:\\Program Files\\TeamViewer\\Connections.txt): 0 inbound remote sessions recorded; service had been running for 47 minutes without any external connection",
+    "Uninstalled TeamViewer Host via CrowdStrike RTR: msiexec /x {TeamViewer GUID} /quiet followed by registry cleanup of HKLM\\SOFTWARE\\TeamViewer and HKCU\\Software\\TeamViewer",
+    "Confirmed no network traffic to TeamViewer relay servers during session using VPC Flow Logs and Zscaler proxy logs: only the initial outbound registration connection to teamviewer.com was made (no data transfer beyond handshake)",
+    "Applied Zscaler DNS filtering rule blocking teamviewer.com for WS-MKT-076 as post-remediation measure; AppLocker policy blocking TeamViewer.exe applied to endpoint",
+    "Issued formal verbal and written policy violation warning to b.reeves; enrolled in mandatory 'Acceptable Use Policy' and 'Endpoint Security' training modules; escalated to HR for personnel file notation",
+    "Deployed AppLocker policy to all 340 non-admin endpoints: TeamViewer.exe, AnyDesk.exe, UltraViewer.exe, and RustDesk blocked by hash and publisher rule"
+  ],
+  "systems_remediated": [
+    "endpoint-mkt-076",
+    "software-compliance"
+  ],
+  "preventive_measures": [
+    "CrowdStrike Device Control policy updated from 'alert' to 'block' mode for all unsigned software not in the approved catalog — installation blocked before completion",
+    "Approved software catalog updated: request procedure published to company intranet and added to onboarding materials; includes explicit list of prohibited software categories (remote access, file sharing, cryptocurrency)",
+    "AppLocker execution prevention policy deployed org-wide: TeamViewer, AnyDesk, UltraViewer, and other unapproved remote access tools blocked by publisher certificate and file hash",
+    "Zscaler URL filtering updated: TeamViewer relay domains blocked for all non-IT-admin endpoints at DNS layer",
+    "Security awareness training updated: 'Acceptable Use Policy' module updated with specific examples of prohibited software and the process for requesting software through IT"
+  ],
+  "security_controls_updated": [
+    "CrowdStrike Falcon Device Control policy switched to block mode for non-catalog software; IT admin accounts exempted; approval workflow for new software added via ServiceNow integration",
+    "AppLocker policy deployed: comprehensive block list of unauthorized remote access tools (TeamViewer, AnyDesk, UltraViewer, RustDesk, Splashtop) by publisher and hash on all endpoints",
+    "Zscaler DNS security policy updated: unapproved remote access software relay domains added to 'IT Block - Unauthorized Remote Access' category",
+    "CrowdStrike alert configured: any SYSTEM-level service installation from non-catalog software now triggers immediate P2 security alert (escalated from previous P4 audit-only level)"
+  ],
+  "documentation_updated": [
+    "Acceptable Use Policy updated: section 4.3 (Prohibited Software) updated with specific named examples of unauthorized remote access tools and the formal consequence of violation",
+    "IT Software Request Procedure updated: how-to guide for requesting new software added to company wiki with 5-business-day approval SLA",
+    "Endpoint Security Runbook updated: unauthorized remote access software response procedure with CrowdStrike RTR removal steps and registry cleanup commands",
+    "Policy violation logged as SEC-4352 Jira ticket; employee training completion tracked for compliance reporting"
+  ],
+  "lessons_learned": "Device Control in 'alert' mode provides visibility without enforcement — the installation was completed and the service ran for 47 minutes before detection. Block mode is always preferable for non-catalog software installs unless there is a documented compatibility concern. The root cause of the behavior (employee didn't know the rule) is as important to address as the technical control gap: the AUP was last communicated at onboarding 10 months prior and employees have short policy memory without reinforcement.",
+  "follow_up_tasks": [
+    "EP-2350: Deploy CrowdStrike Device Control block mode to all 340 endpoints after 7-day compatibility testing window — Owner: Endpoint, Due: 2025-10-24",
+    "EP-2351: Publish approved software catalog to company intranet and add software request link to IT helpdesk landing page — Owner: IT, Due: 2025-10-20",
+    "EP-2352: Update employee onboarding checklist to include AUP acknowledgment with specific remote access software prohibition — Owner: HR/IT, Due: 2025-11-01",
+    "EP-2353: Quarterly prohibited software audit: scan all endpoints for unapproved remote access or file-sharing software — Owner: Endpoint, Due: 2026-01-01"
+  ],
+  "resolution": "TeamViewer fully uninstalled; 0 inbound remote sessions confirmed; AppLocker blocking deployed org-wide; Device Control moved to block mode",
+  "action_taken": "Resolved by endpoint-team within 341 minutes; policy violation confirmed with no external access; formal written warning issued",
+  "entities": {
+    "users": [
+      "e.okafor@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "laptop-eo-sales-003"
+    ],
+    "domains": [
+      "teamviewer.com"
+    ],
+    "hashes": []
+  },
+  "detection_gap": "No software blocklist enforcement existed for unapproved remote access tools at the network or endpoint layer; TeamViewer was listed in the Acceptable Use Policy as unauthorized software but was not in the CrowdStrike Falcon blocklist or the network egress blocklist — the prohibition was advisory, not technically enforced",
+  "what_went_well": [
+    "Wazuh rule detected the TeamViewer installation event within minutes, triggering alert before any remote session was established",
+    "No remote sessions were initiated — TeamViewer was installed but never actively used for unauthorized access during the detection window",
+    "Uninstallation was confirmed via CrowdStrike Falcon Real Time Response console within the same incident window"
+  ],
+  "what_went_wrong": [
+    "Endpoint management policy listed TeamViewer as prohibited software but did not technically enforce removal or block installation — policy was advisory only",
+    "CrowdStrike custom IOA for unauthorized remote access tool installation was not configured — detection relied on a Wazuh file integrity rule rather than proactive prevention",
+    "Employee installed TeamViewer without understanding that remote access software requires explicit IT approval regardless of the stated business justification"
+  ]
+}

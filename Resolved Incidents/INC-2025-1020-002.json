@@ -1,0 +1,132 @@
+{
+  "@timestamp": "2025-10-20T18:40:12Z",
+  "incident_id": "INC-2025-1020-002",
+  "severity": "critical",
+  "status": "resolved",
+  "category": "api",
+  "type": "service_outage",
+  "title": "Payment API complete service outage",
+  "description": "Datadog synthetic monitoring and customer-facing PagerDuty escalation confirmed a complete outage of payment-api-prod at 18:03 UTC on Oct 19, following a deployment of release v4.2.1. The deployment introduced a misconfigured Redis connection string in the payment service's environment variable block (REDIS_URL pointed to a decommissioned cluster endpoint redis-old.internal:6379), causing all payment processing workers to fail at startup with 'ECONNREFUSED — redis-old.internal:6379' and crash-loop. All 12 payment-api ECS tasks entered a continuous CrashLoopBackOff state within 4 minutes of deployment, causing 100% of POST /v1/payments requests to return HTTP 503. The payment-gateway and transaction-processor microservices were unaffected but had no incoming requests to process.",
+  "affected_systems": [
+    "payment-api-prod",
+    "transaction-processor",
+    "payment-gateway"
+  ],
+  "assigned_to": "api-team",
+  "detection_method": "Datadog synthetic monitor 'Payment API health check' (POST /v1/payments/ping) — HTTP 503 for 3 consecutive checks triggering PagerDuty P1; simultaneous customer escalation via support channel",
+  "tags": [
+    "service-outage",
+    "api",
+    "critical"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-20T18:40:12Z",
+      "event": "Datadog synthetic monitor 'Payment API health check' returned HTTP 503 for 3 consecutive checks (5-minute interval); PagerDuty P1 fired; 4 customer support tickets opened simultaneously; ECS console showing all 12 payment-api tasks in CrashLoopBackOff",
+      "actor": "datadog-synthetic"
+    },
+    {
+      "timestamp": "2025-10-20T18:44:07Z",
+      "event": "On-call payment engineering lead t.okonkwo@company.com acknowledged; correlated with v4.2.1 deployment at 18:03 UTC; initiated rollback procedure for payment-api ECS service to v4.1.9",
+      "actor": "t.okonkwo@company.com"
+    },
+    {
+      "timestamp": "2025-10-20T19:03:48Z",
+      "event": "Root cause identified in ECS task logs: ECONNREFUSED to redis-old.internal:6379 — new deployment had incorrect REDIS_URL env var pointing to decommissioned Redis cluster; confirmed v4.2.1 task definition diff showed REDIS_URL changed from redis-prod.internal:6379 to redis-old.internal:6379 by CI/CD environment variable substitution error",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-20T20:09:48Z",
+      "event": "ECS rollback to v4.1.9 completed; all 12 tasks healthy; payment-api returning HTTP 200; transaction queue backlog processed; Datadog synthetic monitor returned green",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-10-20T20:45:48Z",
+      "event": "Transaction reconciliation confirmed: 847 payment requests queued during outage window; all re-submitted and confirmed by payment-gateway; no financial data loss; customer communications sent; incident closed",
+      "actor": "t.okonkwo@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-20T20:45:48Z",
+  "resolved_by": "t.okonkwo@company.com",
+  "resolution_time_minutes": 125,
+  "resolution_summary": "ECS service rollback to v4.1.9 restored payment-api within 79 minutes of detection. Root cause was a CI/CD environment variable substitution error in the v4.2.1 deployment pipeline that replaced the production Redis cluster endpoint with a decommissioned one. 847 payment transactions queued during the outage were reconciled and resubmitted successfully with no financial losses. Total outage window was 78 minutes (18:03-19:21 UTC).",
+  "root_cause_analysis": "The v4.2.1 deployment pipeline used a GitHub Actions workflow that substituted environment variables from a secrets.ENVIRONMENT_CONFIG JSON object. A refactoring PR (PR #1847) had updated the Redis cluster naming convention from 'redis-old' to 'redis-prod' in the development and staging environment configs but the production config was not updated in the same PR — it was left as an open task. When the deployment pipeline ran, it substituted the production environment config, which still contained REDIS_URL=redis-old.internal:6379. The decommissioned Redis endpoint had been removed from DNS 3 weeks prior. The pre-deployment smoke test ran against the staging environment (correct Redis URL) and passed, providing false assurance. No production connection test was included in the deployment gate.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 5000,
+  "business_impact": "Complete payment processing unavailability, direct revenue loss $450K+, customer impact severe, SLA breach",
+  "estimated_cost": 100000,
+  "sla_met": true,
+  "mttr": 125,
+  "mtta": 3,
+  "remediation_actions": [
+    "Initiated ECS service rollback: aws ecs update-service --cluster prod --service payment-api --task-definition payment-api:v4.1.9 --force-new-deployment — 12 tasks replaced within 4 minutes",
+    "Confirmed production Redis cluster health: redis-cli -h redis-prod.internal -p 6379 PING — returned PONG; confirmed no Redis-side issues, failure was entirely in deployment config",
+    "Updated v4.2.1 task definition: REDIS_URL corrected from redis-old.internal:6379 to redis-prod.internal:6379; re-deployed as v4.2.1-hotfix; verified all 12 tasks healthy before declaring resolution",
+    "Ran transaction reconciliation: queried payment-gateway for all requests received during 18:03-19:21 UTC window; identified 847 requests that had not received confirmation from payment-api; re-submitted each through the payment-api /v1/payments/retry endpoint",
+    "Confirmed 847/847 transactions processed successfully by payment-gateway with matching transaction_ids; no duplicate charges or financial data loss; Stripe dashboard confirmed no orphaned intents",
+    "Sent customer communications to all affected B2B customers with SLA credit documentation generated; support tickets updated with resolution timeline"
+  ],
+  "systems_remediated": [
+    "payment-api-prod",
+    "transaction-processor",
+    "payment-gateway"
+  ],
+  "preventive_measures": [
+    "Deployment pipeline updated: production environment config is now validated by a pre-deploy connectivity check script that tests all critical service endpoints (Redis, PostgreSQL, RabbitMQ) from the production VPC before the ECS service update",
+    "GitHub Actions workflow updated: environment config diff is automatically compared against the previous production deployment and any changed service endpoints trigger a mandatory review gate before deploy",
+    "Payment API ECS service now has a deployment circuit breaker enabled: if >5% of new tasks fail health checks within 5 minutes, deployment automatically rolls back without manual intervention",
+    "DNS TTL for redis.internal cluster endpoints set to 30 seconds: decommissioned endpoints now return NXDOMAIN within 30 seconds of removal, ensuring any lingering config references fail fast during testing rather than only in production"
+  ],
+  "security_controls_updated": [
+    "GitHub Environments protection rules updated: payment-api production environment requires 2 required reviewers from the payment-leads team before any deployment proceeds",
+    "AWS ECS deployment circuit breaker enabled for payment-api, transaction-processor, and payment-gateway services: auto-rollback on >5% task health check failures in first 5 minutes",
+    "Datadog synthetic monitor frequency increased: payment API health check now runs every 1 minute (from 5 minutes) — reduces maximum undetected outage from 15 minutes to 3 minutes",
+    "ECS task log alarms added: ECONNREFUSED error pattern in payment-api logs now triggers immediate PagerDuty P1 (was previously only captured in log aggregation with no alerting)"
+  ],
+  "documentation_updated": [
+    "Payment API Deployment Runbook updated: pre-deploy production environment validation checklist; ECS rollback procedure with specific commands; transaction reconciliation procedure",
+    "Environment Configuration Management Policy updated: all service endpoint changes must be applied atomically across all environments (dev, staging, prod) in a single PR",
+    "Incident Postmortem published to eng-all Slack channel and confidence wiki with timeline, root cause, and 4 follow-up action owners",
+    "OPS-2025-1020 Jira ticket documenting financial impact, customer SLA breach calculation, and credit authorization for affected accounts"
+  ],
+  "lessons_learned": "Partial environment config updates are a systemic deployment risk — the convention of 'we'll update prod in the next PR' reliably produces production outages. Environment configs must be treated as atomic: all environments updated or none. The staging smoke test passing provides near-zero assurance about production if staging uses different infrastructure endpoints. Production-specific connectivity tests in the deployment gate are the only reliable pre-deploy validation for infrastructure-dependent services.",
+  "follow_up_tasks": [
+    "PAY-OPS-001: Implement pre-deploy production connectivity validation script in CI/CD; gate deployment on successful probe of all critical endpoints — Owner: Platform, Due: 2025-10-27",
+    "PAY-OPS-002: Enable ECS deployment circuit breaker for all 6 production ECS services — Owner: Platform, Due: 2025-10-24",
+    "PAY-OPS-003: Implement Environment config atomic update policy in GitHub repo; PR template updated with environment parity checklist — Owner: Engineering, Due: 2025-10-27",
+    "PAY-OPS-004: Datadog synthetic monitor frequency changed to 1 minute for all P1 services — Owner: SRE, Due: 2025-10-22"
+  ],
+  "resolution": "ECS rollback to v4.1.9 completed; 847 queued transactions reconciled with no financial loss; REDIS_URL config corrected in v4.2.1-hotfix; deployment circuit breaker deployed",
+  "action_taken": "Resolved by api-team within 117 minutes; complete payment processing outage for 78 minutes; ECS rollback was the primary mitigation",
+  "entities": {
+    "users": [
+      "t.okonkwo@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "payment-api-prod",
+      "redis-prod.internal"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog Synthetic Monitoring",
+  "detection_gap": "No production-specific connectivity validation existed in the deployment pipeline; the staging environment used a correctly-configured Redis endpoint (redis-prod.internal), masking the misconfiguration in PR #1847 during pre-deploy testing; no pre-deploy probe validated that all critical service endpoints were reachable from the production VPC",
+  "what_went_well": [
+    "Datadog synthetic monitoring detected the outage within 3 minutes via the 'Payment API health check' probe",
+    "ECS rollback to v4.1.9 was well-documented and executed cleanly, restoring service within 79 minutes of detection",
+    "Transaction reconciliation confirmed all 847 queued payments were reprocessed with zero financial losses or duplicate charges"
+  ],
+  "what_went_wrong": [
+    "Production Redis endpoint was not updated atomically with dev/staging configs in PR #1847 — left as an open follow-up task that was never completed",
+    "Staging smoke test provided false assurance by executing against a correctly-configured Redis endpoint that differed from production",
+    "No ECS deployment circuit breaker was configured to auto-rollback on task health check failures"
+  ]
+}

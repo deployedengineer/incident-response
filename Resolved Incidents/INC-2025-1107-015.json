@@ -1,0 +1,130 @@
+{
+  "@timestamp": "2025-11-07T20:07:46Z",
+  "incident_id": "INC-2025-1107-015",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "application",
+  "type": "memory_leak",
+  "title": "Memory leak in customer portal application",
+  "description": "Datadog infrastructure monitoring triggered an alert on app-server-3 (hosting the customer-portal Node.js application) as heap memory crossed 92% of available RAM (22.1 GB of 24 GB). The alert identified a continuous, non-returning memory growth pattern — heap usage had grown from a stable 8 GB at 09:00 UTC to 22.1 GB by 20:00 UTC at a rate of approximately 1.26 GB/hour. Application response times had degraded from P99 280ms to P99 4.7 seconds as the Node.js garbage collector spent increasing time on major GC cycles. The customer portal was serving requests but with unacceptable latency for the last 2 hours.",
+  "affected_systems": [
+    "customer-portal",
+    "app-server-3"
+  ],
+  "assigned_to": "application-team",
+  "detection_method": "Datadog infrastructure monitor — 'app-server-3 heap memory > 90% of available RAM' + P99 latency degradation alert on customer-portal APM trace",
+  "tags": [
+    "memory-leak",
+    "application",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-11-07T20:07:46Z",
+      "event": "Datadog infrastructure alert: app-server-3 Node.js heap at 22.1 GB / 24 GB (92%); GC pause time 8.4 seconds per major cycle; customer-portal P99 latency 4.7 seconds; PagerDuty P2 alert generated",
+      "actor": "datadog-infra"
+    },
+    {
+      "timestamp": "2025-11-07T20:13:25Z",
+      "event": "On-call engineer o.mensah@company.com acknowledged; restarted customer-portal PM2 process on app-server-3 to restore immediate service; heap reset to 8.2 GB; P99 latency returned to 290ms",
+      "actor": "o.mensah@company.com"
+    },
+    {
+      "timestamp": "2025-11-07T21:08:59Z",
+      "event": "Heap dump captured from app-server-3 before PM2 restart using node --inspect + Chrome DevTools heap snapshot; analysis initiated; deployment history reviewed: customer-portal v3.8.2 deployed Nov 5 — coincides with memory growth start",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-08T00:45:59Z",
+      "event": "Heap dump analysis identified root cause: v3.8.2 introduced an event listener registration inside a React SSR render function without cleanup — listeners accumulated on the EventEmitter without being removed, retaining references to request context objects; fix developed and tested in staging",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-11-08T02:25:59Z",
+      "event": "Customer-portal v3.8.3 (memory leak fix) deployed to production; memory monitoring confirmed stable heap at 8.4 GB after 2 hours of traffic; no further growth detected; incident closed",
+      "actor": "o.mensah@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-11-08T02:25:59Z",
+  "resolved_by": "o.mensah@company.com",
+  "resolution_time_minutes": 378,
+  "resolution_summary": "An emergency PM2 restart restored normal customer-portal latency within 2 minutes of detection. Heap dump analysis identified an event listener accumulation pattern introduced in v3.8.2: EventEmitter listeners were registered in a React SSR render path without a corresponding removeEventListener, causing each request to retain a growing chain of listener references. v3.8.3 added emitter.removeAllListeners() calls in the appropriate cleanup hooks. Memory monitoring after v3.8.3 deployment confirmed stable heap usage with no growth over 2 hours of steady traffic.",
+  "root_cause_analysis": "The v3.8.2 release added a new server-side analytics tracking feature that registered an EventEmitter listener inside the React SSR renderToString() function to capture render timing metrics. The listener registration was inside the render function but the corresponding cleanup (removeEventListener or using emitter.once()) was not implemented. Each HTTP request triggered one render (and one listener registration) with no deregistration, causing the EventEmitter's listener list to grow by 1 per request. At 3,200 requests/hour, the listener list grew by 3,200 listeners per hour — each listener retained a reference to the request context object, preventing garbage collection. The pattern was not caught in code review because the reviewer was unfamiliar with Node.js EventEmitter memory semantics, and no heap memory growth test existed in the CI test suite.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 350,
+  "business_impact": "Customer portal P99 latency degraded to 4.7 seconds for 2 hours; checkout and account management affected",
+  "estimated_cost": 27500,
+  "sla_met": true,
+  "mttr": 378,
+  "mtta": 5,
+  "remediation_actions": [
+    "Emergency PM2 restart: pm2 restart customer-portal on app-server-3; heap dropped from 22.1 GB to 8.2 GB; P99 latency returned to 290ms within 90 seconds",
+    "Captured heap dump before restart using: node --prof-process --inspect attached to running PID; took V8 heap snapshot via Chrome DevTools Protocol; 22 GB snapshot size confirmed listener accumulation pattern",
+    "Analyzed heap snapshot in Chrome Memory tab: identified EventEmitter#emit listener array containing 18,400+ anonymous function objects, each retaining a distinct IncomingMessage (HTTP request) object — confirmed the leak pattern",
+    "Deployed fix: v3.8.3 replaced persistent EventEmitter listener registration with emitter.once() in render path (fires once per render cycle then auto-removes) and added emitter.removeAllListeners('renderComplete') in the SSR cleanup hook",
+    "Validated fix in staging: ran 1-hour load test at 4x normal traffic (12,800 requests/hour); heap monitored every 5 minutes via node --heap-prof; heap remained stable at 9.1-9.4 GB (normal GC oscillation), no growth trend",
+    "Deployed v3.8.3 to production; monitored heap for 2 hours post-deployment at 5-minute intervals; heap stable at 8.2-8.6 GB; listener count cap confirmed at <50 (normal operational baseline)"
+  ],
+  "systems_remediated": [
+    "customer-portal",
+    "app-server-3"
+  ],
+  "preventive_measures": [
+    "Datadog APM heap memory alarm threshold lowered to 75% of available RAM: provides 4-5 hours of warning before OOM-kill territory at observed growth rates",
+    "Memory growth regression test added to CI test suite: load test with --expose-gc flag; any test run showing >5% heap growth per 10,000 requests fails the build",
+    "Node.js SSR code review checklist updated: EventEmitter listener registration in request-scoped rendering functions must include a corresponding deregistration or use emitter.once()",
+    "Customer-portal deployed on auto-restart policy: PM2 configured with max-memory-restart 20000 (20 GB) — automatic restart triggered before OOM-kill, providing self-healing behavior for future memory issues"
+  ],
+  "security_controls_updated": [
+    "Datadog infrastructure alarm updated: app-server-3 heap memory > 75% triggers P2 alert; > 90% triggers P1 auto-escalation (previously only > 90% P2 existed)",
+    "Node.js heap profiling enabled in production during off-peak hours (02:00-04:00 UTC): weekly --heap-prof snapshots stored in S3 for trend analysis",
+    "PM2 auto-restart policy deployed to all Node.js application servers: max-memory-restart threshold set at 80% of available RAM",
+    "Datadog memory growth rate monitor added: alert if heap grows >200 MB/hour sustained for >30 minutes on any application server"
+  ],
+  "documentation_updated": [
+    "Node.js Application Engineering Standards updated: EventEmitter lifecycle management section with examples of compliant and non-compliant listener patterns",
+    "Customer Portal Runbook updated: memory leak response procedure including PM2 restart commands, heap dump capture steps, and Chrome DevTools analysis guide",
+    "Memory Leak Debugging Guide created: step-by-step heap dump analysis procedure for Node.js apps using V8 heap snapshot and Chrome DevTools Memory tab",
+    "APP-2025-1107 Jira postmortem documented with heap snapshot analysis screenshots, v3.8.2 vs v3.8.3 code diff, and staging validation results"
+  ],
+  "lessons_learned": "Node.js EventEmitter listener accumulation is a silent memory leak pattern that produces no errors and no warnings — the application appears healthy until memory pressure triggers GC thrash and latency spikes. The emitter.once() pattern should be the default for request-scoped listeners in SSR frameworks; persistent listeners on shared emitters require explicit lifecycle management. Memory growth regression tests in CI are essential for SSR applications where request-coupled resource retention is common — a test that verifies heap stability across 10,000 requests would have caught this pre-deployment.",
+  "follow_up_tasks": [
+    "APP-1107-01: Add heap memory growth regression test to customer-portal CI pipeline — Owner: Portal Team, Due: 2025-11-14",
+    "APP-1107-02: Code review checklist update for Node.js SSR PRs: EventEmitter lifecycle checklist — Owner: Engineering, Due: 2025-11-14",
+    "APP-1107-03: PM2 max-memory-restart policy deployed to all 6 Node.js app servers — Owner: Platform, Due: 2025-11-11",
+    "APP-1107-04: Datadog memory growth rate monitor deployed for all application servers — Owner: SRE, Due: 2025-11-11"
+  ],
+  "resolution": "Memory leak in v3.8.2 fixed in v3.8.3; EventEmitter listener accumulation pattern patched; heap stable at 8.4 GB after 2 hours of production traffic",
+  "action_taken": "Resolved by application-team within 332 minutes; emergency PM2 restart provided immediate relief; v3.8.3 applied permanent fix",
+  "entities": {
+    "users": [
+      "o.mensah@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "customer-portal",
+      "app-server-3"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog Infrastructure Monitoring",
+  "detection_gap": "No heap memory growth regression test existed in the CI pipeline to detect EventEmitter listener accumulation in SSR rendering paths; no PM2 auto-restart memory threshold was configured, meaning the process would degrade to OOM-kill rather than restart gracefully; the 90% heap alert threshold allowed 2 hours of latency degradation before detection",
+  "what_went_well": [
+    "Emergency PM2 restart restored normal customer-portal P99 latency from 4.7s to 290ms within 90 seconds of acknowledgment",
+    "Heap dump was successfully captured before restart, enabling root cause identification from a static analysis artifact without requiring live reproduction",
+    "v3.8.3 fix was validated with a 1-hour heap profiling load test in staging before production deployment"
+  ],
+  "what_went_wrong": [
+    "Code review for the v3.8.2 SSR analytics tracking feature did not identify the missing removeEventListener pattern — the reviewer was unfamiliar with Node.js EventEmitter memory semantics",
+    "No heap growth regression test existed in CI; a test validating heap stability across 10,000 requests would have caught this pattern pre-deployment",
+    "The 90% heap alert threshold was too close to failure — by the time the alert fired, GC pause time was 8.4 seconds per major cycle and latency was already severely degraded"
+  ]
+}

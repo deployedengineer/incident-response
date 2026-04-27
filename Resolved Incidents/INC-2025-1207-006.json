@@ -1,0 +1,152 @@
+{
+  "@timestamp": "2025-12-07T11:48:41Z",
+  "incident_id": "INC-2025-1207-006",
+  "severity": "high",
+  "status": "resolved",
+  "category": "security",
+  "type": "leaked_credentials",
+  "title": "AWS credentials leaked in public repository",
+  "description": "GitHub Advanced Security secret scanning flagged an exposed AWS IAM access key (AKIA3WXYZABCD1234) committed to the public repository 'infra-deploy-prod' by service account svc-cicd@company.com. The credential appeared in plaintext inside terraform/backend.tf as part of PR #2341. GitHub's trusted partner notification reached AWS within 2 minutes of the push event. GuardDuty had no active findings at the time of discovery, indicating the key had not yet been used by an external actor.",
+  "affected_systems": [
+    "aws-prod-account",
+    "s3-buckets",
+    "ec2-instances"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "GitHub Advanced Security — Secret Scanning with AWS trusted partner push notification",
+  "tags": [
+    "leaked-credentials",
+    "security",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-07T11:48:41Z",
+      "event": "GitHub Advanced Security secret scanning detected IAM access key AKIA3WXYZABCD1234 in public repository 'infra-deploy-prod' commit f3a91bc; AWS partner notification triggered automatically",
+      "actor": "github-advanced-security"
+    },
+    {
+      "timestamp": "2025-12-07T11:54:55Z",
+      "event": "PagerDuty P1 alert escalated to on-call SOC analyst j.chen@company.com; triage channel #inc-2025-1207-006 opened in Slack",
+      "actor": "j.chen@company.com"
+    },
+    {
+      "timestamp": "2025-12-07T12:33:33Z",
+      "event": "Root cause confirmed: svc-cicd service account committed hardcoded IAM key in terraform/backend.tf via PR #2341 (merged 23:56 UTC Dec 6); repo was public since Oct 22 when opened for OSS review",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-12-07T15:44:33Z",
+      "event": "IAM key deactivated in AWS console; CloudTrail Lake query confirmed 0 API calls in 4-hour exposure window; key permanently deleted; repo set to private; git history sanitized with git filter-repo",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-12-07T17:13:33Z",
+      "event": "Replacement IAM key created in Vault, pipeline restored; AWS Trust & Safety notified of zero-exploitation confirmation; incident closed",
+      "actor": "j.chen@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-07T17:13:33Z",
+  "resolved_by": "j.chen@company.com",
+  "resolution_time_minutes": 324,
+  "resolution_summary": "The compromised IAM access key AKIA3WXYZABCD1234 was deactivated in the AWS IAM console at 00:18Z. A CloudTrail Lake query scoped to the 4-hour exposure window confirmed zero API calls were made using the key, establishing a clean zero-exploitation window. The key was permanently deleted, 'infra-deploy-prod' was set back to private, and the commit history was sanitized using git filter-repo to prevent credential recovery from repository history. A replacement short-lived credential via OIDC was provisioned to restore the CI/CD pipeline by 04:45Z.",
+  "root_cause_analysis": "The CI/CD service account svc-cicd operated with a long-lived IAM access key (created 14 months prior, never rotated) that was hardcoded into terraform/backend.tf. A developer included the credentials in PR #2341, intending to test a backend config change locally, and merged without realizing the file was included in the commit. The 'infra-deploy-prod' repository had been set to public 6 weeks earlier to facilitate an external open-source review — the visibility change was never reviewed for credential exposure risk. No pre-commit secret scanning hook was configured on developer workstations, and the GitHub organization lacked push protection enforcement, allowing the commit to proceed without a block.",
+  "mitre": {
+    "tactic": [
+      "Credential Access",
+      "Initial Access"
+    ],
+    "technique": [
+      "T1552 - Unsecured Credentials",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1027 - Password Policies",
+      "M1047 - Audit",
+      "M1041 - Encrypt Sensitive Information"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0006",
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1552",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1027",
+    "M1047",
+    "M1041"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Significant security exposure, potential data loss, reputation damage risk, compliance concerns",
+  "estimated_cost": 75000,
+  "sla_met": false,
+  "mttr": 324,
+  "mtta": 6,
+  "remediation_actions": [
+    "Set IAM access key AKIA3WXYZABCD1234 status to Inactive in AWS IAM console at 00:18Z before completing investigation to stop any in-flight use",
+    "Ran CloudTrail Lake query to confirm zero-exploitation: SELECT * FROM cloudtrail_logs WHERE userIdentity.accessKeyId = 'AKIA3WXYZABCD1234' AND eventTime BETWEEN '2025-12-06T23:55:00Z' AND '2025-12-07T00:18:00Z' — returned 0 rows",
+    "Permanently deleted the access key from svc-cicd IAM user; rotated all 6 remaining long-lived IAM keys found during the audit",
+    "Set 'infra-deploy-prod' GitHub repository visibility to Private pending DevSecOps architecture review",
+    "Ran git filter-repo --path terraform/backend.tf --invert-paths and force-pushed to main to excise credential from commit history",
+    "Provisioned replacement OIDC-based credential for CI/CD pipeline using GitHub Actions OIDC provider, avoiding new long-lived key issuance",
+    "Notified AWS Trust & Safety with the zero-exploitation CloudTrail evidence; logged SEC-4412 for ISO 27001 compliance audit trail"
+  ],
+  "systems_remediated": [
+    "aws-prod-account",
+    "s3-buckets",
+    "ec2-instances"
+  ],
+  "preventive_measures": [
+    "Mandatory gitleaks pre-commit hooks deployed to all 47 developer workstations via Jamf MDM within 72 hours of incident",
+    "GitHub organization-wide push protection enforced via Advanced Security settings — secret pattern matches now block pushes at source",
+    "All 23 CI/CD service account credentials migrated from long-lived IAM keys to OIDC-based role assumption using GitHub Actions OIDC provider",
+    "AWS Config rule 'access-keys-rotated' (90-day TTL maximum) enabled across all accounts; non-compliant keys auto-flagged for immediate rotation",
+    "Repository visibility changes (private → public) now trigger an automated secret scan and security team notification via AWS EventBridge"
+  ],
+  "security_controls_updated": [
+    "GitHub organization policy updated: push protection and secret scanning enabled for all repositories including private",
+    "AWS IAM policy updated to deny CreateAccessKey for service accounts; EC2 instance profiles and OIDC roles now mandatory for automations",
+    "HashiCorp Vault dynamic secrets engine configured for AWS — all CI/CD jobs now receive short-lived, auto-rotated credentials",
+    "SIEM alert rule added: any AWS IAM key with age > 90 days triggers a severity-medium ticket for forced rotation review"
+  ],
+  "documentation_updated": [
+    "Incident Response Runbook §4.2 (IAM Credential Exposure) updated with CloudTrail Lake query template and sub-5-minute deactivation SLA",
+    "Developer Security Guidelines updated with 'Never Hardcode Credentials' section and gitleaks setup walkthrough",
+    "CI/CD Credential Management Procedure document created: covers OIDC setup, Vault integration, and emergency key rotation steps",
+    "SEC-4412 Jira ticket archived as compliance evidence for ISO 27001 A.9.4 (Secure Authentication) control"
+  ],
+  "lessons_learned": "Long-lived IAM access keys create systemic risk that compounds over time: six additional service accounts were found holding keys older than 90 days during the post-incident audit, none of which had ever been rotated. The 2-minute detection time from GitHub's partner notification is excellent, but the 18-minute gap between alert and key deactivation must be reduced — an automated Lambda trigger on GitHub webhook events should deactivate the key within 2 minutes of detection without requiring human intervention. Repository visibility changes represent an uncontrolled blast radius for secret exposure; any repo made public must be scanned for secrets before the visibility change commits.",
+  "follow_up_tasks": [
+    "SEC-4415: Complete OIDC migration for all 23 CI/CD service accounts — Owner: Platform Engineering, Due: 2025-12-21",
+    "SEC-4416: Build automated IAM key deactivation Lambda triggered by GitHub secret scanning webhook (target: <2 min deactivation) — Owner: Cloud Security, Due: 2026-01-10",
+    "SEC-4417: Enable AWS Config rule 'access-keys-rotated' on all 4 AWS accounts and remediate 6 non-compliant keys — Owner: Cloud, Due: 2025-12-14",
+    "SEC-4418: Add credential hygiene module to DevSecOps onboarding training — Owner: Security Training, Due: 2026-01-20"
+  ],
+  "resolution": "AWS IAM access key AKIA3WXYZABCD1234 deactivated and deleted; zero-exploitation confirmed via CloudTrail; repository history sanitized; OIDC-based replacement deployed",
+  "action_taken": "Resolved by security-team within 295 minutes of GitHub Advanced Security detection",
+  "entities": {
+    "users": [
+      "a.chen@company.com"
+    ],
+    "ips": [],
+    "hosts": [],
+    "domains": [
+      "github.com"
+    ],
+    "hashes": []
+  },
+  "detection_gap": "No pre-commit hook or GitHub push protection policy was enforced to block secrets from being committed to repositories; the GitHub Advanced Security secret scanning workflow ran on-push but only alerted 6 minutes after the commit, leaving the AWS access key publicly accessible in a public repository for that window",
+  "what_went_well": [
+    "AWS CloudTrail confirmed zero API calls using the exposed access key during the approximately 6-minute public exposure window — the key was rotated before any observed usage",
+    "GitHub Advanced Security flagged the commit within 6 minutes of the push, providing rapid detection despite the absence of push protection",
+    "IAM key rotation was executed seamlessly with zero impact to the analytics-etl pipeline — new key was provisioned and deployed while old key was revoked"
+  ],
+  "what_went_wrong": [
+    "Developer committed AWS credentials directly in a configuration file without a pre-commit hook to scan for and block secrets",
+    "GitHub push protection (secret scanning push protection mode) was not enabled — it would have blocked the push at the git protocol level before the commit was accepted",
+    "No automated IAM key rotation policy existed; the exposed key had been static for 7 months with no rotation schedule"
+  ]
+}

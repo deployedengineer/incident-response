@@ -1,0 +1,151 @@
+{
+  "@timestamp": "2025-12-14T03:22:59Z",
+  "incident_id": "INC-2025-1214-028",
+  "severity": "high",
+  "status": "resolved",
+  "category": "security",
+  "type": "unauthorized_access_attempt",
+  "title": "Brute force attack on admin panel",
+  "description": "Datadog WAF detected a sustained brute force attack against the admin panel login endpoint (admin-portal.company.com/login) starting at 23:43 UTC on Dec 13. The attack generated 12,340 POST requests over 79 minutes from 23 distinct IP addresses in 5 countries (RU, UA, IN, BR, VN), all identified as cloud VPS infrastructure. The requests targeted a dictionary of 4,100 common admin usernames against a fixed password rotation. Datadog triggered a custom WAF rule 'Admin Panel High-Volume Login Failures' at the 2,000-request threshold. Auth-system logs confirmed no successful authentications occurred — all 12,340 requests returned 401. The admin portal lacked IP allowlisting and rate limiting specific to the admin login endpoint.",
+  "affected_systems": [
+    "admin-portal",
+    "auth-system"
+  ],
+  "assigned_to": "security-team",
+  "detection_method": "Datadog WAF — custom rule 'Admin Panel High-Volume Login Failures' threshold trigger (>2,000 failed logins in 30 min across >10 source IPs on /admin/login)",
+  "tags": [
+    "unauthorized-access-attempt",
+    "security",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-14T03:22:59Z",
+      "event": "Datadog WAF rule 'Admin Panel High-Volume Login Failures' fired: 12,340 POST requests to admin-portal.company.com/login from 23 IPs across 5 countries; 0 successful authentications; Datadog triggered PagerDuty P1 alert",
+      "actor": "datadog-waf"
+    },
+    {
+      "timestamp": "2025-12-14T03:31:49Z",
+      "event": "On-call security engineer f.oduya@company.com acknowledged alert; applied Cloudflare rate limiting rule to /admin/login: block after 10 requests/5min per IP; IP blocklist of all 23 attacking IPs added to Cloudflare firewall",
+      "actor": "f.oduya@company.com"
+    },
+    {
+      "timestamp": "2025-12-14T04:07:33Z",
+      "event": "Root cause confirmed: admin-portal exposed on public internet with no IP allowlisting; rate limiting applied only to /api/* paths, not /admin/* paths; no MFA required for admin login beyond username/password; attack leveraged cloud VPS IPs to evade per-IP rate limits",
+      "actor": "security-team"
+    },
+    {
+      "timestamp": "2025-12-14T04:47:33Z",
+      "event": "Admin portal placed behind Cloudflare Zero Trust Access: all admin login attempts now require Okta SSO authentication before reaching the login page; IP allowlist restricted to company office IPs and VPN exit nodes",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-14T05:11:33Z",
+      "event": "Auth-system confirmed 0 successful logins; all admin accounts verified with no password change or session creation; Cloudflare ZT access gateway confirmed working for all 12 admin users; incident closed",
+      "actor": "f.oduya@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-14T05:11:33Z",
+  "resolved_by": "f.oduya@company.com",
+  "resolution_time_minutes": 108,
+  "resolution_summary": "Cloudflare rate limiting was applied within 2 minutes of detection, blocking all further brute force requests. Auth-system logs confirmed zero successful authentications across all 12,340 requests. The admin portal was placed behind Cloudflare Zero Trust Access (ZTNA) requiring Okta SSO authentication before reaching the login endpoint — this effectively removes the admin panel from the public attack surface entirely. An IP allowlist restricting admin panel access to company office IPs and VPN exit nodes was applied as an additional layer.",
+  "root_cause_analysis": "The admin portal was reachable on the public internet at admin-portal.company.com with no network-layer access restriction. The application-layer rate limiting was configured only for the customer-facing /api/* path prefix and did not apply to the administrative /admin/* path. The admin login form used username/password authentication without MFA, making it vulnerable to credential-based attacks. The attack used 23 distinct VPS IPs across 5 regions to stay below any per-IP rate limit that might have been presented, rotating through the list to maintain high throughput. The absence of an IP allowlist for the admin panel was a known configuration gap documented in a previous security review but not yet remediated.",
+  "mitre": {
+    "tactic": [
+      "Credential Access",
+      "Initial Access"
+    ],
+    "technique": [
+      "T1110 - Brute Force",
+      "T1078 - Valid Accounts"
+    ],
+    "prevention": [
+      "M1036 - Account Use Policies",
+      "M1032 - Multi-factor Authentication",
+      "M1027 - Password Policies"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0006",
+    "TA0001"
+  ],
+  "mitre_technique_ids": [
+    "T1110",
+    "T1078"
+  ],
+  "mitre_prevention_ids": [
+    "M1036",
+    "M1032",
+    "M1027"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Significant security exposure, potential data loss, reputation damage risk, compliance concerns",
+  "estimated_cost": 20000,
+  "sla_met": true,
+  "mttr": 108,
+  "mtta": 8,
+  "remediation_actions": [
+    "Applied Cloudflare WAF rate limit rule to admin-portal.company.com/login: block after 10 POST requests per 5-minute window per IP; active attack throttled within 90 seconds of rule application",
+    "Added all 23 attacking IP ranges to Cloudflare firewall as permanent blocks; submitted IPs to AbuseIPDB and Cloudflare Radar abuse reports",
+    "Confirmed auth-system integrity: SELECT count(*) FROM auth_events WHERE endpoint='/admin/login' AND result='success' AND timestamp > '2025-12-13T23:43:00Z' — returned 0; no successful authentications",
+    "Deployed Cloudflare Zero Trust Access rule for admin-portal.company.com: all requests now challenged by Cloudflare Access requiring Okta SSO authentication before reaching origin server",
+    "Applied Cloudflare Access IP allowlist: admin portal now only reachable from company office IP ranges (10.0.0.0/8, 203.0.113.x corporate egress) and VPN exit nodes via Cloudflare Access policy",
+    "Enforced MFA requirement on all 12 admin accounts: TOTP minimum via Okta (existing FIDO2 keys retained for 4 accounts already enrolled)",
+    "Reviewed all admin accounts for password age: required password reset for 3 accounts with passwords older than 90 days"
+  ],
+  "systems_remediated": [
+    "admin-portal",
+    "auth-system"
+  ],
+  "preventive_measures": [
+    "Admin portal now behind Cloudflare Zero Trust Access (ZTNA): public internet access eliminated; all admin traffic requires Okta SSO with MFA before reaching origin",
+    "Rate limiting extended to all admin portal paths (/admin/*) with a 10-request/5-minute threshold and permanent block after 50 failed attempts from any source IP",
+    "All admin accounts required to enroll FIDO2 hardware key (YubiKey) MFA within 7 days — TOTP considered insufficient for admin-level access",
+    "Security review backlog cleared: IP allowlist for admin panel was documented as a known gap for 47 days before this incident — security debt items now have mandatory 30-day remediation SLA",
+    "Quarterly admin portal penetration test scheduled: external red team to validate ZTNA configuration, auth hardening, and session management"
+  ],
+  "security_controls_updated": [
+    "Cloudflare Access policy deployed for admin-portal.company.com: Okta SSO + device posture check (CrowdStrike Falcon score > 70) required for all admin access",
+    "Datadog WAF rule sensitivity increased: admin panel brute force rule threshold lowered from 2,000 to 500 failed requests in 30 minutes; response escalated from alert to automatic Cloudflare block",
+    "Auth-system rate limiting updated: /admin/login endpoint now has a global rate limit of 50 requests/minute regardless of source IP distribution",
+    "CrowdStrike Falcon device posture check integrated with Cloudflare Access: admin panel access denied if endpoint posture score < 70 (indicating unpatched or non-compliant device)"
+  ],
+  "documentation_updated": [
+    "Admin Portal Security Runbook created: covers ZTNA configuration, Okta SSO admin enrollment, IP allowlist management, and brute force response procedure",
+    "Security Remediation Policy updated: known security debt items with 'High' risk rating now require 30-day mandatory remediation SLA with weekly reporting to CISO",
+    "Datadog WAF Rule Catalog updated: admin panel brute force detection rule documented with threshold justification and auto-response configuration",
+    "Incident logged as SEC-5344 Jira ticket; 23 attacking IP ranges archived in threat intelligence database with VPS attribution data"
+  ],
+  "lessons_learned": "An admin panel exposed to the public internet with no IP restriction is a fundamental security misconfiguration that should be caught during initial deployment, not 47 days later in a security review backlog. The known gap documentation allowed the risk to persist — security debt must have escalation triggers, not just documentation. Zero Trust Access (ZTNA) is the correct architectural solution: it eliminates the attack surface entirely by requiring identity authentication before the admin panel receives any traffic, making brute force attacks impossible as the attacker cannot reach the login form at all.",
+  "follow_up_tasks": [
+    "ADMIN-SEC-001: Enforce FIDO2 hardware key (YubiKey) MFA for all 12 admin accounts — Owner: IAM, Due: 2025-12-21",
+    "ADMIN-SEC-002: Security architectural review of all other internal admin tools for public internet exposure — Owner: Security Architecture, Due: 2025-12-21",
+    "ADMIN-SEC-003: Clear security debt backlog: all High-rated open items > 30 days require CISO exception or immediate remediation — Owner: Security Program, Due: 2025-12-31",
+    "ADMIN-SEC-004: Schedule external penetration test of admin portal ZTNA configuration — Owner: CISO, Due: 2026-01-31"
+  ],
+  "resolution": "Zero admin accounts compromised; admin portal placed behind Cloudflare ZTNA requiring Okta SSO; IP allowlist applied; public attack surface fully eliminated",
+  "action_taken": "Resolved by security-team within 79 minutes of Datadog WAF detection",
+  "entities": {
+    "users": [],
+    "ips": [
+      "194.165.16.154",
+      "45.142.212.100"
+    ],
+    "hosts": [
+      "admin.company.com"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "Admin panel was accessible from the public internet without VPN restriction or IP allowlist; no dedicated per-IP rate limiting existed on the admin authentication endpoint beyond the global API gateway limit; account lockout threshold was set at 25 failed attempts per account — too high relative to the speed of automated credential spraying tools",
+  "what_went_well": [
+    "No successful authentication was achieved despite approximately 2,300 automated login attempts across 47 targeted admin accounts",
+    "IP blocklist update prevented the attacking IP ranges from making further attempts within 4 minutes of detection",
+    "Geo-blocking policy restricting admin access to corporate IP ranges was deployed within the same incident window, permanently removing the public-internet attack surface"
+  ],
+  "what_went_wrong": [
+    "Admin panel was reachable from the public internet without VPN enforcement or IP allowlist — any internet-connected host could attempt authentication",
+    "Account lockout threshold of 25 failed attempts per account was significantly higher than needed; automated spraying tools bypassed per-account lockout by distributing attempts",
+    "No CAPTCHA or adaptive authentication challenge existed on the admin login endpoint to detect and slow automated attack tools"
+  ]
+}

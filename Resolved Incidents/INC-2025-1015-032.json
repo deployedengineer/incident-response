@@ -1,0 +1,154 @@
+{
+  "@timestamp": "2025-10-15T14:39:05Z",
+  "incident_id": "INC-2025-1015-032",
+  "severity": "high",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "ransomware_detection",
+  "title": "Ransomware encryption attempt blocked",
+  "description": "CrowdStrike Falcon EDR triggered a critical behavioral Indicator of Attack (IOA) on endpoint-256 (hostname: WS-ACCT-256, user: kberry@company.com), detecting a process attempting to enumerate and rename files in bulk using the .locked extension across mapped network drives. The pattern matched known LockBit 3.0 behavioral signatures: vssadmin.exe delete shadows /all, followed by bulk file rename operations at >2,000 files/second. CrowdStrike's behavioral prevention engine quarantined the process and isolated the endpoint from the network in real time before any encryption completed on network file shares.",
+  "affected_systems": [
+    "endpoint-256",
+    "file-shares"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "CrowdStrike Falcon EDR — Behavioral IOA (mass file rename + shadow copy deletion pattern matching LockBit 3.0)",
+  "tags": [
+    "ransomware-detection",
+    "endpoint",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-15T14:39:05Z",
+      "event": "CrowdStrike Falcon EDR fired critical behavioral IOA on endpoint-256 (WS-ACCT-256): vssadmin.exe delete shadows followed by bulk .locked file rename at 2,100 files/sec; Falcon Prevention Engine quarantined the process in 340ms and initiated automatic network isolation",
+      "actor": "crowdstrike-falcon"
+    },
+    {
+      "timestamp": "2025-10-15T14:44:52Z",
+      "event": "PagerDuty P1 alert escalated to endpoint-team on-call engineer r.okonkwo@company.com; CrowdStrike console alert confirmed endpoint-256 in full network isolation mode",
+      "actor": "r.okonkwo@company.com"
+    },
+    {
+      "timestamp": "2025-10-15T15:17:19Z",
+      "event": "Malware binary identified: C:\\Users\\kberry\\AppData\\Roaming\\svchost32.exe (SHA256: 7a3f8e2b1c9d4f6a...) — Falcon classified as LockBit 3.0 variant; initial infection vector traced to phishing email attachment opened 90 minutes prior (not initially flagged by email gateway)",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-15T16:16:19Z",
+      "event": "Forensic disk image taken from endpoint-256; file share audit confirmed 0 files encrypted on network shares (encryption was blocked before accessing UNC paths); malware binary and all related registry persistence keys removed using Falcon remediation",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-15T16:48:19Z",
+      "event": "Endpoint-256 reimaged from clean baseline image; user kberry@company.com credentials reset; network isolation lifted after endpoint rejoined domain with clean posture scan; incident closed",
+      "actor": "r.okonkwo@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-15T16:48:19Z",
+  "resolved_by": "r.okonkwo@company.com",
+  "resolution_time_minutes": 129,
+  "resolution_summary": "CrowdStrike Falcon's behavioral prevention engine quarantined the ransomware process within 340ms of detection and automatically isolated endpoint-256 from the network, preventing any encryption of files on mapped network shares. A forensic disk image was captured before remediation. Analysis confirmed zero files were encrypted on network shares (the LockBit binary was blocked before successfully connecting to UNC paths). The endpoint was reimaged from a clean baseline, user credentials were reset, and the network file shares were verified intact. The phishing email that served as the initial infection vector was retroactively quarantined from 3 other mailboxes where it had arrived.",
+  "root_cause_analysis": "A phishing email with a weaponized Microsoft Word document (subject: 'Invoice_Oct2025_Final.docx') bypassed the email gateway's ML-based detection, which gave it a 0.41 threat score (below the 0.80 quarantine threshold). User kberry@company.com opened the attachment 90 minutes before the ransomware triggered, allowing a macro to download and execute the LockBit 3.0 dropper via a living-off-the-land technique using certutil.exe. The malware established persistence via a Run registry key and waited for system idle state before attempting encryption. CrowdStrike's behavioral engine detected the shadow copy deletion and mass file rename pattern before any actual encryption completed on network shares, as the lateral movement to UNC paths was the step that triggered the behavioral kill chain.",
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1486 - Data Encrypted for Impact",
+      "T1490 - Inhibit System Recovery"
+    ],
+    "prevention": [
+      "M1053 - Data Backup",
+      "M1040 - Behavior Prevention on Endpoint",
+      "M1049 - Antivirus/Antimalware"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1486",
+    "T1490"
+  ],
+  "mitre_prevention_ids": [
+    "M1053",
+    "M1040",
+    "M1049"
+  ],
+  "affected_users_count": 1200,
+  "business_impact": "Multiple endpoints compromised, potential for lateral movement, data at risk",
+  "estimated_cost": 27500,
+  "sla_met": true,
+  "mttr": 129,
+  "mtta": 5,
+  "remediation_actions": [
+    "CrowdStrike Falcon Prevention Engine quarantined svchost32.exe (SHA256: 7a3f8e2b1c9d4f6a...) in 340ms and placed endpoint-256 in full network isolation mode automatically",
+    "Took forensic disk image of endpoint-256 (WS-ACCT-256) using Falcon Real Time Response before any remediation to preserve malware artifacts for threat intelligence",
+    "Confirmed file share integrity: ran Get-ChildItem \\\\file-shares\\... -Recurse | Where-Object {$_.Name -like '*.locked'} — returned 0 results, confirming no encryption succeeded on network shares",
+    "Removed malware binary and all persistence mechanisms using CrowdStrike RTR: deleted C:\\Users\\kberry\\AppData\\Roaming\\svchost32.exe and registry key HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\svchost32",
+    "Reimaged endpoint-256 from company baseline image (version 2025-09-30) deployed via SCCM; rejoined to domain after clean posture scan",
+    "Reset kberry@company.com Active Directory credentials and forced MFA re-enrollment; reviewed account for any admin privilege escalation during 90-minute dwell time — none found",
+    "Retroactively quarantined the phishing email from all 3 mailboxes where it arrived (confirmed via Microsoft Defender for O365 Threat Explorer); updated email gateway ML weights with the IOC submission"
+  ],
+  "systems_remediated": [
+    "endpoint-256",
+    "file-shares"
+  ],
+  "preventive_measures": [
+    "Email gateway ML quarantine threshold lowered from 0.80 to 0.65 for macro-enabled Office documents from external senders",
+    "CrowdStrike Falcon IOA rule set updated with LockBit 3.0 behavioral signatures shared by CrowdStrike Intelligence team",
+    "Macro execution disabled by Group Policy for all non-finance department users; finance department uses Protected View with no macro auto-run",
+    "Network file share access requires Kerberos constrained delegation — workstations can only mount shares they are explicitly authorized for, limiting lateral encryption blast radius",
+    "Backup integrity verified post-incident: all file share backups confirmed restorable within 4-hour RTO"
+  ],
+  "security_controls_updated": [
+    "CrowdStrike Falcon prevention policy updated: behavioral IOA for vssadmin shadow deletion now triggers immediate network isolation without human approval",
+    "Email gateway (Proofpoint) updated with LockBit 3.0 macro IOCs from the CrowdStrike threat intelligence report",
+    "Active Directory Group Policy updated: Office macro execution blocked org-wide except for explicitly allowlisted documents in designated secure locations",
+    "Network segmentation reviewed: file-shares VLAN now requires jump-host authentication for any workstation accessing multiple shares simultaneously"
+  ],
+  "documentation_updated": [
+    "Endpoint Incident Response Runbook updated: ransomware kill chain section updated with CrowdStrike RTR forensic image procedure and LockBit 3.0 artifact locations",
+    "Threat Intelligence Bulletin TB-2025-047 published internally: LockBit 3.0 TTPs, IOCs (hashes, C2 IPs), and behavioral signatures",
+    "Email Security Runbook updated: macros in external attachments response procedure and retroactive quarantine steps documented",
+    "Backup Recovery Procedure updated with 4-hour RTO commitment and quarterly restore drill schedule"
+  ],
+  "lessons_learned": "The 90-minute dwell time between phishing email open and ransomware trigger represents a significant gap in detection coverage — the email gateway's ML model failed on a clean-looking document that only activated the dropper after user interaction. CrowdStrike's behavioral prevention was the sole control that prevented data loss; this incident demonstrates that endpoint detection must be assumed to be the last line of defense on the client side. File share access controls need to be more granular — allowing all workstations broad UNC path access means a single compromised endpoint can theoretically encrypt all network shares.",
+  "follow_up_tasks": [
+    "EP-2310: Lower email gateway macro document quarantine threshold to 0.65 and test against 30-day false positive baseline — Owner: Email Security, Due: 2025-10-22",
+    "EP-2311: Implement 'Macro Controlled Folder Access' GPO for all non-finance users; validate with pilot group of 50 — Owner: Endpoint, Due: 2025-10-29",
+    "EP-2312: Deploy CrowdStrike Falcon for file servers to provide EDR coverage on file-shares targets — Owner: Endpoint, Due: 2025-11-15",
+    "EP-2313: Schedule quarterly Ransomware Tabletop Exercise including backup restoration drill — Owner: CISO, Due: 2026-01-15"
+  ],
+  "resolution": "Ransomware process quarantined by CrowdStrike Falcon in 340ms; zero files encrypted on network shares; endpoint reimaged and credentials reset",
+  "action_taken": "Resolved by endpoint-team within 106 minutes of CrowdStrike Falcon behavioral IOA detection",
+  "entities": {
+    "users": [
+      "k.adeyemi@company.com"
+    ],
+    "ips": [
+      "45.150.67.89"
+    ],
+    "hosts": [
+      "ws-finance-kA-007"
+    ],
+    "domains": [
+      "secure-invoice-portal.net"
+    ],
+    "hashes": [
+      "a67b3c4e89f12d34e56c78b9012345fa"
+    ]
+  },
+  "detection_gap": "Email gateway ML model initially scored the phishing attachment below the quarantine threshold despite it being a macro-enabled document delivered from an external sender claiming to be a vendor; macro execution policy was user-configurable with a single warning prompt rather than IT-enforced block",
+  "what_went_well": [
+    "CrowdStrike Falcon intercepted the ransomware encryption process within 340ms of first file system write — before any file had been fully encrypted",
+    "Network segmentation from the finance workstation subnet prevented lateral movement; no other hosts were affected",
+    "Backup integrity was confirmed within 30 minutes — backup system was isolated and fully intact, eliminating any consideration of ransom payment"
+  ],
+  "what_went_wrong": [
+    "Email gateway initially allowed the phishing attachment through at delivery; retroactive ZAP removal was triggered 12 minutes later after URL reputation was updated",
+    "User enabled macros on an external-sender document despite the security warning — no policy-enforced block on macro execution for external-sender documents existed",
+    "No ransomware canary files or honeypot directories existed on the finance workstation or file share to provide earlier behavioral detection"
+  ]
+}

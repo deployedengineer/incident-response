@@ -1,0 +1,52 @@
+{
+  "@timestamp": "2025-12-29T03:33:00Z",
+  "incident_id": "Test-ddos_attack-001",
+  "severity": "high",
+  "status": "unresolved",
+  "category": "infrastructure",
+  "type": "ddos_attack",
+  "title": "Incoming HTTP requests 500x normal baseline from distributed IPs",
+  "affected_systems": [
+    "load-balancer"
+  ],
+  "description": "Volumetric distributed denial of service attack detected on the primary load balancer. Traffic patterns indicate an HTTP flood attack originating from multiple distributed international IP addresses, increasing the request rate by over 50,000 requests per minute.",
+  "alert_source": "AWS Shield",
+  "rule_name": "DDoSDetected:HTTPFlood",
+  "entities": {
+    "users": [],
+    "ips": ["41.22.84.19", "103.45.112.5"],
+    "hosts": [],
+    "domains": [],
+    "hashes": []
+  },
+  "files": [],
+  "signal_type": "threshold",
+  "confidence": "high",
+  "assigned_to": "network-reliability-team",
+  "detection_method": "WAF Rate Limit Monitoring",
+  "tags": [
+    "ddos",
+    "traffic-spike",
+    "high"
+  ],
+  "mitre": {
+    "tactic": [
+      "Impact"
+    ],
+    "technique": [
+      "T1498 - Network Denial of Service"
+    ],
+    "prevention": [
+      "M1037 - Filter Network Traffic"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0040"
+  ],
+  "mitre_technique_ids": [
+    "T1498"
+  ],
+  "mitre_prevention_ids": [
+    "M1037"
+  ]
+}

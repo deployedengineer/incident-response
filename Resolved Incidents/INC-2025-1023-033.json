@@ -1,0 +1,150 @@
+{
+  "@timestamp": "2025-10-23T16:33:37Z",
+  "incident_id": "INC-2025-1023-033",
+  "severity": "medium",
+  "status": "resolved",
+  "category": "endpoint",
+  "type": "policy_violation",
+  "title": "USB device policy violation",
+  "description": "CrowdStrike Falcon Device Control generated an alert when an unregistered USB mass storage device (SanDisk Cruzer Ultra 64GB, Device ID: VID_0781&PID_5591) was connected to workstation WS-OPS-214 (user: c.brooks@company.com, operations analyst). The device was connected at 14:37 UTC and 3.2 GB of data was transferred to the USB drive over 22 minutes before the alert was acknowledged. CrowdStrike Device Control logs show file transfer activity: 847 files copied from C:\\Operations\\Contracts\\ and C:\\Operations\\Client-Reports\\ directories, which contain CONFIDENTIAL-classified operational documents. The USB device was not on the corporate-registered removable media allowlist.",
+  "affected_systems": [
+    "endpoint-ops-214",
+    "usb-device-control"
+  ],
+  "assigned_to": "endpoint-team",
+  "detection_method": "CrowdStrike Falcon Device Control — unregistered USB mass storage device connection with >1 GB data transfer from CONFIDENTIAL-classified directories (alert mode only)",
+  "tags": [
+    "policy-violation",
+    "endpoint",
+    "medium"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-10-23T16:33:37Z",
+      "event": "CrowdStrike Falcon Device Control alert: unregistered USB (SanDisk Cruzer Ultra 64GB, VID_0781&PID_5591) connected to WS-OPS-214 (c.brooks@company.com); 3.2 GB file transfer from C:\\Operations\\Contracts\\ completed; alert fired after 22-minute transfer window",
+      "actor": "crowdstrike-falcon"
+    },
+    {
+      "timestamp": "2025-10-23T16:45:04Z",
+      "event": "On-call endpoint analyst d.zhao@company.com acknowledged; c.brooks@company.com's manager notified; USB device physically collected by IT security at WS-OPS-214 workstation",
+      "actor": "d.zhao@company.com"
+    },
+    {
+      "timestamp": "2025-10-23T17:33:55Z",
+      "event": "c.brooks interviewed: stated she was working from home the following week and wanted printable copies of client contracts; denies any intent to share externally; confirmed USB is personal, not corporate-registered; treating as data handling policy violation regardless of intent",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-23T20:50:55Z",
+      "event": "USB device forensically imaged by IT security; 847 files confirmed on device — 821 client contract PDFs (CONFIDENTIAL) and 26 internal operations reports; Netskope confirmed no subsequent upload of these files to any cloud service from c.brooks's endpoints in 72-hour window",
+      "actor": "endpoint-team"
+    },
+    {
+      "timestamp": "2025-10-23T23:42:55Z",
+      "event": "All 847 files securely wiped from USB device using DBAN (NIST 800-88 purge); USB device retained by IT security; c.brooks issued formal written warning; CrowdStrike Device Control policy updated to block mode; incident closed",
+      "actor": "d.zhao@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-10-23T23:42:55Z",
+  "resolved_by": "d.zhao@company.com",
+  "resolution_time_minutes": 429,
+  "resolution_summary": "The USB device was physically collected by IT security. A forensic image confirmed 847 files were transferred (821 client contract PDFs and 26 operations reports, all CONFIDENTIAL). Netskope confirmed none of these files were subsequently uploaded to any external service. All files were securely wiped from the USB device using NIST 800-88 purge. C. Brooks confirmed the intent was personal offline access only. A formal written warning was issued, and CrowdStrike Device Control was updated to block mode to prevent future unregistered USB transfers.",
+  "root_cause_analysis": "The company's USB policy prohibited use of non-registered removable media but CrowdStrike Device Control was configured in alert mode rather than block mode, allowing the transfer to complete before the alert fired. The 22-minute transfer window reflects the gap between CrowdStrike detection latency (event collection) and the alert reaching the SOC queue. The employee worked in a role with legitimate frequent access to contract documents and client reports, and sought a workaround for offline access rather than using the approved solution (company-provisioned VPN + OneDrive offline sync). The approved remote access procedure was in the AUP but was not communicated effectively enough to prevent this class of workaround behavior.",
+  "mitre": {
+    "tactic": [
+      "Initial Access",
+      "Collection"
+    ],
+    "technique": [
+      "T1091 - Replication Through Removable Media",
+      "T1025 - Data from Removable Media"
+    ],
+    "prevention": [
+      "M1042 - Disable or Remove Feature or Program",
+      "M1034 - Limit Hardware Installation",
+      "M1017 - User Training"
+    ]
+  },
+  "mitre_tactic_ids": [
+    "TA0001",
+    "TA0009"
+  ],
+  "mitre_technique_ids": [
+    "T1091",
+    "T1025"
+  ],
+  "mitre_prevention_ids": [
+    "M1042",
+    "M1034",
+    "M1017"
+  ],
+  "affected_users_count": 350,
+  "business_impact": "Potential client data exposure, policy violation, compliance risk under client contractual obligations",
+  "estimated_cost": 10000,
+  "sla_met": true,
+  "mttr": 429,
+  "mtta": 11,
+  "remediation_actions": [
+    "Physically collected USB device (SanDisk Cruzer Ultra 64GB) from WS-OPS-214 workstation by IT security at T+15min; device tagged and secured as evidence",
+    "Forensically imaged USB device using FTK Imager before data wipe to preserve evidence chain: 847 files confirmed (821 contract PDFs classified CONFIDENTIAL, 26 internal ops reports classified CONFIDENTIAL)",
+    "Reviewed Netskope CASB 72-hour activity log for c.brooks@company.com across all endpoints: 0 cloud uploads of filename patterns matching the transferred files; confirmed data remained on physical USB only",
+    "Reviewed c.brooks workstation CrowdStrike Device Control logs: confirmed transfer was from WS-OPS-214 only; no other devices connected to c.brooks's endpoints in the prior 30 days",
+    "Securely wiped all 847 files from USB device using DBAN with NIST 800-88 purge standard (3-pass overwrite); verified with post-wipe scan confirming 0 recoverable files",
+    "Reviewed client contracts transferred: confirmed none have data handling audit requirements that trigger breach notification obligations; Legal reviewed 10 contracts with specific data handling clauses — none triggered by employee internal copying",
+    "Issued formal written warning to c.brooks; enrolled in mandatory refresher training for AUP and Data Classification Policy; escalated to HR for personnel file notation; USB device retained by IT security"
+  ],
+  "systems_remediated": [
+    "endpoint-ops-214",
+    "usb-device-control"
+  ],
+  "preventive_measures": [
+    "CrowdStrike Device Control policy updated to block mode for all non-registered USB mass storage devices on all endpoints immediately following this incident",
+    "Corporate USB allowlist program established: employees who need removable media access may request company-registered encrypted USB devices (Kingston Ironkey) through IT helpdesk with manager approval",
+    "OneDrive offline sync feature enabled and communicated to all operations team members: correct and approved method for offline document access without USB",
+    "Quarterly USB and removable media policy review added to IT/Security operations calendar",
+    "Microsoft Information Protection auto-labeling deployed to Operations team directories: CONFIDENTIAL files now blocked from copy to non-corporate destinations by MIP RMS policy"
+  ],
+  "security_controls_updated": [
+    "CrowdStrike Device Control policy switched from 'alert' to 'block' mode for all non-allowlisted USB mass storage devices across all 340 corporate endpoints",
+    "Microsoft Information Protection Rights Management deployed for C:\\Operations\\Contracts\\ and C:\\Operations\\Client-Reports\\: files are now encrypted and readable only on corporate-managed devices via MIP RMS",
+    "SIEM alert updated: any USB device connection outside business hours (6am-8pm local time) now triggers immediate P2 alert regardless of allowlist status",
+    "CrowdStrike alert threshold lowered: USB data transfer >100 MB from CONFIDENTIAL-classified paths now generates P1 alert (from previous P3 threshold of 500 MB)"
+  ],
+  "documentation_updated": [
+    "Data Handling and Classification Policy updated: USB removable media section updated with explicit block-by-default policy, allowlist request procedure, and approved encrypted USB device catalog",
+    "Removable Media Incident Response Runbook created: physical device collection procedure, forensic imaging steps, Netskope log review commands, and NIST 800-88 purge protocol",
+    "Employee AUP updated: offline data access section updated with OneDrive offline sync as approved solution; USB workarounds explicitly listed as prohibited",
+    "Client Contract Data Handling Assessment documented: breach notification obligation matrix for CONFIDENTIAL contract data transfers referenced in SEC-4408"
+  ],
+  "lessons_learned": "CrowdStrike Device Control in alert mode provides audit visibility but zero prevention capability — a 22-minute data transfer window is more than sufficient to copy a substantial volume of sensitive documents before the SOC can act. Block mode must be the default posture for removable media on any endpoint with access to CONFIDENTIAL data. The employee's behavior was driven by a legitimate operational need (offline access for WFH) that the organization hadn't adequately solved — providing OneDrive offline sync as a clearly communicated, easy-to-use alternative removes the motivation for USB workarounds.",
+  "follow_up_tasks": [
+    "EP-2360: Verify CrowdStrike Device Control block mode deployment on all 340 endpoints and confirm via compliance report — Owner: Endpoint, Due: 2025-10-27",
+    "EP-2361: Deploy MIP RMS auto-labeling to all Operations team directories; validate that file copy to USB is blocked — Owner: Information Security, Due: 2025-11-03",
+    "EP-2362: Enable and communicate OneDrive offline sync to all Operations team members with setup walkthrough — Owner: IT, Due: 2025-10-30",
+    "EP-2363: Establish corporate encrypted USB allowlist program: Kingston Ironkey devices issued on manager-approved request — Owner: IT, Due: 2025-11-15"
+  ],
+  "resolution": "USB files securely wiped using NIST 800-88; no external sharing confirmed; Device Control updated to block mode; formal warning issued; MIP RMS deployed to protect CONFIDENTIAL directories",
+  "action_taken": "Resolved by endpoint-team within 384 minutes; insider data handling violation confirmed with no external sharing; hardware retained by IT security",
+  "entities": {
+    "users": [
+      "d.chen@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "ws-ops-112"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "detection_gap": "USB port policy was configured in audit mode rather than enforcement (block) mode on non-executive endpoints; Tanium DLP agent logged and alerted on the transfer but did not prevent it; no pre-transfer content inspection was configured for removable media writes to detect sensitive document classification markings",
+  "what_went_well": [
+    "Tanium DLP audit log captured a complete transfer manifest with file names, sizes, and timestamps for all 3.2 GB of transferred content",
+    "USB device was confiscated and forensically imaged before the employee's departure, preserving the complete evidence chain",
+    "All transferred files were confirmed as internal-use documents with no customer PII, regulated health data, or financial records"
+  ],
+  "what_went_wrong": [
+    "USB port policy was in audit mode rather than block mode — the policy design allowed the transfer to complete and logged it, but did not prevent it",
+    "Employee was not required to declare or obtain approval for removable media usage for project work — no pre-use authorization process existed",
+    "No pre-transfer content inspection existed for USB writes; DLP detection was based on transfer volume thresholds rather than content classification"
+  ]
+}

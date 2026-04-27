@@ -1,0 +1,133 @@
+{
+  "@timestamp": "2025-12-24T10:50:20Z",
+  "incident_id": "INC-2025-1224-003",
+  "severity": "high",
+  "status": "resolved",
+  "category": "api",
+  "type": "error_spike",
+  "title": "API Gateway 500 error spike",
+  "description": "Datadog APM and AWS CloudWatch detected a sudden spike of HTTP 500 errors on api-gateway-prod (AWS API Gateway, us-east-1) beginning at 10:17 UTC on December 24. The error rate reached 47% across all API endpoints, affecting auth-service and user-service downstream consumers. Investigation revealed the error source was not the API Gateway configuration but rather the auth-service backend: a Christmas Eve maintenance deployment of auth-service v3.1.0 had introduced a bug in the JWT verification middleware — it attempted to load a new RSA private key file from the filesystem path /secrets/jwt_private.pem, which did not exist in the production ECS task filesystem (the key was in AWS Secrets Manager and was being migrated from file-based to Secrets Manager delivery). All requests requiring JWT generation (login, token refresh) returned HTTP 500; requests using only JWT validation (most API operations) were unaffected, creating a confusing partial failure pattern.",
+  "affected_systems": [
+    "api-gateway-prod",
+    "auth-service",
+    "user-service"
+  ],
+  "assigned_to": "api-team",
+  "detection_method": "Datadog APM — 'api-gateway-prod P99 error rate > 30% for 3 consecutive minutes' + CloudWatch API Gateway 5XXError metric > 1000 per minute alert",
+  "tags": [
+    "error-spike",
+    "api",
+    "high"
+  ],
+  "timeline": [
+    {
+      "timestamp": "2025-12-24T10:50:20Z",
+      "event": "Datadog APM alert: api-gateway-prod 47% HTTP 500 error rate; CloudWatch 5XXError metric 4,312/minute; auth-service logs showing 'Error: ENOENT: no such file or directory, open /secrets/jwt_private.pem'; PagerDuty P1 generated",
+      "actor": "datadog-apm"
+    },
+    {
+      "timestamp": "2025-12-24T10:54:43Z",
+      "event": "On-call engineer b.okafor@company.com acknowledged; identified auth-service v3.1.0 deployment at 10:12 UTC (5 minutes before error spike) as likely cause; initiated ECS rollback to auth-service v3.0.8",
+      "actor": "b.okafor@company.com"
+    },
+    {
+      "timestamp": "2025-12-24T11:14:24Z",
+      "event": "ECS rollback to auth-service v3.0.8 completed; API Gateway error rate dropped from 47% to 0.3%; root cause confirmed: v3.1.0 JWT middleware attempted to read /secrets/jwt_private.pem which was not mounted in ECS task definition (migration to Secrets Manager incomplete — code was deployed before Secrets Manager binding was added to task definition)",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-24T11:34:24Z",
+      "event": "Auth-service v3.1.1 prepared: ECS task definition updated to inject jwt_private_key from AWS Secrets Manager ARN; JWT middleware updated to read key from environment variable (injected by ECS Secrets Manager binding) rather than filesystem path; deployed to staging and validated",
+      "actor": "engineering-team"
+    },
+    {
+      "timestamp": "2025-12-24T11:50:24Z",
+      "event": "auth-service v3.1.1 deployed to production; all API endpoints returning HTTP 200; JWT generation confirmed working with Secrets Manager key delivery; monitoring stable for 20 minutes; incident closed",
+      "actor": "b.okafor@company.com"
+    }
+  ],
+  "resolved_timestamp": "2025-12-24T11:50:24Z",
+  "resolved_by": "b.okafor@company.com",
+  "resolution_time_minutes": 60,
+  "resolution_summary": "ECS rollback to auth-service v3.0.8 resolved the HTTP 500 error spike within 13 minutes of detection. The root cause was a code-infrastructure mismatch: auth-service v3.1.0 code was deployed before its required infrastructure dependency (AWS Secrets Manager binding in the ECS task definition) was deployed. The permanent fix (v3.1.1) updated the ECS task definition to inject the JWT private key via Secrets Manager and updated the JWT middleware to consume the key from an environment variable rather than a filesystem path. The full JWT key migration to Secrets Manager was completed successfully.",
+  "root_cause_analysis": "The auth-service Secrets Manager migration was a two-part change: (1) update the JWT middleware to read the key from an environment variable instead of a filesystem path, and (2) update the ECS task definition to inject the key from AWS Secrets Manager via the `secrets` block. The engineer who implemented the change completed the code change in PR #2284 and the infrastructure change as a separate Terraform PR (#TF-847). The deployment pipeline was triggered from the application repository on merge of PR #2284 without a dependency gate on TF-847. Terraform PR #TF-847 was reviewed but not applied until the following sprint cycle (TF changes require Plan+Apply approval from two Platform engineers, and the approval queue was not checked before the application deployment ran). The staging environment had the Secrets Manager binding already applied (from a previous sprint's staging-first infrastructure deployment), masking the dependency issue in staging testing.",
+  "mitre": {
+    "tactic": [],
+    "technique": [],
+    "prevention": []
+  },
+  "mitre_tactic_ids": [],
+  "mitre_technique_ids": [],
+  "mitre_prevention_ids": [],
+  "affected_users_count": 1200,
+  "business_impact": "47% API error rate for 13 minutes; all login and token refresh operations failed; Christmas Eve peak traffic period affected",
+  "estimated_cost": 12500,
+  "sla_met": true,
+  "mttr": 60,
+  "mtta": 4,
+  "remediation_actions": [
+    "ECS service rollback initiated: aws ecs update-service --cluster prod --service auth-service --task-definition auth-service:v3.0.8 --force-new-deployment; all tasks replaced within 8 minutes; error rate dropped from 47% to 0.3%",
+    "Confirmed API Gateway health post-rollback: CloudWatch 5XXError metric returned to <50/minute baseline; Datadog auth-service APM showing 0% error rate on POST /v1/auth/token and POST /v1/auth/refresh",
+    "Applied Terraform PR #TF-847: added Secrets Manager binding to auth-service ECS task definition (secrets block with jwt_private_key ARN from Secrets Manager); applied in production via Terraform Cloud with two-engineer approval",
+    "Deployed auth-service v3.1.1: JWT middleware reads key from JWT_PRIVATE_KEY environment variable (injected by ECS Secrets Manager binding); removed filesystem path dependency; tested in staging and production with JWT sign/verify round-trip validation",
+    "Verified Secrets Manager key delivery: aws secretsmanager get-secret-value confirmed production task can retrieve jwt_private_key; JWT generation tested for 200 consecutive requests with 0% error rate",
+    "Reviewed 13-minute outage user impact: identified 3,847 failed login and token refresh attempts; customer communications sent for user-facing mobile and web apps; enterprise API customers contacted with incident timeline"
+  ],
+  "systems_remediated": [
+    "api-gateway-prod",
+    "auth-service",
+    "user-service"
+  ],
+  "preventive_measures": [
+    "Deployment pipeline updated: any application deployment with a declared infrastructure dependency (tagged in PR with 'infra-dependency' label) is gated on the dependent Terraform workspace being in 'applied' state before application deploy proceeds",
+    "ECS task definition validation added to CI: pre-deploy script checks that all environment variables and secrets referenced in application code are declared in the task definition; build fails if undeclared references are found",
+    "Staging environment infrastructure parity enforced: staging must apply all Terraform changes within 24 hours of production changes to avoid parity gaps that mask infrastructure dependency issues",
+    "Rollback runbook mandatory for all auth-service deployments: deployment engineer must have rollback command documented and tested before initiating production deployment"
+  ],
+  "security_controls_updated": [
+    "AWS Secrets Manager access audit enabled for jwt_private_key secret: unexpected access patterns (new ECS task ARN, non-auth-service consumer) trigger CloudTrail alert",
+    "Auth service deployment lock added: auth-service production deployments now blocked during business peak hours (08:00-18:00 UTC) without explicit Security and Platform approval — prevents holiday-period deployments without adequate staffing",
+    "JWT private key rotation scheduled: new key rotation procedure implemented in Secrets Manager with automatic key version rollover; previous filesystem-based key deprecated and deleted",
+    "API Gateway 5XXError CloudWatch alarm threshold lowered: alarm now triggers at 500/minute (was 2,000/minute) — earlier detection; 3-minute sustained > 500/minute triggers PagerDuty P1"
+  ],
+  "documentation_updated": [
+    "Auth Service Deployment Runbook updated: Secrets Manager dependency validation steps, ECS task definition secrets block verification procedure, pre-deploy checklist",
+    "Platform Engineering Deployment Standards updated: infrastructure dependency gating policy; 'infra-dependency' PR label definition and pipeline gate implementation",
+    "AWS Secrets Manager Integration Guide updated: ECS Secrets Manager binding configuration, environment variable injection patterns, testing procedure for Secrets Manager key delivery",
+    "API-2025-1224-003 Jira postmortem published with deployment timeline, root cause analysis, and infrastructure dependency gate implementation plan"
+  ],
+  "lessons_learned": "Code and infrastructure changes that have a strict dependency order require hard pipeline gates, not social conventions around deployment sequencing. A PR label and a deployment pipeline gate for declared infrastructure dependencies is a reliable control; asking engineers to remember to check Terraform apply status before deploying is not. The staging parity gap (Secrets Manager binding already applied in staging) is a common masked-failure pattern — staging must be infrastructure-identical to production, not infrastructure-ahead of production. Public-holiday deployments of authentication services with reduced staffing require an explicit risk acceptance process, not ad-hoc decisions.",
+  "follow_up_tasks": [
+    "AUTH-1224-01: Deployment pipeline infrastructure dependency gate implemented: 'infra-dependency' labeled PRs blocked until dependent Terraform workspace shows 'applied' — Owner: Platform, Due: 2025-12-31",
+    "AUTH-1224-02: ECS task definition variable declaration CI validation script deployed to all application repositories — Owner: Platform, Due: 2025-12-31",
+    "AUTH-1224-03: Peak-hours deployment lock policy deployed for all authentication-critical services — Owner: Engineering Management, Due: 2025-12-31",
+    "AUTH-1224-04: Staging infrastructure parity SLA: Terraform changes must be applied to staging within 24 hours of merge — Owner: Platform, Due: 2026-01-09"
+  ],
+  "resolution": "ECS rollback to v3.0.8 resolved 47% error rate in 13 minutes; v3.1.1 with Secrets Manager key delivery deployed; infrastructure dependency gate added to deployment pipeline",
+  "action_taken": "Resolved by api-team in 51 minutes; code-infrastructure deployment ordering mismatch identified and prevented with pipeline gate",
+  "entities": {
+    "users": [
+      "b.okafor@company.com"
+    ],
+    "ips": [],
+    "hosts": [
+      "api-gateway-prod",
+      "auth-service",
+      "user-service"
+    ],
+    "domains": [],
+    "hashes": []
+  },
+  "alert_source": "Datadog APM + CloudWatch API Gateway",
+  "detection_gap": "Deployment pipeline lacked enforcement gates for infrastructure dependencies before application releases; staging environment had the AWS Secrets Manager binding pre-applied from a previous sprint, masking the production dependency gap during pre-deploy testing; no CI validation script verified that all environment variables and secrets referenced in application code were declared in the ECS task definition",
+  "what_went_well": [
+    "ECS rollback to auth-service v3.0.8 resolved the 47% HTTP 500 error rate within 13 minutes of detection",
+    "Root cause was identified rapidly by correlating the deployment timestamp (10:12 UTC) with the error spike onset (10:17 UTC) — a 5-minute deployment-to-failure window",
+    "JWT sign/verify round-trip test was run against the Secrets Manager key before declaring the v3.1.1 deployment successful"
+  ],
+  "what_went_wrong": [
+    "Application code (PR #2284) was deployed before its required infrastructure dependency (Terraform PR #TF-847 for Secrets Manager ECS binding) was applied — no hard gate enforced the ordering",
+    "Staging environment had the Secrets Manager binding pre-applied from a prior sprint, providing false assurance that the new code would work in production",
+    "A Christmas Eve deployment of the authentication service with reduced staffing proceeded without explicit risk assessment for the peak traffic period"
+  ]
+}
