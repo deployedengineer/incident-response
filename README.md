@@ -1,6 +1,6 @@
 # 🚨 Incident-to-Runbook Automation for SOC Teams
+Generate a structured, source-attributed incident response runbook based on internal best practice playbooks, learnings from resolved incidents and broader threat intel sources. Reduce your MTtR and make your SecOps teams happier: no manual playbook lookup, no hunting through past incidents, no Googling CVEs.
 
-> **Take a new incident, pull the right context from old tickets and playbooks, and generate a useful runbook fast enough to cut MTTR.**
 
 [![GitHub Stars](https://img.shields.io/github/stars/deployedengineer/incident-response?style=social)](https://github.com/deployedengineer/incident-response)
 [![n8n](https://img.shields.io/badge/Built%20with-n8n-orange?logo=n8n)](https://n8n.io)
@@ -70,7 +70,7 @@ This repository is designed to do exactly one thing well. Setting the right expe
 **An advisory intelligence layer.** It automatically drafts a heavily-contextualized runbook for a human analyst to review. It brings the data to the analyst, saving them 30 minutes of searching.
 
 ### ❌ What this is NOT:
-- **It is not a SOAR platform:** It does not actively isolate endpoints, ban hashes, or block IPs out of the box. Every action requires human execution.
+- **It is not a SOAR platform:** It does not actively isolate endpoints, ban hashes, or block IPs out of the box. However, it can be expanded to do so if that's what you want out of it.
 - **It is not a BAS (Breach & Attack Simulation) tool:** It does not simulate attacks.
 - **It is not a Detection Engineering platform:** It does not write YARA or Sigma rules (though that is on our [roadmap](./docs/roadmap.md)).
 - **It does not make autonomous decisions:** Severity calibration and containment steps are surfaced as *recommendations*, not automated actions.
