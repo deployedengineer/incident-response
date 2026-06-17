@@ -55,20 +55,11 @@ You must run this manually **once** to populate your Supabase database:
 
 ---
 
-## Step 4: The 5-Minute Demo Path
+## Step 4: The Demo Path
 
-Once ingestion is complete, you are ready to test the primary workflow.
+Once ingestion is complete, you are ready to test the primary workflow. You'll do this by sending a JSON payload to the 'Webhook' node. Make sure you first Publish the workflow and make a HTTP POST request to the 'Production URL' of the webhook node in your workflow.
 
-This repository supports a frictionless demo path that does not require you to configure external webhooks or payload simulators. 
-
-1. Locate the **"When clicking 'Test workflow'"** trigger node on the far left of the main retrieval workflow.
-2. It triggers a **"Config"** node where all essential pipeline variables are set:
-   - **GitHub details:** `github_repo`, `github_baseUrl`
-   - **Models:** `model_chat`, `model_embedding`, `model_analysis`, `temperature`
-   - **Chunking:** `chunk_size`, `chunk_overlap`
-   - **Supabase RPC/Tables:** `query_playbooks`, `query_incidents`, `table_resolved`, `table_playbooks`, `table_test`
-3. Next, the **"Set Incident ID"** node is configured to fetch `Test-ransomware_detection-001` (a sample ransomware alert) from the `test_incidents_v1` table.
-4. Click **Test workflow** on the trigger node to start the run.
+You can make this any way you wish. We have built this [simple front-end]([url](https://incident-response.deployed.engineer/)) if you would like a frictionless way to send JSON payloads to the workflow. You can submit your own JSON or use one of the pre-loaded incident templates from this repository.
 
 Watch as the workflow fans out to query the vector database, match playbooks, search Tavily for active CVEs, and synthesize the final Runbook. The output will be visible in the final **Write Runbook to DB** node, and directly inside your Supabase `test_incidents_v1` table in the `output_markdown` column!
 
