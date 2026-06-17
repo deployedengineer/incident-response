@@ -1,62 +1,52 @@
 {
-  "name": "Incident Management V1: Final",
+  "name": "[Template] AI Powered Incident Management",
   "nodes": [
     {
-      "parameters": {},
-      "id": "d0783323-d22a-4790-b7f3-265c75bbc73a",
-      "name": "When clicking Test workflow",
-      "position": [
-        4704,
-        464
-      ],
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1
-    },
-    {
       "parameters": {
-        "content": "## Ingestion Workflows\n\nRun these pipelines ONCE before the first demo, and again whenever source data changes.\n\nEach pipeline is independent and can be run separately.\n\nRecommended order:\n  1) Ingest Resolved Incidents\n  2) Ingest Reference Playbooks\n  3) Ingest Test Incidents",
-        "height": 1344,
-        "width": 4160
+        "content": "# Ingestion Pipeline\n\nRun these pipelines ONCE before the first demo, and again whenever source data changes.\n\nEach pipeline is independent and can be run separately.\n\nRecommended order:\n  1) Ingest Resolved Incidents\n  2) Ingest Reference Playbooks\n  3) Ingest Test Incidents",
+        "height": 1392,
+        "width": 4416,
+        "color": 2
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        5184,
-        -272
+        -3840,
+        2256
       ],
-      "id": "edc1e044-9ed5-4dac-a851-3d4b14de3cc8",
+      "id": "334458ec-a24e-4033-a286-ac3dc8521d5f",
       "name": "Sticky Note"
     },
     {
       "parameters": {
         "content": "## 1) Ingest Resolved Incidents\n\nSource:    GitHub (Resolved Incidents/)\nTarget:    resolved_incidents_v1 (vector table)\nEmbedding: Gemini models/gemini-embedding-001\n\nRe-run after adding or updating resolved\nincident JSON files.",
-        "height": 208,
+        "height": 256,
         "width": 448,
-        "color": 6
+        "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        5552,
-        80
+        -2896,
+        2448
       ],
-      "id": "1cc772e7-62d7-4ea6-bf48-a424ccb9f117",
+      "id": "97c4f761-febf-4338-a1fd-f58cdabe82b7",
       "name": "Sticky Note1"
     },
     {
       "parameters": {
         "content": "## 2) Ingest Reference Playbooks\n\nSource:    GitHub (Reference Playbooks/)\nTarget:    reference_playbooks_v1 (vector table)\nEmbedding: Gemini models/gemini-embedding-001\n\nRe-run after adding new .md playbook files\n(e.g. ransomware, IAM credential compromise).",
-        "height": 224,
+        "height": 176,
         "width": 448,
-        "color": 6
+        "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        7056,
-        64
+        -1216,
+        2768
       ],
-      "id": "192cc43c-4da5-4e0b-b04f-bea7f3f6871c",
+      "id": "ca2fb3f1-393e-42e7-9fea-6f41aeb2e542",
       "name": "Sticky Note2"
     },
     {
@@ -126,61 +116,61 @@
           }
         }
       },
-      "id": "9e28f435-1c3e-4398-b31d-967c5d4ed976",
+      "id": "9d63fedc-75ea-4715-bdda-29bd4fffe380",
       "name": "Resolved Incidents Data Loader",
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1,
       "position": [
-        5792,
-        544
+        -2448,
+        2624
       ]
     },
     {
       "parameters": {
-        "modelName": "={{ $('Config').item.json.model_embedding }}"
+        "modelName": "={{ $('Config-Ingestion').item.json.model_embedding }}"
       },
       "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
       "typeVersion": 1,
       "position": [
-        6080,
-        544
+        -2160,
+        2624
       ],
-      "id": "cb7a5c6e-bd9d-40c9-9942-eafdbf58955c",
+      "id": "bbb9c6c0-c0aa-472e-9db0-17529fb339c8",
       "name": "Gemini Embeddings (Resolved Incidents)",
       "retryOnFail": true,
       "credentials": {
         "googlePalmApi": {
-          "id": "TMxXjmwGE8M5436u",
+          "id": "eFp22F1YihoaUDVd",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
     },
     {
       "parameters": {
-        "url": "={{ $('Config').item.json.github_baseUrl + '/' + $('Config').item.json.github_repo + '/contents/Reference%20Playbooks' }}",
+        "url": "={{ $('Config-Ingestion').item.json.github_baseUrl + '/' + $('Config-Ingestion').item.json.github_repo + '/contents/Reference%20Playbooks' }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        6608,
-        368
+        -2304,
+        3008
       ],
-      "id": "a2b39ef3-f3d0-4c90-93ba-3048008b59f5",
+      "id": "58223e31-4441-4b14-870c-732dcb6cb456",
       "name": "Get Reference Playbooks From GitHub",
       "retryOnFail": true,
       "executeOnce": true
     },
     {
       "parameters": {
-        "url": "={{ $('Config').item.json.github_baseUrl + '/' + $('Config').item.json.github_repo + '/contents/Resolved%20Incidents' }}",
+        "url": "={{ $('Config-Ingestion').item.json.github_baseUrl + '/' + $('Config-Ingestion').item.json.github_repo + '/contents/Resolved%20Incidents' }}",
         "options": {}
       },
-      "id": "765a28e5-40f8-47b1-8221-552e2c87c1b9",
+      "id": "1a6ccefd-01be-4a85-9d01-cbbd74bdf968",
       "name": "Get Resolved Incidents from GitHub",
       "position": [
-        5248,
-        352
+        -3344,
+        3008
       ],
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -195,10 +185,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        6816,
-        368
+        -1952,
+        2944
       ],
-      "id": "5cbc27da-42b1-4da0-b03c-2586a4cae973",
+      "id": "74f99ed4-9051-4dbf-aad8-34f2cc376a78",
       "name": "Download Reference Playbooks From GitHub",
       "retryOnFail": true
     },
@@ -216,10 +206,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        5456,
-        352
+        -3120,
+        3008
       ],
-      "id": "1c51e501-d0f0-4c30-811c-968f5c84b791",
+      "id": "f3783cca-59f7-4803-a57f-be13ffc82945",
       "name": "Download Resolved Incidents From GitHub",
       "retryOnFail": true
     },
@@ -228,13 +218,13 @@
         "mode": "runOnceForEachItem",
         "jsCode": "const data = $json;\n\n// -----------------------------\n// Metadata (STRICT – Only Requested Fields)\n// -----------------------------\nconst metadata = {\n  \"@timestamp\": data[\"@timestamp\"] ?? null,\n  incident_id: data.incident_id ?? null,\n  severity: data.severity ?? null,\n  category: data.category ?? null,\n  type: data.type ?? null,\n\n  affected_systems: Array.isArray(data.affected_systems)\n    ? data.affected_systems\n    : [],\n\n  mitre_tactic_ids: Array.isArray(data.mitre_tactic_ids)\n    ? data.mitre_tactic_ids\n    : [],\n\n  mitre_technique_ids: Array.isArray(data.mitre_technique_ids)\n    ? data.mitre_technique_ids\n    : [],\n\n  mitre_prevention_ids: Array.isArray(data.mitre_prevention_ids)\n    ? data.mitre_prevention_ids\n    : [],\n\n  // ✅ New fields retained\n  description: data.description ?? null,\n  alert_source: data.alert_source ?? null,\n  rule_name: data.rule_name ?? null,\n  entities: typeof data.entities === 'object' ? data.entities : {},\n  detection_gap: data.detection_gap ?? null,\n  what_went_well: Array.isArray(data.what_went_well) ? data.what_went_well : [],\n  what_went_wrong: Array.isArray(data.what_went_wrong) ? data.what_went_wrong : []\n};\n\n// Remove null/undefined only\nObject.keys(metadata).forEach(key => {\n  if (metadata[key] === undefined || metadata[key] === null) {\n    delete metadata[key];\n  }\n});\n\n// -----------------------------\n// Markdown Content\n// -----------------------------\nconst sections = [];\n\n// Header\nsections.push(`# Incident: ${data.title ?? \"Untitled Incident\"}`);\nsections.push(`**Incident ID:** ${data.incident_id ?? \"N/A\"}`);\nsections.push(`**Severity:** ${data.severity ?? \"N/A\"}`);\nsections.push(`**Category:** ${data.category ?? \"N/A\"}`);\nsections.push(`**Type:** ${data.type ?? \"N/A\"}`);\nsections.push(`**Status:** ${data.status ?? \"N/A\"}`);\nsections.push(`**Date:** ${data[\"@timestamp\"] ?? \"N/A\"}`);\n\nif (Array.isArray(data.affected_systems) && data.affected_systems.length > 0) {\n  sections.push(`**Affected Systems:** ${data.affected_systems.join(\", \")}`);\n}\n\n// Alert Source\nif (data.alert_source) {\n  sections.push(\"\");\n  sections.push(\"## Alert Source\");\n  sections.push(`**Detection Tool:** ${data.alert_source}`);\n  if (data.rule_name) {\n    sections.push(`**Rule/Finding:** ${data.rule_name}`);\n  }\n}\n\n// Entities (clean + safe)\nconst entities = metadata.entities;\n\nif (\n  entities &&\n  typeof entities === 'object' &&\n  Object.keys(entities).length > 0\n) {\n  const entityLines = [];\n\n  if (Array.isArray(entities.users) && entities.users.length > 0)\n    entityLines.push(`**Users:** ${entities.users.join(', ')}`);\n\n  if (Array.isArray(entities.ips) && entities.ips.length > 0)\n    entityLines.push(`**IPs:** ${entities.ips.join(', ')}`);\n\n  if (Array.isArray(entities.hosts) && entities.hosts.length > 0)\n    entityLines.push(`**Hosts:** ${entities.hosts.join(', ')}`);\n\n  if (Array.isArray(entities.domains) && entities.domains.length > 0)\n    entityLines.push(`**Domains:** ${entities.domains.join(', ')}`);\n\n  if (Array.isArray(entities.hashes) && entities.hashes.length > 0)\n    entityLines.push(`**Hashes:** ${entities.hashes.join(', ')}`);\n\n  if (entityLines.length > 0) {\n    sections.push(\"\");\n    sections.push(\"## Entities\");\n    entityLines.forEach(l => sections.push(l));\n  }\n}\n\n// Description\nif (data.description) {\n  sections.push(\"\");\n  sections.push(\"## Description\");\n  sections.push(data.description);\n}\n\n// Detection Gap\nif (data.detection_gap) {\n  sections.push(\"\");\n  sections.push(\"## Detection Gap\");\n  sections.push(data.detection_gap);\n}\n\n// Timeline (safe)\nif (Array.isArray(data.timeline) && data.timeline.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## Timeline\");\n\n  data.timeline.slice(0, 50).forEach(t => {\n    if (t && t.timestamp && t.event) {\n      sections.push(`- ${t.timestamp} — ${t.event}`);\n    }\n  });\n}\n\n// Root Cause\nif (data.root_cause_analysis) {\n  sections.push(\"\");\n  sections.push(\"## Root Cause\");\n  sections.push(data.root_cause_analysis);\n}\n\n// What Went Well\nif (Array.isArray(data.what_went_well) && data.what_went_well.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## What Went Well\");\n  data.what_went_well.forEach(item => sections.push(`- ${item}`));\n}\n\n// What Went Wrong\nif (Array.isArray(data.what_went_wrong) && data.what_went_wrong.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## What Went Wrong\");\n  data.what_went_wrong.forEach(item => sections.push(`- ${item}`));\n}\n\n// Resolution Summary\nif (data.resolution_summary) {\n  sections.push(\"\");\n  sections.push(\"## Resolution Summary\");\n  sections.push(data.resolution_summary);\n}\n\n// Remediation Actions\nif (Array.isArray(data.remediation_actions) && data.remediation_actions.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## Remediation Actions\");\n  data.remediation_actions.forEach(action => {\n    sections.push(`- ${action}`);\n  });\n}\n\n// Lessons Learned\nif (data.lessons_learned) {\n  sections.push(\"\");\n  sections.push(\"## Lessons Learned\");\n  sections.push(data.lessons_learned);\n}\n\n// MITRE Mapping (safe)\nconst mitre = [];\n\nif (Array.isArray(metadata.mitre_tactic_ids) && metadata.mitre_tactic_ids.length > 0)\n  mitre.push(`Tactics: ${metadata.mitre_tactic_ids.join(\", \")}`);\n\nif (Array.isArray(metadata.mitre_technique_ids) && metadata.mitre_technique_ids.length > 0)\n  mitre.push(`Techniques: ${metadata.mitre_technique_ids.join(\", \")}`);\n\nif (Array.isArray(metadata.mitre_prevention_ids) && metadata.mitre_prevention_ids.length > 0)\n  mitre.push(`Prevention: ${metadata.mitre_prevention_ids.join(\", \")}`);\n\nif (mitre.length > 0) {\n  sections.push(\"\");\n  sections.push(\"## MITRE Mapping\");\n  sections.push(mitre.join(\"\\n\"));\n}\n\n// Final Output\nconst pageContent = sections.join(\"\\n\");\n\nreturn {\n  json: {\n    pageContent,\n    metadata\n  }\n};"
       },
-      "id": "82bfb9a0-819f-453d-a014-9410396dbdf6",
+      "id": "5ff4ebbc-e18c-4c67-9d05-cfd1ca08305c",
       "name": "Prepare Markdown Document & Metadata",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5664,
-        352
+        -2896,
+        3008
       ],
       "alwaysOutputData": false,
       "retryOnFail": true,
@@ -242,104 +232,73 @@
     },
     {
       "parameters": {
-        "content": "## Retrieval & Response Workflow -- Active Demo Path\n\nThis is the main pipeline. It processes one test incident\nend-to-end through three parallel intelligence branches\nand produces a structured JSON response report.\n\nFull flow:\n  Step 1 --> Fetch Incident from Supabase\n  Step 2 --> Parallel Retrieval (3 branches simultaneously)\n  Step 3 --> Merge All Intelligence\n  Step 4 --> Synthesize Report\n  Step 5 --> Validate Output (If node)\n  Step 6 --> Write to Supabase (or skip if degraded)\n\nConfigure the incident to process in the Set Incident ID node.",
-        "height": 2240,
-        "width": 4432
+        "content": "# Retrieval & Response Workflow\n\nThis is the main pipeline. It processes one test incident\nend-to-end through three parallel intelligence branches\nand produces a structured JSON response report.\n\nFull flow:\n  Step 1 --> Fetch Incident from Supabase\n  Step 2 --> Parallel Retrieval (3 branches simultaneously)\n  Step 3 --> Merge All Intelligence\n  Step 4 --> Synthesize Report\n  Step 5 --> Validate Output (If node)\n  Step 6 --> Write to Supabase (or skip if degraded)\n\nConfigure the incident to process in the Set Incident ID node.",
+        "height": 1584,
+        "width": 4624,
+        "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        5184,
-        1120
+        -3840,
+        3760
       ],
-      "id": "d93b1c13-b848-406a-a891-23f5ed732a4a",
+      "id": "2afcc845-1303-42f9-931d-baeb068b840e",
       "name": "Sticky Note3"
     },
     {
       "parameters": {
-        "content": "",
-        "height": 864,
-        "width": 1296,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        5200,
-        48
-      ],
-      "id": "7bd7d8c3-3410-4266-8140-281b0e9d1864",
-      "name": "Sticky Note4"
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 864,
-        "width": 1520,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        6528,
-        48
-      ],
-      "id": "ff030fa3-2387-485f-b1a6-8cd96a061d03",
-      "name": "Sticky Note5"
-    },
-    {
-      "parameters": {
         "content": "## 3) Ingest Test Incidents\n\nSource:    GitHub (Test Incidents/)\nTarget:    test_incidents_v1 (flat table)\n\nRe-run after updating test incident JSON files.\nClears and re-inserts all 13 rows.",
-        "height": 192,
+        "height": 176,
         "width": 416,
-        "color": 6
+        "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        8368,
-        64
+        -672,
+        2768
       ],
-      "id": "acd390be-04b8-41a1-bf6b-629d312f29ab",
+      "id": "63cb4b2d-249d-4c9e-bb1c-cc37315b1ade",
       "name": "Sticky Note6"
     },
     {
       "parameters": {
-        "tableId": "={{ $('Config').item.json.table_test }}",
+        "tableId": "={{ $('Config-Ingestion').item.json.table_test }}",
         "dataToSend": "autoMapInputData"
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        8752,
-        384
+        -208,
+        3008
       ],
-      "id": "6fb7557a-6839-470e-b496-d8655d9b3476",
+      "id": "45073f01-633f-4f16-9648-9ea80c422179",
       "name": "Create a Row of Test Incident on Supabase",
       "retryOnFail": true,
       "credentials": {
         "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
+          "id": "dNPuriLFVHh6kevz",
           "name": "Supabase_n8n_Workflow_Incident_Management_V1"
         }
       }
     },
     {
       "parameters": {
-        "modelName": "={{ $('Config').item.json.model_embedding }}"
+        "modelName": "={{ $('Config-Ingestion').item.json.model_embedding }}"
       },
       "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
       "typeVersion": 1,
       "position": [
-        7792,
-        560
+        -864,
+        3232
       ],
-      "id": "b190a3a7-37e0-4473-b7f1-ba3b022b697e",
+      "id": "87c836df-fb31-4a6e-8b34-ba61f937c11e",
       "name": "Gemini Embeddings (Playbooks Ingestion)",
       "retryOnFail": true,
       "credentials": {
         "googlePalmApi": {
-          "id": "TMxXjmwGE8M5436u",
+          "id": "eFp22F1YihoaUDVd",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -363,30 +322,14 @@
           }
         }
       },
-      "id": "b728338c-f104-43a8-975f-20774c040fcd",
+      "id": "73966a1f-24b6-44db-ae8e-0d5aab353f79",
       "name": "Reference Playbooks Data Loader",
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1,
       "position": [
-        7488,
-        560
+        -1152,
+        3232
       ]
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 848,
-        "width": 896,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        8112,
-        48
-      ],
-      "id": "352a6664-24ae-4ff5-8598-984b51f9e499",
-      "name": "Sticky Note7"
     },
     {
       "parameters": {
@@ -398,10 +341,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        7392,
-        368
+        -1376,
+        2992
       ],
-      "id": "65b2e35b-e64b-4950-8b78-77d74e99ce5c",
+      "id": "a51aa36c-26f0-4d75-a68a-f09405f768e9",
       "name": "Merge Ingestion Branches"
     },
     {
@@ -420,25 +363,25 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
       "position": [
-        7024,
-        368
+        -1728,
+        2816
       ],
-      "id": "8bd44bd5-eec4-4392-ba22-6a71b589baf0",
+      "id": "ef1cc9cb-d519-474c-a64e-90f00e8909e4",
       "name": "Summarize Reference Playbooks for Embeddings",
       "retryOnFail": true
     },
     {
       "parameters": {
-        "url": "={{ $('Config').item.json.github_baseUrl + '/' + $('Config').item.json.github_repo + '/contents/Test%20Incidents' }}",
+        "url": "={{ $('Config-Ingestion').item.json.github_baseUrl + '/' + $('Config-Ingestion').item.json.github_repo + '/contents/Test%20Incidents' }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        8272,
-        384
+        -656,
+        3008
       ],
-      "id": "76a0719e-0424-4237-b6aa-b17af12418fd",
+      "id": "c6e5fc5a-63c9-4f36-bc3d-6a449a47e89d",
       "name": "Get Test Incidents From GitHub",
       "retryOnFail": true,
       "executeOnce": true
@@ -457,42 +400,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        8496,
-        384
+        -432,
+        3008
       ],
-      "id": "ef398dff-53f9-4bca-b14a-50b349c84b9f",
+      "id": "8b803ad3-521d-4a34-9d00-abd7777fa003",
       "name": "Download Test Incidents From GitHub",
       "retryOnFail": true
-    },
-    {
-      "parameters": {
-        "operation": "get",
-        "tableId": "={{ $('Config').item.json.table_test }}",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "=incident_id",
-              "keyValue": "={{ $json.incident_id }}"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        5440,
-        2112
-      ],
-      "id": "63df80ea-4edb-4c02-bbd4-9d1631180cac",
-      "name": "Fetch Test Incident from Supabase",
-      "retryOnFail": true,
-      "alwaysOutputData": false,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
-          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
-        }
-      }
     },
     {
       "parameters": {
@@ -506,51 +419,50 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        6512,
-        2912
+        -1824,
+        4880
       ],
-      "id": "5900a377-b1b2-4f7b-8a7f-60c9572b8b01",
+      "id": "5e43ac58-af0e-488b-9a9e-a926e8fcfa50",
       "name": "Threat Intel Enrichment Agent",
-      "retryOnFail": true
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', ``, 'string') }}",
-        "options": {
-          "auto_parameters": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Auto_Parameters', ``, 'boolean') }}"
-        }
+        "options": {}
       },
       "type": "@tavily/n8n-nodes-tavily.tavilyTool",
       "typeVersion": 1,
       "position": [
-        6656,
-        3120
+        -1424,
+        5136
       ],
-      "id": "4f476291-71c0-4da2-94b1-4899ed3b8930",
+      "id": "68606b1b-a948-4304-b238-b790498cc750",
       "name": "Search in Tavily",
       "credentials": {
         "tavilyApi": {
-          "id": "T5vtPjYIZCZamEvs",
+          "id": "lLsWjgg9PpphNv3F",
           "name": "Tavily account"
         }
       }
     },
     {
       "parameters": {
-        "modelName": "={{ $('Config').item.json.model_embedding }}"
+        "modelName": "={{ $('Config-Ingestion').item.json.model_embedding }}"
       },
       "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
       "typeVersion": 1,
       "position": [
-        6624,
-        2096
+        -1760,
+        4144
       ],
-      "id": "afb46dda-660f-41ca-b97c-c5f86d986614",
+      "id": "85fcf85d-32d4-4b1c-9bfe-671150345aba",
       "name": "Gemini Embeddings (Historical RAG)",
       "retryOnFail": true,
       "credentials": {
         "googlePalmApi": {
-          "id": "TMxXjmwGE8M5436u",
+          "id": "eFp22F1YihoaUDVd",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -558,21 +470,22 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=test_incident: {{ JSON.stringify($json, null, 2) }}",
+        "text": "=test_incident: {{ JSON.stringify($('Webhook').item.json.body, null, 2) }}",
         "hasOutputParser": true,
         "options": {
           "systemMessage": "You are a Historical Incident Intelligence Agent.\n\nINPUT:\n- test_incident: the raw alert JSON from the current security incident.\n\nTOOL:\n- Use the Supabase Vector Store tool to retrieve similar past resolved incidents via semantic similarity.\n\nDATA FORMAT — Critical, read before extracting anything:\nEach retrieved result is a single text block of Markdown (pageContent). There is no separate metadata object. All fields must be extracted from the Markdown text by scanning for section headers.\n\nThe Markdown structure is:\n- Header block contains: Incident ID, Severity, Category, Type, Date, Affected Systems\n- ## Alert Source — contains Detection Tool and Rule/Finding\n- ## Description — raw alert description\n- ## Detection Gap — why the alert was not caught sooner (may be absent)\n- ## Root Cause — root cause analysis text\n- ## What Went Well — bullet list of positive response actions\n- ## What Went Wrong — bullet list of response failures\n- ## Resolution Summary — how the incident was resolved\n- ## Remediation Actions — bullet list of specific actions taken\n- ## Lessons Learned — post-incident insight\n- ## MITRE Mapping — Tactics, Techniques, Prevention IDs\n\nExtraction rules:\n- Parse the incident_id from the line \"**Incident ID:** [value]\" in the header block.\n- Parse severity from \"**Severity:** [value]\", type from \"**Type:** [value]\".\n- For mitre_techniques_used: parse the \"Techniques: [list]\" line under ## MITRE Mapping.\n- For sections that are absent: return null for string fields, [] for array fields.\n\nTASK:\n1. Use the Supabase Vector Store tool to retrieve similar past resolved incidents.\n2. Analyze the retrieved incidents and extract structured historical intelligence.\n\nDo NOT write a triage note.\nDo NOT write a final report.\nDo NOT generate narrative paragraphs.\nYour job is to extract and synthesize patterns from past incidents in structured JSON form only.\n\n---------------------------------\nANALYSIS REQUIREMENTS\n---------------------------------\n\nYou MUST output ONLY valid JSON matching the schema enforced by the output parser. Do not add any explanation text outside the JSON.\n\nIntelligence synthesis rules:\nsimilarity_search_performed: Always true.\n\nmatch_quality:\n  \"strong\"   → top result similarity >= 0.80\n  \"moderate\" → top result similarity >= 0.60\n  \"weak\"     → top result similarity < 0.60\n  \"none\"     → 0 results returned\n\nincidents_retrieved: For EACH retrieved incident, extract and return:\n  incident_id: parse from \"**Incident ID:** [value]\" in the header block\n  similarity_score: similarity float, rounded to 3 decimal places\n  incident_type: parse from \"**Type:** [value]\" in the header block\n  severity: parse from \"**Severity:** [value]\" in the header block\n  resolution_time_minutes: parse from content if mentioned (e.g., \"resolved in 45 minutes\"), else null\n  root_cause: 1–2 sentence summary from the \"## Root Cause\" section\n  resolution_summary: 1–2 sentence summary from the \"## Resolution Summary\" section\n  key_remediation_actions: top 3 most specific/actionable bullet items from \"## Remediation Actions\"\n  lessons_learned: 1 sentence from the \"## Lessons Learned\" section, or null if absent\n  mitre_techniques_used: parse the \"Techniques: [T1xxx, T1xxx]\" line under \"## MITRE Mapping\", return as array\n  detection_gap: full text from the \"## Detection Gap\" section, or null if that section is absent\n  what_went_well: array of bullet items from the \"## What Went Well\" section, or [] if absent\n  what_went_wrong: array of bullet items from the \"## What Went Wrong\" section, or [] if absent\n\nhistorical_patterns: Cross-incident synthesis across ALL retrieved incidents:\n  most_common_root_cause: the root cause pattern repeating most often (1–2 sentences)\n  avg_resolution_time_minutes: arithmetic mean of all non-null resolution_time_minutes, or null\n  proven_remediation_steps: the 3–5 remediation actions appearing most consistently across incidents\n  common_mitre_techniques: deduplicated list of all MITRE technique IDs across all retrieved incidents\n  recurring_detection_gaps: array — summarize detection failures that appeared in multiple incidents. Empty array if none found.\n  what_went_well_patterns: array — 1–2 positive response patterns that historically minimized impact. Empty array if none.\n  what_went_wrong_patterns: array — 1–2 negative response patterns that historically worsened outcomes. Empty array if none.\n\ncontextual_relevance: How well retrieved incidents match the CURRENT test incident:\n  overlap_summary: 1–2 sentences on specific overlaps (same type? same MITRE tactic? same affected system?)\n  key_differentiators: 1–2 sentences on what is DIFFERENT about the test incident vs historical cases\n  confidence: \"high\" / \"medium\" / \"low\" — overall confidence that historical patterns apply to this incident\n\nfallback_note: If 0 results returned, explain that no matches were found and suggest a broader search. If results exist, set to null."
         }
       },
-      "id": "f1435d8c-9150-4d7a-b896-31504dea4637",
+      "id": "6528e1d6-81d7-49ed-9fea-a189ff6d3967",
       "name": "Historical Incidents RAG Agent",
       "position": [
-        6512,
-        1696
+        -1840,
+        3824
       ],
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "retryOnFail": true
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -586,20 +499,20 @@
         "topK": 3,
         "includeDocumentMetadata": false,
         "options": {
-          "queryName": "={{ $('Config').item.json.query_incidents }}"
+          "queryName": "={{ $('Config-Ingestion').item.json.query_incidents }}"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1.3,
       "position": [
-        6608,
-        1904
+        -1760,
+        4016
       ],
-      "id": "8fab29db-07e6-4f37-a4ad-8f494b5d71f8",
+      "id": "08ef03eb-41ae-437a-b174-4df59197923c",
       "name": "Resolved Incidents Vector Store",
       "credentials": {
         "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
+          "id": "dNPuriLFVHh6kevz",
           "name": "Supabase_n8n_Workflow_Incident_Management_V1"
         }
       }
@@ -607,21 +520,23 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "text": "={{ JSON.stringify($('Code in JavaScript').item.json.body, null, 2) }}",
         "hasOutputParser": true,
         "options": {
           "systemMessage": "You are an Incident Response Playbook Routing Agent.\n\nYour responsibility is to determine whether any retrieved reference playbook is a valid and appropriate match for the current security incident.\n\nPROCESS:\n\nCall the \"Supabase Vector Store\" tool using the incident’s core symptoms, detection signals, affected systems, and MITRE context as your search query.\n\nReview up to 3 retrieved candidate playbooks.\n\nEvaluate whether the playbook’s trigger conditions, attack vector, and operational scope truly match the incident.\n\nMATCHING RULES:\n\nThe attack vector must align (e.g., email phishing, identity brute force, S3 data exfiltration, etc.).\n\nThe scope must align (identity layer vs storage layer vs endpoint).\n\nPrefer the most specific playbook.\n\nDo not select a playbook if the match is weak or generic.\n\nIf uncertain, return no match.\n\nOUTPUT FORMAT (STRICT JSON ONLY). No additional commentary."
         }
       },
-      "id": "37c85f90-98fc-4c9e-b39d-648adbc27683",
+      "id": "b8dddfdb-3587-48da-83bf-90ee946da31a",
       "name": "Playbook Routing Agent",
       "position": [
-        6480,
-        2336
+        -1824,
+        4320
       ],
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "retryOnFail": true
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
     },
     {
       "parameters": {
@@ -634,20 +549,20 @@
         },
         "topK": 3,
         "options": {
-          "queryName": "={{ $('Config').item.json.query_playbooks }}"
+          "queryName": "={{ $('Config-Ingestion').item.json.query_playbooks }}"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1.3,
       "position": [
-        6608,
-        2528
+        -1648,
+        4544
       ],
-      "id": "824191c0-1e5d-4886-aff6-9671306847ad",
+      "id": "43fba87f-2e66-4a57-8a23-dfb0e41891dc",
       "name": "Reference Playbooks Vector Store",
       "credentials": {
         "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
+          "id": "dNPuriLFVHh6kevz",
           "name": "Supabase_n8n_Workflow_Incident_Management_V1"
         }
       }
@@ -659,15 +574,15 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
       "typeVersion": 1,
       "position": [
-        6736,
-        2672
+        -1776,
+        4672
       ],
-      "id": "a5852349-8369-4f32-a3c6-216e5972534b",
+      "id": "cf9b40e4-9fa4-4fcf-9f94-a4f8ae8df30c",
       "name": "Gemini Embeddings (Playbooks)",
       "retryOnFail": true,
       "credentials": {
         "googlePalmApi": {
-          "id": "TMxXjmwGE8M5436u",
+          "id": "eFp22F1YihoaUDVd",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -681,10 +596,10 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        6896,
-        2528
+        -1360,
+        4544
       ],
-      "id": "a3e3c893-1213-401f-b322-1136a8be3549",
+      "id": "64d89692-4547-4320-82ca-3abd3c1ed46a",
       "name": "Structured Output Parser - Playbook Router",
       "retryOnFail": true
     },
@@ -705,10 +620,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        7072,
-        2336
+        -1136,
+        4320
       ],
-      "id": "9ab7f4ee-d434-46d0-8435-8e1d72d02925",
+      "id": "04302602-1d53-4d05-a68c-43df10e28c54",
       "name": "Playbook Text Extractor",
       "retryOnFail": true
     },
@@ -721,10 +636,10 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        6768,
-        3120
+        -1776,
+        5104
       ],
-      "id": "ed9007c9-bbba-41f6-9ec4-d63fce387415",
+      "id": "58ddc17d-af50-4c43-a2d0-1ebfb369e8a4",
       "name": "Structured Output Parser - Threat Intel",
       "retryOnFail": true
     },
@@ -733,16 +648,19 @@
         "mode": "combine",
         "combineBy": "combineByPosition",
         "numberInputs": 4,
-        "options": {}
+        "options": {
+          "includeUnpaired": true
+        }
       },
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        7952,
-        2032
+        -608,
+        4304
       ],
-      "id": "89de56b1-3c65-4f23-ba43-1e0e06ad229b",
-      "name": "Merge All Intelligence"
+      "id": "5bf82fab-d781-4805-906d-12e9292b49cb",
+      "name": "Merge All Intelligence",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -753,10 +671,10 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        6912,
-        1920
+        -1504,
+        4048
       ],
-      "id": "f46220c8-abd4-4b05-9a84-5ff2d9ead116",
+      "id": "c87e8aa8-82b3-4477-9ae1-788c60974c38",
       "name": "Structured Output Parser - Historical RAG",
       "retryOnFail": true
     },
@@ -777,17 +695,17 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        6848,
-        2912
+        -1344,
+        4720
       ],
-      "id": "1ec74e56-bb98-4de4-99dc-483878efd578",
+      "id": "aa0f1d66-d27b-4326-8d66-ac25320870c6",
       "name": "Threat Intel Data Formatter",
       "retryOnFail": true
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=test_incident\n{{ JSON.stringify($('Fetch Test Incident from Supabase').item.json, null, 2) }}\n\npast_incident_data\n{{ JSON.stringify($json.past_incident_data) }}\n\nreference_playbook\n{{ JSON.stringify($json.playbook_text) }}\n\nexternal_threat_data\n{{ JSON.stringify($json.external_threat_data) }}",
+        "text": "=test_incident\n\n\npast_incident_data\n{{ JSON.stringify($json.past_incident_data) }}\n\nreference_playbook\n{{ JSON.stringify($json.playbook_text) }}\n\nexternal_threat_data\n{{ JSON.stringify($json.external_threat_data) }}",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
@@ -801,96 +719,27 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
       "position": [
-        8336,
-        2048
+        -464,
+        4432
       ],
-      "id": "348067a9-1bbc-46e8-bc3f-94857fe0f6c7",
+      "id": "98093759-4556-4111-aacf-71ec76425c79",
       "name": "Report Synthesizer",
       "retryOnFail": true
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "e216355c-7d36-4eff-8a2f-b890dabfeda4",
-              "name": "incident_id",
-              "value": "Test-ddos_attack-001",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        5280,
-        2112
-      ],
-      "id": "b384953e-025f-41ad-afd6-2ba147267291",
-      "name": "Set Incident ID"
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "={{ $('Config').item.json.table_test }}",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "=incident_id",
-              "condition": "eq",
-              "keyValue": "={{ $('Set Incident ID').item.json.incident_id }}"
-            }
-          ]
-        },
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "=output",
-              "fieldValue": "={{ $json.output }}"
-            },
-            {
-              "fieldId": "=output_markdown",
-              "fieldValue": "={{ $json.output.report_markdown }}"
-            },
-            {
-              "fieldId": "=run_status",
-              "fieldValue": "={{ \"completed\" }}"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        9264,
-        1872
-      ],
-      "id": "a5421ed9-74ca-49c0-9e0e-ee8eb5650c87",
-      "name": "Write Runbook to DB",
-      "retryOnFail": true,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
-          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
-        }
-      }
-    },
-    {
-      "parameters": {
         "content": "## Test Cases (13 Total)\n\nTC1  -- Test-data_exfiltration-001\nTC2  -- Test-ddos_attack-001\nTC3  -- Test-error_spike-001\nTC4  -- Test-leaked_credentials-001\nTC5  -- Test-malware_detection-001\nTC6  -- Test-memory_leak-001\nTC7  -- Test-phishing_attack-001\nTC8  -- Test-policy_violation-001\nTC9  -- Test-prompt_injection-001\nTC10 -- Test-ransomware_detection-001\nTC11 -- Test-service_outage-001\nTC12 -- Test-unauthorized_access_attempt-001\nTC13 -- Test-vulnerable_dependency-001\n\nChange active incident in the Set Incident ID node.",
-        "height": 368,
-        "width": 384,
-        "color": 5
+        "height": 432,
+        "width": 368,
+        "color": "#33285F"
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        4624,
-        1120
+        -3472,
+        3168
       ],
-      "id": "9092b935-7197-41ea-8fa2-0f19052b03a0",
+      "id": "48fbd7cb-0480-4dcc-9295-db5a5587886e",
       "name": "Sticky Note12"
     },
     {
@@ -910,140 +759,708 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        6816,
-        1696
+        -1136,
+        4032
       ],
-      "id": "9c5850cf-59b9-4a1f-9258-ebb35e1279c7",
+      "id": "50f1378a-1ee1-417d-8e21-f224c98e1883",
       "name": "Historical RAG Data Formatter",
       "retryOnFail": true
     },
     {
       "parameters": {
-        "content": "",
-        "height": 704,
-        "width": 400,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        7792,
-        1856
-      ],
-      "id": "e6c0f871-d8ba-4ad7-bef1-4d5be718d2a2",
-      "name": "Sticky Note23"
-    },
-    {
-      "parameters": {
         "content": "## Step 4 -- Report Synthesizer\n\nReceives merged intelligence from all 3 branches\nand produces a complete incident response report.\n\nModel: Claude - Report Synthesizer (OpenRouter)\n\nOutput (JSON validated by Structured Output Parser):\n  incident_summary\n  immediate_actions[]\n  investigation_checklist[]\n  containment_guidance[]\n  evidence_to_preserve[]\n  iocs_extracted[]\n  assumptions_and_confidence\n  output_markdown (full 11-section report)",
-        "height": 352,
+        "height": 416,
         "width": 480,
-        "color": 5
+        "color": "#51B3D1"
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        8240,
-        1472
+        -128,
+        4032
       ],
-      "id": "1296c4e0-4e48-42ec-8379-74ca21455418",
+      "id": "b69c3b22-561e-4234-b0c7-07df461252e6",
       "name": "Sticky Note24"
     },
     {
       "parameters": {
         "content": "## Branch A -- Historical RAG\n\nSearches past resolved incidents for similar cases.\n\nAgent:  Historical Incidents RAG Agent\nModel:  Gemini Embeddings + Supabase pgvector\nTop-K:  3 most similar past incidents\n\nOutput fields:\n  match_quality  (strong / moderate / weak / none)\n  incidents_retrieved\n  historical_patterns\n  detection_gap_analysis",
-        "height": 304,
-        "width": 464,
-        "color": 6
+        "height": 368,
+        "width": 432,
+        "color": "#18233B"
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        5792,
-        1760
+        -2304,
+        3824
       ],
-      "id": "2c0710c3-5f83-4c68-928c-a19c11b5475d",
+      "id": "6c448e2b-cf7d-4d9b-b206-f2990f7b31a0",
       "name": "Sticky Note26"
     },
     {
       "parameters": {
         "content": "## Branch C -- External Threat Intelligence\n\nSearches the live web for CVEs, active threat campaigns,\nIOCs and mitigation guidance relevant to the incident.\n\nAgent:  Threat Intel Enrichment Agent\nTools:  Tavily Search + Claude (OpenRouter)\n\nOutput fields:\n  incident_classification\n  threat_intelligence[]\n  ioc_indicators[]\n  mitigation_guidance[]\n  emerging_risk_assessment\n\nSmart suppression: AVAILABILITY and PERFORMANCE\nincidents skip external search entirely to avoid\nirrelevant security hallucinations.",
-        "height": 464,
-        "width": 384,
-        "color": 6
+        "height": 528,
+        "width": 416,
+        "color": "#18233B"
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        5792,
-        2864
+        -2304,
+        4800
       ],
-      "id": "b6ff1704-f823-4765-bdec-0a103148b692",
+      "id": "63a4355d-43a9-4f68-841d-9a17a159f4aa",
       "name": "Sticky Note27"
     },
     {
       "parameters": {
-        "content": "",
-        "height": 496,
-        "width": 1984,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        5760,
-        2848
-      ],
-      "id": "a59a26b4-5dc1-4454-8ea5-158ddb85e45e",
-      "name": "Sticky Note28"
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 560,
-        "width": 1984,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        5760,
-        1680
-      ],
-      "id": "0ece48e0-d82d-4efd-afe8-a45804273952",
-      "name": "Sticky Note29"
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 528,
-        "width": 1984,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        5760,
-        2288
-      ],
-      "id": "7aaa6a7b-5c1a-47db-8600-4e037575b403",
-      "name": "Sticky Note30"
-    },
-    {
-      "parameters": {
         "content": "## Branch B -- Playbook Router\n\nMatches the incident to the best-fit response playbook.\nFalls back to GEN-UNIVERSAL-001 if no match found.\n\nAgent:  Playbook Routing Agent\nModel:  Gemini Embeddings + Supabase pgvector\n\nOutput fields:\n  match_found  (true / false)\n  playbook_id, playbook_name\n  confidence, reasoning\n\nLoaded playbooks:\n  S3 Bucket Access, Phishing,\n  Phishing Campaign, Brute Force Login",
-        "height": 368,
-        "width": 384,
-        "color": 6
+        "height": 480,
+        "width": 416,
+        "color": "#18233B"
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        5808,
-        2336
+        -2304,
+        4256
       ],
-      "id": "4c61e910-75fc-4735-8471-fc878c953435",
+      "id": "1420e8df-8d65-43b8-8b4f-329f3fc9bfde",
       "name": "Sticky Note31"
+    },
+    {
+      "parameters": {
+        "content": "## Configuration\n### Values To Change\n\n**Set these before running any pipeline**\n\n  table_incidents   --> test_incidents_v1\n  table_playbooks   --> reference_playbooks_v1\n  incident_id       --> ID of the test incident to process\n  model_analysis    --> OpenRouter model for RAG + Synthesis\n  model_threat      --> OpenRouter model for Threat Intel\n\nEdit values directly in the Config node.\n\nCredentials required (Settings -> Credentials):\n  - Supabase\n  - OpenRouter\n  - Google Gemini\n  - Tavily",
+        "height": 608,
+        "width": 496,
+        "color": "#21C45E"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4384,
+        2752
+      ],
+      "id": "c4127644-c004-4370-91a4-0fb53f218a7a",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"incident_summary\": {\n      \"type\": \"string\",\n      \"description\": \"3–5 sentence summary: what happened, severity, single most important action.\"\n    },\n    \"similar_past_incidents_used\": {\n      \"type\": \"array\",\n      \"description\": \"incident_id values from past_incident_data that materially influenced this response.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"immediate_actions\": {\n      \"type\": \"array\",\n      \"description\": \"Each action from the IMMEDIATE (0–15 min) block of Section 5, as individual strings.\",\n      \"items\": { \"type\": \"string\" },\n      \"minItems\": 1\n    },\n    \"containment_guidance\": {\n      \"type\": \"array\",\n      \"description\": \"Each action from the CONTAINMENT (15–60 min) block of Section 5, as individual strings.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"iocs_extracted\": {\n      \"type\": \"array\",\n      \"description\": \"IOC values extracted from Section 4 — IPs, hashes, domains, process names. Empty array if none.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"assumptions_and_confidence\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"confidence_level\": {\n          \"type\": \"string\",\n          \"enum\": [\"high\", \"medium\", \"low\"]\n        },\n        \"generic_playbook_used\": {\n          \"type\": \"boolean\",\n          \"description\": \"true if GEN-UNIVERSAL-001 playbook was used.\"\n        },\n        \"caveat_notes\": {\n          \"type\": \"array\",\n          \"items\": { \"type\": \"string\" }\n        }\n      },\n      \"required\": [\"confidence_level\", \"generic_playbook_used\", \"caveat_notes\"],\n      \"additionalProperties\": false\n    },\n    \"report_markdown\": {\n      \"type\": \"string\",\n      \"description\": \"The complete, fully formatted 11-section Markdown IR report. Must not be empty or truncated.\"\n    }\n  },\n  \"required\": [\n    \"incident_summary\",\n    \"immediate_actions\",\n    \"containment_guidance\",\n    \"iocs_extracted\",\n    \"assumptions_and_confidence\",\n    \"report_markdown\"\n  ],\n  \"additionalProperties\": false\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -384,
+        4656
+      ],
+      "id": "940e6a95-ab5b-4b9f-b436-cdd39895cdb0",
+      "name": "Structured Output Parser - Synthesizer",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a7b1dcb2-dfa6-4717-b69a-b6b9a19863bd",
+              "leftValue": "={{ $json.output.incident_summary }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "8526c2e3-9a0c-4884-8479-1c490d558e21",
+              "leftValue": "={{ $json.output.immediate_actions.length }}",
+              "rightValue": "={{ 0 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "76cacd44-d21c-48f0-a247-0cf00c25923e",
+              "leftValue": "={{ $json.output.report_markdown }}",
+              "rightValue": "## 1. Executive Summary",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        4432
+      ],
+      "id": "43f65b18-20ed-4d8e-8968-5bc091cd5157",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "## Degraded Output\n\nThe Structured Output Parser did not produce\nall required fields (incident_summary,\nimmediate_actions, output_markdown).\n\nAction: DO NOT write to Supabase.\nCheck the LLM response in execution log\nand re-run the workflow.\n\nThis path should never trigger in normal\noperation. If it does, check model rate\nlimits or context window size.",
+        "height": 384,
+        "width": 256,
+        "color": "#CF8D97"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        368,
+        4688
+      ],
+      "id": "89795f85-dd0a-47a8-a522-28189cd16340",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "={{ $('Config-Ingestion').item.json.table_playbooks }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=id",
+              "keyValue": "={{ $('Playbook Routing Agent').item.json.output.playbook_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        4320
+      ],
+      "id": "ccf987cb-2523-4403-aaa6-f912959c80a5",
+      "name": "Fetch Full Playbook from Supabase",
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "dNPuriLFVHh6kevz",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Incident Management\n\nWhat this workflow does:\nTakes a raw security or operational incident and produces\na structured, battle-ready incident response report.\n\nThree intelligence branches run in parallel:\n\n  Branch A -- Historical RAG\n  Searches past incidents for similar cases and proven\n  remediation patterns.\n\n  Branch B -- Playbook Router\n  Matches the incident to the best-fit response playbook.\n  Falls back to a generic playbook if no match exists.\n\n  Branch C -- Threat Intelligence\n  Searches the live web for CVEs, active threat campaigns,\n  IOCs and mitigation guidance.\n\nFinal output:\n  - Structured JSON written to test_incidents_v1.output\n  - 11-section Markdown in test_incidents_v1.output_markdown\n\nStack: n8n, Supabase (pgvector), Gemini Embeddings,\n       Claude via OpenRouter, Tavily Search",
+        "height": 656,
+        "width": 496,
+        "color": "#4E80EE"
+      },
+      "id": "adc1993b-1328-4f2e-8bb3-d93273b7d862",
+      "name": "Sticky Note - Pipeline Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4384,
+        3408
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 3 -- Merge All Intelligence\n\nCombines outputs from all 3 branches into one item\nusing combineByPosition.\n\nFields passed to the synthesizer:\n  past_incident_data   (from Branch A)\n  playbook_text        (from Branch B)\n  external_threat_data (from Branch C)",
+        "height": 344,
+        "width": 388,
+        "color": "#51B3D1"
+      },
+      "id": "904c7ef7-0ebb-4892-aeaf-658bdb3350bf",
+      "name": "Sticky Note - Merge Step",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        4032
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 1 -- Fetch Incident\n\nReads the active test incident row from Supabase\nby incident_id configured in Set Incident ID.\n\nOutput: full incident JSON passed to all 3 branches.",
+        "height": 272,
+        "width": 320,
+        "color": "#51B3D1"
+      },
+      "id": "4f38de83-84ba-4e3c-865f-8fb69e94ca64",
+      "name": "Sticky Note - Fetch Step",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3648,
+        4400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 2 -- Parallel Retrieval\n3 branches run simultaneously. See labels below.",
+        "width": 284,
+        "color": "#51B3D1"
+      },
+      "id": "f5d219fd-225f-41b8-9bae-ef5b72c24b24",
+      "name": "Sticky Note - Step 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2608,
+        3776
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 5 -- Validate Output\n\nChecks that the synthesizer produced all required fields:\nincident_summary, immediate_actions, output_markdown.\n\nTRUE --> Step 6 (write to Supabase)\nFALSE --> Degraded Output (no write)",
+        "height": 280,
+        "width": 320,
+        "color": "#51B3D1"
+      },
+      "id": "166cc918-8a6a-470b-a354-a4f480f6997f",
+      "name": "Sticky Note - Step 5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        4768
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Step 6 -- Write to Supabase\n\nUpdates test_incidents_v1 row:\n  output          --> structured JSON\n  output_markdown --> 11-section report\n  run_status      --> completed",
+        "height": 260,
+        "width": 280,
+        "color": "#51B3D1"
+      },
+      "id": "f5194d24-dad5-4347-8d6c-5f34ce289778",
+      "name": "Sticky Note - Step 6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        400,
+        4032
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2672,
+        3008
+      ],
+      "id": "e4381b7d-ed85-4b47-81ac-ea9542718922",
+      "name": "Loop Over Documents",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "chunkSize": "={{ $('Config-Ingestion').item.json.chunk_size }}",
+        "chunkOverlap": "={{ $('Config-Ingestion').item.json.chunk_overlap }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        2800
+      ],
+      "id": "fe131fe4-9f46-482b-a9bd-ace0dc743752",
+      "name": "Recursive Character Text Splitter (Resolved Incidents)",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "={{ $('Config-Ingestion').item.json.table_resolved }}",
+          "mode": "id"
+        },
+        "queryName": "={{ $('Config-Ingestion').item.json.query_incidents }}"
+      },
+      "id": "9ea8cfee-247e-496e-849e-e5a68ceb2383",
+      "name": "Supabase Vector Insert (Resolved Incidents)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabaseInsert",
+      "typeVersion": 1,
+      "position": [
+        -2336,
+        2400
+      ],
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "dNPuriLFVHh6kevz",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1952,
+        2608
+      ],
+      "id": "ffc6328b-01be-4942-a58a-04d4cb82ea25",
+      "name": "Wait (To Avoid Hitting API Limits)",
+      "webhookId": "64fee86b-c74c-4101-a2a1-7edfe9259155"
+    },
+    {
+      "parameters": {
+        "chunkSize": "={{ $('Config-Ingestion').item.json.chunk_size }}",
+        "chunkOverlap": "={{ $('Config-Ingestion').item.json.chunk_overlap }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -1136,
+        3408
+      ],
+      "id": "a36e33f3-b047-4482-a256-04f4732bb9bb",
+      "name": "Recursive Character Text Splitter (Playbooks Ingestion)",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config-Ingestion').item.json.model_chat }}",
+        "options": {
+          "temperature": "={{ $('Config-Ingestion').item.json.temperature }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1648,
+        3040
+      ],
+      "id": "8952342f-c176-40cf-a872-95575f02ccef",
+      "name": "Summarizer Agent",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "1LIgost5SEkj7jxV",
+          "name": "IncidentResponse-OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "={{ $('Config-Ingestion').item.json.table_playbooks }}",
+          "mode": "id"
+        },
+        "queryName": "={{ $('Config-Ingestion').item.json.query_playbooks }}"
+      },
+      "id": "607d77cc-ce52-487e-b829-14e9afe469c5",
+      "name": "Supabase Vector Insert (Playbooks Ingestion)",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabaseInsert",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        3008
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "dNPuriLFVHh6kevz",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        4864
+      ],
+      "id": "92ad7447-6859-429a-824f-afbc612ed089",
+      "name": "Report Synthesizer Agent",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "1LIgost5SEkj7jxV",
+          "name": "IncidentResponse-OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "={{ $('Config').item.json.table_test }}",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "=incident_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Webhook').item.json.body.incident_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "=output",
+              "fieldValue": "={{ $json.output }}"
+            },
+            {
+              "fieldId": "=output_markdown",
+              "fieldValue": "={{ $json.output.report_markdown }}"
+            },
+            {
+              "fieldId": "=run_status",
+              "fieldValue": "={{ \"completed\" }}"
+            },
+            {
+              "fieldId": "webhook_url",
+              "fieldValue": "={{ $('Webhook').item.json.webhookUrl }}"
+            },
+            {
+              "fieldId": "execution",
+              "fieldValue": "={{ $execution.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        432,
+        4336
+      ],
+      "id": "c4c574e5-3be9-48d5-a59b-2182ec28f80b",
+      "name": "Write Runbook to DB",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "dNPuriLFVHh6kevz",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        432,
+        4528
+      ],
+      "id": "87f6fb84-ec29-4183-b905-039edbb79af2",
+      "name": "Replace With Error Notification Workflow"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "8142d48e-b633-498d-8e73-d041dff78808",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3664,
+        4240
+      ],
+      "id": "680c7a19-4fba-4024-99d9-8d91bb5342d9",
+      "name": "Webhook",
+      "webhookId": "8142d48e-b633-498d-8e73-d041dff78808"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e72c5a65-6418-4b31-93b0-0d2803000cba",
+              "name": "message",
+              "value": "TIP Search Failed. Other searches unaffected.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1344,
+        4928
+      ],
+      "id": "414b364d-5ca3-4636-ae04-180a59a0415f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst encrypted = $input.first().json.body.encrypted_openrouter_key;\nconst ENCRYPTION_KEY = 'e6d371c137a8b45cb2f26aa651ee4890b54cd4cf47458149cbb51b5a6b4436f6'; // 64-char hex\n\nconst [ivB64, ctB64] = encrypted.split(':');\nconst iv         = Buffer.from(ivB64, 'base64');\nconst ctWithTag  = Buffer.from(ctB64, 'base64');\nconst authTag    = ctWithTag.slice(-16);       // last 16 bytes = GCM tag\nconst ciphertext = ctWithTag.slice(0, -16);\n\nconst decipher = crypto.createDecipheriv(\n  'aes-256-gcm',\n  Buffer.from(ENCRYPTION_KEY, 'hex'),\n  iv\n);\ndecipher.setAuthTag(authTag);\nconst apiKey = decipher.update(ciphertext, null, 'utf8')\n             + decipher.final('utf8');\n\nreturn [{ json: { ...$input.first().json, openrouter_api_key: apiKey } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3280,
+        4240
+      ],
+      "id": "55337668-8df8-4f2b-ac8f-997c9ea94cc7",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        4144
+      ],
+      "id": "8837c073-9e53-4d62-a3bb-891bdadf28db",
+      "name": "Threat Intel Model",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "1LIgost5SEkj7jxV",
+          "name": "IncidentResponse-OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1856,
+        5200
+      ],
+      "id": "c0fd78df-1e0d-49dd-ac58-222a888b6dbb",
+      "name": "Historical RAG Model",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "1LIgost5SEkj7jxV",
+          "name": "IncidentResponse-OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Config').item.json.model_analysis }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1568,
+        4656
+      ],
+      "id": "c5e393a6-8cdf-4002-a6bb-8fa82f091d36",
+      "name": "Playbook RAG Model",
+      "retryOnFail": true,
+      "credentials": {
+        "openRouterApi": {
+          "id": "1LIgost5SEkj7jxV",
+          "name": "IncidentResponse-OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "incident_analyses",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "execution_id",
+              "fieldValue": "={{ $execution.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2944,
+        4240
+      ],
+      "id": "6e88f7ae-fb2e-42e1-8ed2-47b26b19c9b6",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dNPuriLFVHh6kevz",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "incident_analyses",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Create a row').first().json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "report",
+              "fieldValue": "={{ $json.output.report_markdown }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "complete"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        4544
+      ],
+      "id": "b214be4d-44f4-438f-81b0-6df1bedd1dd5",
+      "name": "Update on completion",
+      "credentials": {
+        "supabaseApi": {
+          "id": "dNPuriLFVHh6kevz",
+          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
+        }
+      }
     },
     {
       "parameters": {
@@ -1052,7 +1469,7 @@
             {
               "id": "4730995e-a705-4d72-9f96-8e5b5f388f17",
               "name": "github_repo",
-              "value": "Umang00/Incident-Management-V1",
+              "value": "deployedengineer/incident-response",
               "type": "string"
             },
             {
@@ -1126,6 +1543,12 @@
               "name": "table_test",
               "value": "test_incidents_v1",
               "type": "string"
+            },
+            {
+              "id": "b96729de-4ff2-46ef-bc4a-991c8e9c9aff",
+              "name": "webhook_body",
+              "value": "={{ $json.body }}",
+              "type": "object"
             }
           ]
         },
@@ -1134,544 +1557,225 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        4928,
-        464
+        -3552,
+        3008
       ],
-      "id": "fdcad591-557e-49dc-8abc-40e5a121f762",
-      "name": "Config"
+      "id": "44ab3709-24cd-4e5a-a1e3-ca44540f0535",
+      "name": "Config-Ingestion"
     },
     {
       "parameters": {
-        "content": "## Configuration -- Values To Change\n\nSet these before running any pipeline:\n\n  table_incidents   --> test_incidents_v1\n  table_playbooks   --> reference_playbooks_v1\n  incident_id       --> ID of the test incident to process\n  model_analysis    --> OpenRouter model for RAG + Synthesis\n  model_threat      --> OpenRouter model for Threat Intel\n\nEdit values directly in the Config node.\n\nCredentials required (Settings -> Credentials):\n  - Supabase\n  - OpenRouter\n  - Google Gemini\n  - Tavily",
-        "height": 384,
-        "width": 848
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        4256,
-        368
-      ],
-      "id": "4cb76b02-5be1-4c80-b8a2-1021118d2669",
-      "name": "Sticky Note8"
-    },
-    {
-      "parameters": {
-        "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"incident_summary\": {\n      \"type\": \"string\",\n      \"description\": \"3–5 sentence summary: what happened, severity, single most important action.\"\n    },\n    \"similar_past_incidents_used\": {\n      \"type\": \"array\",\n      \"description\": \"incident_id values from past_incident_data that materially influenced this response.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"immediate_actions\": {\n      \"type\": \"array\",\n      \"description\": \"Each action from the IMMEDIATE (0–15 min) block of Section 5, as individual strings.\",\n      \"items\": { \"type\": \"string\" },\n      \"minItems\": 1\n    },\n    \"containment_guidance\": {\n      \"type\": \"array\",\n      \"description\": \"Each action from the CONTAINMENT (15–60 min) block of Section 5, as individual strings.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"iocs_extracted\": {\n      \"type\": \"array\",\n      \"description\": \"IOC values extracted from Section 4 — IPs, hashes, domains, process names. Empty array if none.\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"assumptions_and_confidence\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"confidence_level\": {\n          \"type\": \"string\",\n          \"enum\": [\"high\", \"medium\", \"low\"]\n        },\n        \"generic_playbook_used\": {\n          \"type\": \"boolean\",\n          \"description\": \"true if GEN-UNIVERSAL-001 playbook was used.\"\n        },\n        \"caveat_notes\": {\n          \"type\": \"array\",\n          \"items\": { \"type\": \"string\" }\n        }\n      },\n      \"required\": [\"confidence_level\", \"generic_playbook_used\", \"caveat_notes\"],\n      \"additionalProperties\": false\n    },\n    \"report_markdown\": {\n      \"type\": \"string\",\n      \"description\": \"The complete, fully formatted 11-section Markdown IR report. Must not be empty or truncated.\"\n    }\n  },\n  \"required\": [\n    \"incident_summary\",\n    \"immediate_actions\",\n    \"containment_guidance\",\n    \"iocs_extracted\",\n    \"assumptions_and_confidence\",\n    \"report_markdown\"\n  ],\n  \"additionalProperties\": false\n}",
-        "autoFix": true
-      },
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.3,
-      "position": [
-        8448,
-        2208
-      ],
-      "id": "754e5552-c024-47a3-97e8-316a7a58a413",
-      "name": "Structured Output Parser - Synthesizer",
-      "retryOnFail": true
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
+        "assignments": {
+          "assignments": [
             {
-              "id": "a7b1dcb2-dfa6-4717-b69a-b6b9a19863bd",
-              "leftValue": "={{ $json.output.incident_summary }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
+              "id": "4730995e-a705-4d72-9f96-8e5b5f388f17",
+              "name": "github_repo",
+              "value": "deployedengineer/incident-response",
+              "type": "string"
             },
             {
-              "id": "8526c2e3-9a0c-4884-8479-1c490d558e21",
-              "leftValue": "={{ $json.output.immediate_actions.length }}",
-              "rightValue": "={{ 0 }}",
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
+              "id": "a9cd6345-3ec7-4be1-8e56-ff290289554d",
+              "name": "github_baseUrl",
+              "value": "https://api.github.com/repos",
+              "type": "string"
             },
             {
-              "id": "76cacd44-d21c-48f0-a247-0cf00c25923e",
-              "leftValue": "={{ $json.output.report_markdown }}",
-              "rightValue": "## 1. Executive Summary",
-              "operator": {
-                "type": "string",
-                "operation": "contains"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        8912,
-        2048
-      ],
-      "id": "0a4dea6e-b852-4de0-9457-825aa79b4868",
-      "name": "If"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        9264,
-        2336
-      ],
-      "id": "dc094fef-85a8-4dd1-9ab9-56161b94b0b5",
-      "name": "Replace With Error Notification Workflow"
-    },
-    {
-      "parameters": {
-        "content": "## Degraded Output\n\nThe Structured Output Parser did not produce\nall required fields (incident_summary,\nimmediate_actions, output_markdown).\n\nAction: DO NOT write to Supabase.\nCheck the LLM response in execution log\nand re-run the workflow.\n\nThis path should never trigger in normal\noperation. If it does, check model rate\nlimits or context window size.",
-        "height": 304,
-        "width": 256,
-        "color": 5
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        9184,
-        2576
-      ],
-      "id": "46f52e20-53e1-4dca-bf0f-cbd5640bcaee",
-      "name": "Sticky Note9"
-    },
-    {
-      "parameters": {
-        "operation": "get",
-        "tableId": "={{ $('Config').item.json.table_playbooks }}",
-        "filters": {
-          "conditions": [
+              "id": "d724a580-8b94-4736-86ba-ba729b16c6fe",
+              "name": "model_chat",
+              "value": "google/gemini-3.1-pro-preview",
+              "type": "string"
+            },
             {
-              "keyName": "=id",
-              "keyValue": "={{ $('Playbook Routing Agent').item.json.output.playbook_id }}"
+              "id": "a91d0c1f-44d7-44e9-b63d-2283226de411",
+              "name": "model_embedding",
+              "value": "models/gemini-embedding-001",
+              "type": "string"
+            },
+            {
+              "id": "c88da39a-8099-418e-aa87-217275acaa12",
+              "name": "model_analysis",
+              "value": "anthropic/claude-opus-4.5",
+              "type": "string"
+            },
+            {
+              "id": "134e44c4-d70f-460a-a235-542cce3b385e",
+              "name": "temperature",
+              "value": 0.3,
+              "type": "number"
+            },
+            {
+              "id": "76ff66b0-3b3b-435f-b1fd-f216f2ed7594",
+              "name": "chunk_size",
+              "value": 10000,
+              "type": "number"
+            },
+            {
+              "id": "8641c57d-7230-4769-80b4-fd2fd048f441",
+              "name": "chunk_overlap",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "68ef0470-970f-4a13-94df-e4a086c4edaf",
+              "name": "query_playbooks",
+              "value": "match_reference_playbooks_v1",
+              "type": "string"
+            },
+            {
+              "id": "fec0bfa3-147a-4b0a-bd66-239f0830534a",
+              "name": "query_incidents",
+              "value": "match_resolved_incidents_v1",
+              "type": "string"
+            },
+            {
+              "id": "82640a55-43a8-4e7d-808e-2f99712fc0ab",
+              "name": "table_resolved",
+              "value": "resolved_incidents_v1",
+              "type": "string"
+            },
+            {
+              "id": "3bb5bfcc-2fc7-4c9e-946f-90fc368cdb1e",
+              "name": "table_playbooks",
+              "value": "reference_playbooks_v1",
+              "type": "string"
+            },
+            {
+              "id": "eb1088ba-166d-4f8a-bd89-cfc18ea9c721",
+              "name": "table_test",
+              "value": "test_incidents_v1",
+              "type": "string"
+            },
+            {
+              "id": "b96729de-4ff2-46ef-bc4a-991c8e9c9aff",
+              "name": "webhook_body",
+              "value": "={{ $json.body }}",
+              "type": "object"
             }
           ]
-        }
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        6864,
-        2336
-      ],
-      "id": "3682764a-78c4-4376-ae8f-187a90f4dc1c",
-      "name": "Fetch Full Playbook from Supabase",
-      "alwaysOutputData": false,
-      "retryOnFail": false,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
-          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
-        }
-      },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
-        "content": "## Incident Management\n\nWhat this workflow does:\nTakes a raw security or operational incident and produces\na structured, battle-ready incident response report.\n\nThree intelligence branches run in parallel:\n\n  Branch A -- Historical RAG\n  Searches past incidents for similar cases and proven\n  remediation patterns.\n\n  Branch B -- Playbook Router\n  Matches the incident to the best-fit response playbook.\n  Falls back to a generic playbook if no match exists.\n\n  Branch C -- Threat Intelligence\n  Searches the live web for CVEs, active threat campaigns,\n  IOCs and mitigation guidance.\n\nFinal output:\n  - Structured JSON written to test_incidents_v1.output\n  - 11-section Markdown in test_incidents_v1.output_markdown\n\nStack: n8n, Supabase (pgvector), Gemini Embeddings,\n       Claude via OpenRouter, Tavily Search",
-        "height": 560,
-        "width": 464,
-        "color": 5
-      },
-      "id": "57bf6a1b-59a7-471b-846b-18d0a87061c8",
-      "name": "Sticky Note - Pipeline Overview",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        4624,
-        -256
-      ]
-    },
-    {
-      "parameters": {
-        "content": "## Step 3 -- Merge All Intelligence\n\nCombines outputs from all 3 branches into one item\nusing combineByPosition.\n\nFields passed to the synthesizer:\n  past_incident_data   (from Branch A)\n  playbook_text        (from Branch B)\n  external_threat_data (from Branch C)",
-        "height": 344,
-        "width": 388,
-        "color": 5
-      },
-      "id": "9fabfcf8-4f33-4f72-aea0-00153a80b58e",
-      "name": "Sticky Note - Merge Step",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        7808,
-        1472
-      ]
-    },
-    {
-      "parameters": {
-        "content": "## Step 1 -- Fetch Incident\n\nReads the active test incident row from Supabase\nby incident_id configured in Set Incident ID.\n\nOutput: full incident JSON passed to all 3 branches.",
-        "height": 192,
-        "width": 320,
-        "color": 5
-      },
-      "id": "5c913115-b6da-4ad4-b9f3-6abd67b25d4c",
-      "name": "Sticky Note - Fetch Step",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        5280,
-        1888
-      ]
-    },
-    {
-      "parameters": {
-        "content": "## Step 2 -- Parallel Retrieval\n3 branches run simultaneously. See labels below.",
-        "height": 128,
-        "width": 300,
-        "color": 5
-      },
-      "id": "1e44cc5d-df61-49b8-8fbc-29b64df6ef03",
-      "name": "Sticky Note - Step 2",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        5776,
-        1536
-      ]
-    },
-    {
-      "parameters": {
-        "content": "## Step 5 -- Validate Output\n\nChecks that the synthesizer produced all required fields:\nincident_summary, immediate_actions, output_markdown.\n\nTRUE --> Step 6 (write to Supabase)\nFALSE --> Degraded Output (no write)",
-        "height": 232,
-        "width": 320,
-        "color": 5
-      },
-      "id": "c6bb32ef-cf30-4859-9b40-fafcf71108ca",
-      "name": "Sticky Note - Step 5",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        8800,
-        1488
-      ]
-    },
-    {
-      "parameters": {
-        "content": "## Step 6 -- Write to Supabase\n\nUpdates test_incidents_v1 row:\n  output          --> structured JSON\n  output_markdown --> 11-section report\n  run_status      --> completed",
-        "height": 212,
-        "width": 280,
-        "color": 5
-      },
-      "id": "4a1bf1ca-5f01-4b47-9b59-d653f22dde09",
-      "name": "Sticky Note - Step 6",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        9200,
-        1488
-      ]
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 704,
-        "width": 496,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        8240,
-        1856
-      ],
-      "id": "cf6a6c9a-044d-4d8e-86c5-a5db0c0a526e",
-      "name": "Sticky Note10"
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 688,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        8832,
-        1856
-      ],
-      "id": "151d8941-9437-4aef-8482-bff992ac9406",
-      "name": "Sticky Note11"
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 288,
-        "width": 304,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        9168,
-        2256
-      ],
-      "id": "d13e74de-3d2c-47d6-804d-f4d692b0fa94",
-      "name": "Sticky Note13"
-    },
-    {
-      "parameters": {
-        "content": "",
-        "height": 224,
-        "width": 304,
-        "color": 2
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        9168,
-        1840
-      ],
-      "id": "9dd4070c-c2fd-443e-af02-9c26575b4cd3",
-      "name": "Sticky Note14"
-    },
-    {
-      "parameters": {
-        "model": "={{ $('Config').item.json.model_analysis }}",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        6464,
-        2544
-      ],
-      "id": "7a9dbb28-b7a6-436e-b0db-e67a206e0c3e",
-      "name": "Playbook Router",
-      "retryOnFail": true,
-      "credentials": {
-        "openRouterApi": {
-          "id": "9r5tndCAyKCnqvfG",
-          "name": "OpenRouter account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "={{ $('Config').item.json.model_analysis }}",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        6512,
-        3120
-      ],
-      "id": "8be21867-d87a-4b19-9319-4599af5c0a28",
-      "name": "Historical RAG Agent",
-      "retryOnFail": true,
-      "credentials": {
-        "openRouterApi": {
-          "id": "9r5tndCAyKCnqvfG",
-          "name": "OpenRouter account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "={{ $('Config').item.json.model_analysis }}",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        6512,
-        1936
-      ],
-      "id": "296254bb-b960-43e0-9443-795e0496892a",
-      "name": "Threat Intel Agent",
-      "retryOnFail": true,
-      "credentials": {
-        "openRouterApi": {
-          "id": "9r5tndCAyKCnqvfG",
-          "name": "OpenRouter account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        5856,
-        352
-      ],
-      "id": "67de9d1e-8a11-412d-9bf4-dbb31253fc8d",
-      "name": "Loop Over Documents",
-      "retryOnFail": true
-    },
-    {
-      "parameters": {
-        "chunkSize": "={{ $('Config').item.json.chunk_size }}",
-        "chunkOverlap": "={{ $('Config').item.json.chunk_overlap }}",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
-      "typeVersion": 1,
-      "position": [
-        5792,
-        752
-      ],
-      "id": "01905489-3331-4a37-a12a-5635323cdec3",
-      "name": "Recursive Character Text Splitter (Resolved Incidents)",
-      "retryOnFail": true
-    },
-    {
-      "parameters": {
-        "tableName": {
-          "__rl": true,
-          "value": "={{ $('Config').item.json.table_resolved }}",
-          "mode": "id"
         },
-        "queryName": "={{ $('Config').item.json.query_incidents }}"
-      },
-      "id": "dd7178ee-46ce-445b-83fd-38e5953bf657",
-      "name": "Supabase Vector Insert (Resolved Incidents)",
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabaseInsert",
-      "typeVersion": 1,
-      "position": [
-        6064,
-        352
-      ],
-      "alwaysOutputData": false,
-      "retryOnFail": true,
-      "executeOnce": false,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
-          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
-        }
-      }
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        6352,
-        352
-      ],
-      "id": "d65e2cd4-7568-491a-a055-e1c35e32ad40",
-      "name": "Wait (To Avoid Hitting API Limits)",
-      "webhookId": "1061be21-f173-4ab6-9160-a146552d4f53"
-    },
-    {
-      "parameters": {
-        "chunkSize": "={{ $('Config').item.json.chunk_size }}",
-        "chunkOverlap": "={{ $('Config').item.json.chunk_overlap }}",
         "options": {}
       },
-      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
-        7488,
-        736
+        -2656,
+        4240
       ],
-      "id": "2930abbf-0d61-4adf-b8b1-273eae615db3",
-      "name": "Recursive Character Text Splitter (Playbooks Ingestion)",
-      "retryOnFail": false
-    },
-    {
-      "parameters": {
-        "model": "={{ $('Config').item.json.model_chat }}",
-        "options": {
-          "temperature": "={{ $('Config').item.json.temperature }}"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        7024,
-        576
-      ],
-      "id": "65e3b88b-3d80-4a86-b6f0-370e6d331f3f",
-      "name": "Summarizer Agent",
-      "retryOnFail": true,
-      "credentials": {
-        "openRouterApi": {
-          "id": "9r5tndCAyKCnqvfG",
-          "name": "OpenRouter account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "tableName": {
-          "__rl": true,
-          "value": "={{ $('Config').item.json.table_playbooks }}",
-          "mode": "id"
-        },
-        "queryName": "={{ $('Config').item.json.query_playbooks }}"
-      },
-      "id": "ce116d68-9e05-4d4a-9cf5-9c8d1f161c0c",
-      "name": "Supabase Vector Insert (Playbooks Ingestion)",
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabaseInsert",
-      "typeVersion": 1,
-      "position": [
-        7568,
-        384
-      ],
-      "alwaysOutputData": true,
-      "retryOnFail": true,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Tfi1jU337qJ96pPq",
-          "name": "Supabase_n8n_Workflow_Incident_Management_V1"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "={{ $('Config').item.json.model_analysis }}",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
-      "typeVersion": 1,
-      "position": [
-        8336,
-        2272
-      ],
-      "id": "23f82001-8e06-4aa0-b805-e150256f8980",
-      "name": "Report Synthesizer Agent",
-      "retryOnFail": true,
-      "credentials": {
-        "openRouterApi": {
-          "id": "9r5tndCAyKCnqvfG",
-          "name": "OpenRouter account 2"
-        }
-      }
+      "id": "10aa3397-cc2f-4014-ad14-485ea7e82073",
+      "name": "Config"
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "deployed.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:151.0) Gecko/20100101 Firefox/151.0",
+            "content-length": "1593",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-GB,en;q=0.9",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "217.138.89.28",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "SG",
+            "cf-ray": "a0b36f7aaad440a6-SIN",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://incident-response.deployed.engineer",
+            "priority": "u=4",
+            "referer": "https://incident-response.deployed.engineer/",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "217.138.89.28, 162.158.106.237",
+            "x-forwarded-host": "deployed.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-swc-7-6c7676c857-tk4tz",
+            "x-is-trusted": "yes",
+            "x-real-ip": "217.138.89.28"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "d492d91a-708e-4b20-a5f5-d40be1994143",
+            "incident_id": "Test-ransomware_detection-001",
+            "title": "Files on shared drive are being renamed with .crypto extension rapidly",
+            "category": "security",
+            "type": "ransomware_detection",
+            "severity": "critical",
+            "status": "unresolved",
+            "@timestamp": "2025-12-25T10:30:00+00:00",
+            "affected_systems": [
+              "file-shares"
+            ],
+            "mitre_tactic_ids": [
+              "TA0040"
+            ],
+            "mitre_technique_ids": [
+              "T1486"
+            ],
+            "mitre_prevention_ids": [
+              "M1053"
+            ],
+            "detection_method": "Endpoint Protection Agent",
+            "tags": [
+              "ransomware",
+              "security",
+              "critical"
+            ],
+            "description": "CrowdStrike Falcon detected mass file encryption behavior on the primary corporate file share. The agent identified hundreds of files being rapidly renamed with a .crypto extension from a compromised host machine, and immediately isolated the host from the network.",
+            "alert_source": "CrowdStrike Falcon",
+            "rule_name": "Ransomware: mass file encryption behavior",
+            "entities": {
+              "ips": [],
+              "hosts": [
+                "win-fileserver-01",
+                "desktop-compromised-44"
+              ],
+              "users": [
+                "msmith_ops"
+              ],
+              "hashes": [],
+              "domains": []
+            },
+            "files": [],
+            "signal_type": "behavioral",
+            "confidence": "high",
+            "output": null,
+            "output_markdown": null,
+            "run_status": "pending",
+            "created_at": "2026-04-22T11:04:52.709887+00:00",
+            "updated_at": "2026-04-22T11:04:52.709887+00:00",
+            "assigned_to": "security-team",
+            "mitre": {
+              "tactic": [
+                "Impact"
+              ],
+              "technique": [
+                "T1486 - Data Encrypted for Impact"
+              ],
+              "prevention": [
+                "M1053 - Data Backup"
+              ]
+            },
+            "execution": null,
+            "webhook_url": null,
+            "encrypted_openrouter_key": "m9fuFatbsN7s4mIH:3I4Uo2Mk8YDcbnKxdQ/0meLDKXwSIkGV2MPGXvsyp0w+Q/mP5qIvtbI6MU/FiBaMyqySilQCOgid3Fy5g9fAPr8YYQ+bYrqLfdQuEkYoQ49mKTpNIDZOeKs="
+          },
+          "webhookUrl": "https://deployed.app.n8n.cloud/webhook/incident-management",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
   "connections": {
-    "When clicking Test workflow": {
-      "main": [
-        [
-          {
-            "node": "Config",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Resolved Incidents Data Loader": {
       "ai_document": [
         [
@@ -1825,37 +1929,18 @@
         ]
       ]
     },
-    "Fetch Test Incident from Supabase": {
-      "main": [
-        [
-          {
-            "node": "Playbook Routing Agent",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge All Intelligence",
-            "type": "main",
-            "index": 3
-          },
-          {
-            "node": "Historical Incidents RAG Agent",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Threat Intel Enrichment Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Threat Intel Enrichment Agent": {
       "main": [
         [
           {
             "node": "Threat Intel Data Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
@@ -1892,7 +1977,8 @@
             "type": "main",
             "index": 0
           }
-        ]
+        ],
+        []
       ]
     },
     "Resolved Incidents Vector Store": {
@@ -2005,20 +2091,14 @@
         ]
       ]
     },
-    "Set Incident ID": {
-      "main": [
-        [
-          {
-            "node": "Fetch Test Incident from Supabase",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Report Synthesizer": {
       "main": [
         [
+          {
+            "node": "Update on completion",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "If",
             "type": "main",
@@ -2032,22 +2112,6 @@
         [
           {
             "node": "Merge All Intelligence",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Config": {
-      "main": [
-        [
-          {
-            "node": "Get Resolved Incidents from GitHub",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Set Incident ID",
             "type": "main",
             "index": 0
           }
@@ -2089,54 +2153,6 @@
           {
             "node": "Playbook Text Extractor",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Playbook Router": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Playbook Routing Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          },
-          {
-            "node": "Structured Output Parser - Playbook Router",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Historical RAG Agent": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Structured Output Parser - Threat Intel",
-            "type": "ai_languageModel",
-            "index": 0
-          },
-          {
-            "node": "Threat Intel Enrichment Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Threat Intel Agent": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Structured Output Parser - Historical RAG",
-            "type": "ai_languageModel",
-            "index": 0
-          },
-          {
-            "node": "Historical Incidents RAG Agent",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -2241,18 +2257,144 @@
           }
         ]
       ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge All Intelligence",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threat Intel Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser - Historical RAG",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Historical Incidents RAG Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Historical RAG Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Threat Intel Enrichment Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser - Threat Intel",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Playbook RAG Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Playbook Routing Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser - Playbook Router",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config-Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Get Resolved Incidents from GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Historical Incidents RAG Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Playbook Routing Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Threat Intel Enrichment Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "availableInMCP": false
   },
-  "versionId": "23f0b8bf-dd1f-47f6-8964-8770aeced5be",
+  "versionId": "020e4437-b2bd-4eec-9de3-61441c5796c6",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "3cd7d9dbf66c7997e1074b2709f070109fda700187bd69d165833c1582642e54"
+    "instanceId": "687877ed0fc16dad003f1d96373ab4b3e3328c5280bd6f9bd6f073a10ca7c911"
   },
-  "id": "AonXK7NwKSYm267K",
+  "nodeGroups": [],
+  "id": "gcQL6CuHB17OzWiN",
   "tags": []
 }
